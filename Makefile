@@ -325,6 +325,7 @@ $(ARM_ROOT)/usr/include/X11/X.h: build/nxlib $(ARM_ROOT)/usr/include/microwin/na
 		cat $(CONFIGS)/x11.pc | sed 's#ARM_APPROOT#$(ARM_APPROOT)#' >$(ARM_APPROOT)/lib/pkgconfig/x11.pc; \
 		cat $(CONFIGS)/xext.pc | sed 's#ARM_APPROOT#$(ARM_APPROOT)#' >$(ARM_APPROOT)/lib/pkgconfig/xext.pc; \
 	}
+	cd $(ARM_ROOT)/usr/lib && ln -s libX11.so libX11.so.0
 
 
 build/nxlib: $(DOWNLOADS)/nxlib_nanox_git.tgz
@@ -442,7 +443,7 @@ $(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1f.tar.gz
 		cd build && tar xf ../Downloads/openssl-1.0.1f.tar.gz && cd openssl-1.0.1f && { \
 			CC=gcc ./Configure linux-armv4 shared --prefix=$(ARM_APPROOT) >$(LOGS)/ssl.log && \
 			make >>$(LOGS)/ssl.log && \
-			INSTALL_PREFIX=/mnt/sdcard/opentom make install >>$(LOGS)/ssl.log; \
+			INSTALL_PREFIX=/mnt/sdcard/opentom make install_sw >>$(LOGS)/ssl.log; \
 		}
 
 gtk: $(ARM_ROOT)/usr/include/gtk-1.2/gtk/gtk.h
@@ -470,7 +471,8 @@ apps: $(TOMDIST) tool_apps dropbear
 	make -C applications install
 
 $(TOMDIST): nano-X
-	cp -R src/opentom_skel $(TOMDIST)
+	mkdir -p $(TOMDIST)
+	cp -R src/opentom_skel/* $(TOMDIST)/
 	cp $(ARM_APPROOT)/bin/nano-X $(TOMDIST)/bin
 	cd build/microwin/src/bin && cp nanowm setportrait nxeyes nxclock nxroach nxmag nxview slider vnc $(TOMDIST)/bin
 	cp -R $(ARM_SYSROOT)/usr/lib/ts/*.so $(TOMDIST)/lib/ts/

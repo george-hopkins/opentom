@@ -3,12 +3,13 @@ OpenTom SDK Readme.txt
 OpenTom is a tiny OpenSource Linux distribution for TomTom(tm)
 
 * To use this SDK :
-- you need (in your system): fltk, imagemagick
+- you need package (in your system): subversion chrpath fluid imagemagick
 - modify the ROOT env var into get_cross_env.sh
 - source get_cross_env.sh
 - type make to perform primary OpenTom buids
 
 * To build (into opentom_dist) extra application
+- mount your SDCARD on /mnt/sdcard or link $ROOT/opentom_dist to /mnt/sdcard/opentom (for espeak-data)
 - type: make extra
 
 Then, you will have :
@@ -77,7 +78,6 @@ Then: cp $ROOT/src/ttsystem.tomtom.initramfs/bin/gltt $TOMDIST/bin
 
 * TODO
 - fix espeak => portaudio => OSS, that currently don't work
-- find how to improve FLTK-nxlib-NanoX stability (notably with menus)
 - patch spreadsheet to be adapted to TomTom screen
 
 

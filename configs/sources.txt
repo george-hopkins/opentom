@@ -1,6 +1,6 @@
 # How to get source archives
 # Libs
-wget http://freefr.dl.sourceforge.net/project/libpng/libpng12/1.2.50/libpng-1.2.50.tar.gz
+wget http://freefr.dl.sourceforge.net/project/libpng/libpng12/older-releases/1.2.50/libpng-1.2.50.tar.gz
 wget http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
 wget http://www.tomtom.com/gpl/golinux-tt1114405.tar.gz
 wget http://zlib.net/zlib-1.2.8.tar.gz
@@ -36,7 +36,7 @@ wget http://ftp.gnome.org/pub/gnome/sources/gtk+/1.2/gtk+-1.2.10.tar.gz
 # Apps
 wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
 wget http://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz
-wget https://matt.ucc.asn.au/dropbear/dropbear-2013.62.tar.bz2
+wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2013.62.tar.bz2
 wget http://pkgs.fedoraproject.org/repo/pkgs/bluez-utils/bluez-utils-2.15.tar.gz/4e86dfd4449ff49e82696d8a3b254002/bluez-utils-2.15.tar.gz
 wget https://picocom.googlecode.com/files/picocom-1.7.tar.gz
 wget http://freefr.dl.sourceforge.net/project/mad/madplay/0.15.2b/madplay-0.15.2b.tar.gz
