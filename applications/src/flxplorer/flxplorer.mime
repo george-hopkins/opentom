@@ -1,0 +1,5 @@
+.pdf	mupdf
+.epub	cr3
+.mp3	madplay  -a 	-15 
+.cxx	/usr/bin/gedit
+*	editor

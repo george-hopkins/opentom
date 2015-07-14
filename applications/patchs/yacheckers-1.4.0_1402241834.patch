@@ -1,0 +1,1145 @@
+diff -rupN yacheckers-1.4.0.original/Makefile yacheckers-1.4.0/Makefile
+--- yacheckers-1.4.0.original/Makefile	2012-03-29 21:29:45.000000000 +0200
++++ yacheckers-1.4.0/Makefile	2014-02-24 15:25:09.000000000 +0100
+@@ -5,7 +5,7 @@ BUILD=emu
+ #BUILD=arm_gnueabi
+ endif
+ 
+-include /usr/local/pocketbook/common.mk
++#include /usr/local/pocketbook/common.mk
+ 
+ CXXFLAGS+=-I/usr/local/pocketbook_eabi/include -DHAS_NO_IV_GET_DEFAULT_FONT \
+           `freetype-config --cflags` -I.. -I/usr/local/pocketbook_eabi/include/sigc++-2.0
+@@ -48,6 +48,7 @@ PIXMAPS_C=$(PIXMAPS:.bmp=.c)
+ PIXMAPS_OBJS=$(addprefix $(OBJDIR)/,$(PIXMAPS_C:.c=.o))
+ 
+ all:$(PROJECT)
++	cp flchekers $(TOMDIST)/bin
+ 
+ $(PROJECT): $(PIXMAPS_C) $(OBJDIR) $(OBJS) $(PIXMAPS_OBJS)
+ 	$(CXX) -o $@ $(OBJS) $(PIXMAPS_OBJS) $(LDFLAGS) $(LIBS)
+@@ -67,6 +68,7 @@ $(PIXMAPS_C): $(PIXMAPS)
+ images/%.c: images/%.bmp
+ 	pbres -c $@ $<
+ 
+-
++clean:
++	rm -f src/*.o flchekers
+ 
+ -include $(OBJDIR)/src/*.d
+diff -rupN yacheckers-1.4.0.original/Makefile.fl yacheckers-1.4.0/Makefile.fl
+--- yacheckers-1.4.0.original/Makefile.fl	2012-03-13 16:21:55.000000000 +0100
++++ yacheckers-1.4.0/Makefile.fl	2014-02-24 15:25:09.000000000 +0100
+@@ -9,7 +9,7 @@ FLTK=fltk-config
+ LIBS = `${FLTK} --use-images --ldflags`
+ endif
+ 
+-CXXFLAGS+= -DUSE_FLTK `${FLTK} --use-images --cxxflags`
++CXXFLAGS+= -DUSE_FLTK `${FLTK} --use-images --cxxflags`
+ CPPFILES = src/checkers.cc \
+ 	src/rcheckers.cc\
+ 	src/echeckers.cc\
+diff -rupN yacheckers-1.4.0.original/src/flcheckers.cc yacheckers-1.4.0/src/flcheckers.cc
+--- yacheckers-1.4.0.original/src/flcheckers.cc	2012-03-29 17:42:14.000000000 +0200
++++ yacheckers-1.4.0/src/flcheckers.cc	2014-02-24 15:25:09.000000000 +0100
+@@ -24,7 +24,7 @@
+ #include <FL/Fl_Check_Button.H>
+ #include <FL/Fl_Return_Button.H>
+ #include <FL/fl_draw.H>
+-#include <FL/fl_file_chooser.H>
++#include <FL/Fl_File_Chooser.H>
+ #include <FL/Fl_Browser.H>
+ #include <FL/Fl_Pixmap.H>
+ #include <FL/fl_ask.H>
+@@ -62,6 +62,8 @@ namespace {
+ 
+ #endif*/
+ 
++Fl_Double_Window *mainwnd;
++
+ namespace{
+   void update_menus();
+   Fl_Pixmap king2(kingblack_xpm),king1(kingwhite_xpm);
+@@ -69,8 +71,9 @@ namespace{
+ };
+ 
+ class Fl_Board : public Fl_Widget, public CheckersBoard{
++public:
++  static const int csize=27;
+ protected:
+-  static const int csize=50;
+   Fl_Pixmap *mn1,*mn2,*kg1,*kg2;
+   virtual void set_checkers(){
+     if(true/*Checkers::RUSSIAN==rules*/){
+@@ -89,20 +92,20 @@ protected:
+     
+     switch(t){
+        	  case Checkers::MAN1:
+-          if(is_white)mn1->draw(X+9,Y+9);
+-          else mn2->draw(X+9,Y+9);
++          if(is_white)mn1->draw(X+1,Y+1);
++          else mn1->draw(X+1,Y+1);
+           return;
+        	  case Checkers::MAN2:
+-          if(is_white)mn2->draw(X+9,Y+9);
+-          else mn1->draw(X+9,Y+9);
++          if(is_white)mn2->draw(X+1,Y+1);
++          else mn1->draw(X+1,Y+1);
+           return;
+        	  case Checkers::KING1:
+-          if(is_white)kg1->draw(X+9,Y+9);
+-          else kg2->draw(X+9,Y+9);
++          if(is_white)kg1->draw(X+1,Y+1);
++          else kg1->draw(X+1,Y+1);
+           return;
+        	  case Checkers::KING2:
+-          if(is_white)kg2->draw(X+9,Y+9);
+-          else kg1->draw(X+9,Y+9);
++          if(is_white)kg2->draw(X+1,Y+1);
++          else kg1->draw(X+1,Y+1);
+           return;
+        	  default:
+        	  ;
+@@ -121,7 +124,7 @@ public:
+     redraw();
+   }
+   Fl_Browser* movesList;
+-  Fl_Board(int X,int Y,const char L=0) : Fl_Widget(X,Y,400,440){
++  Fl_Board(int X,int Y,const char L=0) : Fl_Widget(X,Y,Fl_Board::csize * 8,Fl_Board::csize * 8 + 40){
+     box(FL_ENGRAVED_BOX);
+     set_checkers();
+   }
+@@ -142,7 +145,7 @@ public:
+           fl_draw(str,x()+i*50+9,y()+j*50+9);*/
+           if(cp==item){
+             fl_color(FL_BLUE);
+-            fl_rectf(X+4,Y+4,csize-8,csize-8);
++            fl_rectf(X+1,Y+1,csize-2,csize-2);
+           }
+           draw_chess(game->item(item++),X,Y);
+         }
+@@ -151,11 +154,13 @@ public:
+     fl_color(FL_BLACK);
+     fl_font(FL_BOLD,10);
+     char str[512];
+-    sprintf(str,_("Game type:%s    Level:%s "),Checkers::RUSSIAN==rules?_("Russian"):_("English"),skill_v[Checkers::skill2index(skill)]);
+-    fl_draw(str,x()+5,y()+410);
++    sprintf(str,_("FlCheckers - Game type:(%s) Level:(%s)"),Checkers::RUSSIAN==rules?_("Russian"):_("English"),skill_v[Checkers::skill2index(skill)]);
++    mainwnd->label(str);
++    //fl_draw(str,x()+5,y()+220);
+     if(game_over){
+-      sprintf(str,_("Game Over! %s"),(winner==1)?_("Winner Computer"):((winner==2)?_("You Win!"):_("Nobody can move!")));
+-      fl_draw(str,x()+5,y()+420);
++      sprintf(str,_("FlCheckers - Game Over! - %s"),(winner==1)?_("Winner Computer"):((winner==2)?_("You Win!"):_("Nobody can move!")));
++      mainwnd->label(str);
++      //fl_draw(str,x()+5,y()+240);
+     }
+   }
+   void updateList(){
+@@ -207,8 +212,8 @@ public:
+     }
+     if(FL_PUSH == e && !move && !game_over){
+       move=true;
+-      int X=(Fl::event_x()-x())/50;
+-      int Y=(Fl::event_y()-y())/50;
++      int X=(Fl::event_x()-x())/Fl_Board::csize;
++      int Y=(Fl::event_y()-y())/Fl_Board::csize;
+       int gm_ind=((X+Y)%2)?(X/2+4*Y):-1;
+       chmove mv;
+       if(go1 && Checkers::FREE==game->item(gm_ind) && cp!=-1 && gm_ind !=-1 && game->go1(cp,gm_ind,mv)){
+@@ -363,7 +368,7 @@ void cb_exit(Fl_Widget*,void*){
+   }
+ }
+ void cb_load(Fl_Widget*,void*){
+-  char* fname=fl_file_chooser("Load Pdn file","","*.pdn");
++  char* fname=fl_file_chooser("Load Pdn file", "/mnt/sdcard/opentom","*.pdn", 0);
+   if(fname && brd->load_games(fname)){
+     brd->new_game(brd->curgame);
+     brd->updateList();
+@@ -417,14 +422,14 @@ namespace{
+ };
+ 
+ int main(int argc,char** argv){
+-  Fl_Double_Window mainwnd(600,480,_("Checkers"));
+-  Fl_Menu_Bar menub(0,0,600,25);
++  mainwnd = new Fl_Double_Window(320,240,_("Checkers"));
++  Fl_Menu_Bar menub(0,0,320,20);
+   menub.menu(mmenu);
+-  brd = new Fl_Board(5,30);
+-  brd->movesList=new Fl_Browser(415,30,180,440);
+-  mainwnd.resizable(brd->movesList);
+-  mainwnd.callback(cb_exit);
+-  mainwnd.show(argc,argv);
++  brd = new Fl_Board(1,21);
++  brd->movesList=new Fl_Browser(217,20,180,220);
++  mainwnd->resizable(brd->movesList);
++  mainwnd->callback(cb_exit);
++  mainwnd->show(argc,argv);
+   return Fl::run();
+ }
+ 
+diff -rupN yacheckers-1.4.0.original/src/img/kingblack.xpm yacheckers-1.4.0/src/img/kingblack.xpm
+--- yacheckers-1.4.0.original/src/img/kingblack.xpm	2009-07-20 19:05:08.000000000 +0200
++++ yacheckers-1.4.0/src/img/kingblack.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -1,43 +1,142 @@
+ /* XPM */
+-static const char * kingblack_xpm[] = {
+-"32 32 8 1",
+-" 	c None",
+-".	c #000000",
+-"+	c #A0A0A0",
+-"@	c #808080",
+-"#	c #DCDCDC",
+-"$	c #585858",
+-"%	c #FFFFFF",
+-"&	c #303030",
+-"                                ",
+-"                                ",
+-"            ........            ",
+-"          ..+++@@@@@..          ",
+-"        ..#+$$$$$$$$@@..        ",
+-"       .###...........@@.       ",
+-"      .%%$..............@.      ",
+-"     .%%.................@.     ",
+-"    .%%...................@.    ",
+-"    .%..........%.........@.    ",
+-"   .#%..........%..........@.   ",
+-"   .#..........$%$.........@.   ",
+-"  .++....#+....+%@....%+....@.  ",
+-"  .++....@%+...#%+...+%@....@.  ",
+-"  .+$....$#%...%##...%#$....@.  ",
+-"  .+$.....#%+..%##..+%+.....@.  ",
+-"  .+$.....+#%+.%##.+%#@.....@.  ",
+-"  .+$......#%%.%##.%%#......@.  ",
+-"  .+$......##%%%##%%#+......@.  ",
+-"  .@$......+#########@......@.  ",
+-"   .@.......#########......@.   ",
+-"   .@.......########+......@.   ",
+-"    .@......++++++++@.....@.    ",
+-"    .@.......&&&&&&&&&....@.    ",
+-"     .@..................@.     ",
+-"      .@................@.      ",
+-"       .@@............@@.       ",
+-"        ..@@........@@..        ",
+-"          ..@@@@@@@@..          ",
+-"            ........            ",
+-"                                ",
+-"                                "};
++static char *kingblack_xpm[] = {
++/* columns rows colors chars-per-pixel */
++"24 24 112 2 ",
++"   c #000400040004",
++".  c #00ED00ED00ED",
++"X  c #020C020C020C",
++"o  c #031103110311",
++"O  c #038603860386",
++"+  c #053005300530",
++"@  c #05DB05DB05DB",
++"#  c #070407040704",
++"$  c #095009500950",
++"%  c #0A090A090A09",
++"&  c #0D560D560D56",
++"*  c #0FD00FD00FD0",
++"=  c #10C910C910C9",
++"-  c #134513451345",
++";  c #16B116B116B1",
++":  c #195319531953",
++">  c #19D419D419D4",
++",  c #1AD11AD11AD1",
++"<  c #1E471E471E47",
++"1  c #205A205A205A",
++"2  c #225422542254",
++"3  c #232D232D232D",
++"4  c #26F226F226F2",
++"5  c #284928492849",
++"6  c #2C752C752C75",
++"7  c #2E632E632E63",
++"8  c #2FD72FD72FD7",
++"9  c #355D355D355D",
++"0  c #36F736F736F7",
++"q  c #394639463946",
++"w  c #3B9C3B9C3B9C",
++"e  c #3C653C653C65",
++"r  c #3D413D413D41",
++"t  c #3E7E3E7E3E7E",
++"y  c #3ECE3ECE3ECE",
++"u  c #420442044204",
++"i  c #434D434D434D",
++"p  c #468D468D468D",
++"a  c #477E477E477E",
++"s  c #48AA48AA48AA",
++"d  c #490749074907",
++"f  c #49E349E349E3",
++"g  c #4B934B934B93",
++"h  c #4CAE4CAE4CAE",
++"j  c #4D034D034D03",
++"k  c #4DEF4DEF4DEF",
++"l  c #511751175117",
++"z  c #52B252B252B2",
++"x  c #535653565356",
++"c  c #558355835583",
++"v  c #598C598C598C",
++"b  c #5A345A345A34",
++"n  c #5AF65AF65AF6",
++"m  c #5F705F705F70",
++"M  c #613D613D613D",
++"N  c #68A768A768A7",
++"B  c #6AC66AC66AC6",
++"V  c #6B3F6B3F6B3F",
++"C  c #6DB06DB06DB0",
++"Z  c #6E576E576E57",
++"A  c #706570657065",
++"S  c #721472147214",
++"D  c #76C076C076C0",
++"F  c #78C678C678C6",
++"G  c #7A3A7A3A7A3A",
++"H  c #7BF57BF57BF5",
++"J  c #7D717D717D71",
++"K  c #807B807B807B",
++"L  c #82A982A982A9",
++"P  c #84E984E984E9",
++"I  c #875387538753",
++"U  c #8A498A498A49",
++"Y  c #8C058C058C05",
++"T  c #972797279727",
++"R  c #993499349934",
++"E  c #9ABC9ABC9ABC",
++"W  c #9E7C9E7C9E7C",
++"Q  c #A0B1A0B1A0B1",
++"!  c #A196A196A196",
++"~  c #A2ECA2ECA2EC",
++"^  c #A55FA55FA55F",
++"/  c #AE8BAE8BAE8B",
++"(  c #AFB0AFB0AFB0",
++")  c #B1AEB1AEB1AE",
++"_  c #B86BB86BB86B",
++"`  c #BDCABDCABDCA",
++"'  c #BEE1BEE1BEE1",
++"]  c #BF77BF77BF77",
++"[  c #C08CC08CC08C",
++"{  c #C732C732C732",
++"}  c #CA59CA59CA59",
++"|  c #CBE9CBE9CBE9",
++" . c #CCB2CCB2CCB2",
++".. c #CF7DCF7DCF7D",
++"X. c #D25BD25BD25B",
++"o. c #D736D736D736",
++"O. c #D7DAD7DAD7DA",
++"+. c #DAECDAECDAEC",
++"@. c #DD22DD22DD22",
++"#. c #DDFEDDFEDDFE",
++"$. c #DE70DE70DE70",
++"%. c #DFEEDFEEDFEE",
++"&. c #E4E8E4E8E4E8",
++"*. c #E780E780E780",
++"=. c #E8A6E8A6E8A6",
++"-. c #E9F3E9F3E9F3",
++";. c #EAEAEAEAEAEA",
++":. c #EB76EB76EB76",
++">. c #F1DFF1DFF1DF",
++",. c #F4B4F4B4F4B4",
++"<. c #F5B8F5B8F5B8",
++"1. c None",
++/* pixels */
++"1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.",
++"1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.",
++"1.1.1.1.1.1.1.1.2 N Z m v v c , 1.1.1.1.1.1.1.1.",
++"1.1.1.1.1.1.r Y K j d d p p d z r 5 1.1.1.1.1.1.",
++"1.1.1.1.1.D ..P <               2 u 0 1.1.1.1.1.",
++"1.1.1.1.G O.d #                     6 0 1.1.1.1.",
++"1.1.1.p X.u           $ 6             u 3 1.1.1.",
++"1.1.1.T K             , ^             2 u 1.1.1.",
++"1.1.3 ! 3   # &       p [ 2     $ *     j , 1.1.",
++"1.1.S G     6 / d     P &.u   $ Y W $   * j 1.1.",
++"1.1.S M     , / | *   / :.m   0 %.P $   & z 1.1.",
++"1.1.Z d     # G >.Z # _ :.Z & R O.r     & z 1.1.",
++"1.1.Z d       r | :.z / :.N J <.! -     & z 1.1.",
++"1.1.Z j         ! <.[ O.&./ +.:.m       & z 1.1.",
++"1.1.v d         G %.:.*.+.&.:.{ r       * j 1.1.",
++"1.1., z         , | +.%.%.%.%.R #       j , 1.1.",
++"1.1.1.u 2       * / ] ] ] ] ] Z       2 r 1.1.1.",
++"1.1.1.3 u       # 8 d d d p d q &     u 3 1.1.1.",
++"1.1.1.1.0 6                   #     8 0 1.1.1.1.",
++"1.1.1.1.1.0 u 2                 2 u 0 1.1.1.1.1.",
++"1.1.1.1.1.1.5 r j * & & & & - j u 5 1.1.1.1.1.1.",
++"1.1.1.1.1.1.1.1., j z z z z j , 1.1.1.1.1.1.1.1.",
++"1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.",
++"1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
++};
+diff -rupN yacheckers-1.4.0.original/src/img/kingwhite.xpm yacheckers-1.4.0/src/img/kingwhite.xpm
+--- yacheckers-1.4.0.original/src/img/kingwhite.xpm	2009-07-20 19:05:08.000000000 +0200
++++ yacheckers-1.4.0/src/img/kingwhite.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -1,43 +1,132 @@
+ /* XPM */
+-static const char * kingwhite_xpm[] = {
+-"32 32 8 1",
+-" 	c None",
+-".	c #000000",
+-"+	c #FFFFFF",
+-"@	c #DCDCDC",
+-"#	c #A0A0A0",
+-"$	c #303030",
+-"%	c #585858",
+-"&	c #808080",
+-"                                ",
+-"                                ",
+-"            ........            ",
+-"          ..++++++++..          ",
+-"        ..+++@@@@@@@##..        ",
+-"       .+++@@@@@@@@@@@##.       ",
+-"      .++@@@@@@@@@@@@@@@#.      ",
+-"     .++@@@@@@@@@@@@@@@@@#.     ",
+-"    .++@@@@@@@@@@@@@@@@@@@#.    ",
+-"    .+@@@@@@@@@+$@@@@@@@@@#.    ",
+-"   .+@@@@@@@@@@+$@@@@@@@@@@#.   ",
+-"   .+@@@@@@@@@@+$@@@@@@@@@@#.   ",
+-"  .++@@@@.+@@@@+$@@@@@+.@@@@#.  ",
+-"  .+@@@@@.$+@@+#.#@@@+%.@@@@#.  ",
+-"  .+@@@@@+$$@@+&$&@@+&.%@@@@#.  ",
+-"  .+@@@@@@%$#@+%$%@@+..#@@@@#.  ",
+-"  .+@@@@@@#$$++$$$@+&$%@@@@@#.  ",
+-"  .+@@@@@@@$$$+$$$+#$$#@@@@@#.  ",
+-"  .+@@@@@@@%$$&$$$&$$%@@@@@@#.  ",
+-"  .+@@@@@@@#$$$$$$$$$#@@@@@@#.  ",
+-"   .#@@@@@@@$$$$$$$$%@@@@@@#.   ",
+-"   .#@@@@@@@%$$$$$$$#@@@@@@#.   ",
+-"    .#@@@@@@#&&&&&&&@@@@@@#.    ",
+-"    .#@@@@@@@@@@@@@@@@@@@@#.    ",
+-"     .#@@@@@@@@@@@@@@@@@@#.     ",
+-"      .#@@@@@@@@@@@@@@@@#.      ",
+-"       .##@@@@@@@@@@@@##.       ",
+-"        ..##@@@@@@@@##..        ",
+-"          ..########..          ",
+-"            ........            ",
+-"                                ",
+-"                                "};
++static char *kingwhite_xpm[] = {
++/* columns rows colors chars-per-pixel */
++"24 24 102 2 ",
++"   c #138913891389",
++".  c #1C511C511C51",
++"X  c #1D0B1D0B1D0B",
++"o  c #22ED22ED22ED",
++"O  c #23C723C723C7",
++"+  c #285428542854",
++"@  c #297629762976",
++"#  c #2A282A282A28",
++"$  c #2ADC2ADC2ADC",
++"%  c #2D222D222D22",
++"&  c #2E222E222E22",
++"*  c #2F792F792F79",
++"=  c #302230223022",
++"-  c #31DE31DE31DE",
++";  c #354E354E354E",
++":  c #366736673667",
++">  c #391839183918",
++",  c #3AA43AA43AA4",
++"<  c #3AFF3AFF3AFF",
++"1  c #3E853E853E85",
++"2  c #43A943A943A9",
++"3  c #448A448A448A",
++"4  c #455145514551",
++"5  c #470B470B470B",
++"6  c #497249724972",
++"7  c #4D2F4D2F4D2F",
++"8  c #553655365536",
++"9  c #57A257A257A2",
++"0  c #583E583E583E",
++"q  c #596759675967",
++"w  c #5A985A985A98",
++"e  c #607260726072",
++"r  c #68D868D868D8",
++"t  c #694B694B694B",
++"y  c #6B766B766B76",
++"u  c #6C326C326C32",
++"i  c #70ED70ED70ED",
++"p  c #710B710B710B",
++"a  c #721472147214",
++"s  c #730673067306",
++"d  c #758B758B758B",
++"f  c #767176717671",
++"g  c #778F778F778F",
++"h  c #783378337833",
++"j  c #7B007B007B00",
++"k  c #7EB27EB27EB2",
++"l  c #7FF57FF57FF5",
++"z  c #809C809C809C",
++"x  c #817281728172",
++"c  c #862386238623",
++"v  c #8E998E998E99",
++"b  c #974C974C974C",
++"n  c #9D479D479D47",
++"m  c #9E9F9E9F9E9F",
++"M  c #9F979F979F97",
++"N  c #A2ECA2ECA2EC",
++"B  c #A7E8A7E8A7E8",
++"V  c #A8BBA8BBA8BB",
++"C  c #A94EA94EA94E",
++"Z  c #AB76AB76AB76",
++"A  c #AC8BAC8BAC8B",
++"S  c #B3BCB3BCB3BC",
++"D  c #B63FB63FB63F",
++"F  c #B8DFB8DFB8DF",
++"G  c #BB34BB34BB34",
++"H  c #BB84BB84BB84",
++"J  c #BDB7BDB7BDB7",
++"K  c #BE43BE43BE43",
++"L  c #BFDDBFDDBFDD",
++"P  c #C3B4C3B4C3B4",
++"I  c #C615C615C615",
++"U  c #C7F8C7F8C7F8",
++"Y  c #CCCDCCCDCCCD",
++"T  c #CDF1CDF1CDF1",
++"R  c #D2DBD2DBD2DB",
++"E  c #D46FD46FD46F",
++"W  c #D5D1D5D1D5D1",
++"Q  c #D718D718D718",
++"!  c #D847D847D847",
++"~  c #D99CD99CD99C",
++"^  c #DB02DB02DB02",
++"/  c #DC05DC05DC05",
++"(  c #DCE8DCE8DCE8",
++")  c #DDDDDDDDDDDD",
++"_  c #DEEEDEEEDEEE",
++"`  c #DFF4DFF4DFF4",
++"'  c #E121E121E121",
++"]  c #E1F3E1F3E1F3",
++"[  c #E2D3E2D3E2D3",
++"{  c #E419E419E419",
++"}  c #E4FCE4FCE4FC",
++"|  c #E609E609E609",
++" . c #E71DE71DE71D",
++".. c #E78FE78FE78F",
++"X. c #E9A2E9A2E9A2",
++"o. c #ED07ED07ED07",
++"O. c #EE62EE62EE62",
++"+. c #EEEAEEEAEEEA",
++"@. c #EFF3EFF3EFF3",
++"#. c #F266F266F266",
++"$. c #F2C4F2C4F2C4",
++"%. c None",
++/* pixels */
++"%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.",
++"%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.",
++"%.%.%.%.%.%.%.%.- A S S S S C O %.%.%.%.%.%.%.%.",
++"%.%.%.%.%.%.3 m ] #.} } } } ( C t $ %.%.%.%.%.%.",
++"%.%.%.%.%.f #.o.] ( ( ( ( ( ( ( T S 7 %.%.%.%.%.",
++"%.%.%.%.f o.} ( ( ( ( ( ( ( ( ( ( ] H 7 %.%.%.%.",
++"%.%.%.3 #.} ( ( ( ( ( ( P ( ( ( ( ( ( S $ %.%.%.",
++"%.%.%.b } / ( ( ( ( ( ] i ( ( ( ( ( ( T t %.%.%.",
++"%.%.- ] ( / / E ( ( ( ] i ( ( ( ( R / ( C X %.%.",
++"%.%.A #.( ] m t } ( ] R e E / ] ( 8 U ( E i %.%.",
++"%.%.S } ( ( I q x / o.N 1 S ] ] f ; R ( ( h %.%.",
++"%.%.S } ( ( } m < A #.c 1 m X.K   i / ( / f %.%.",
++"%.%.S } ( ( ( I 7 q } t O v } t 3 K ( ( / h %.%.",
++"%.%.S } ( ( ( ( t $ h q $ h k ; x E ( ( / f %.%.",
++"%.%.C ( ( ( ( ( m ; < ; % < - 6 H ( ( ( E i %.%.",
++"%.%.o C ( ( ( ( T 3 % % % % - x / ( ( ( B X %.%.",
++"%.%.%.t T ( ( ( E h q q q q e K ( ( ( T t %.%.%.",
++"%.%.%.$ S ( ( ( ( T I I I I U ( ( ( ( S $ %.%.%.",
++"%.%.%.%.7 H ] ( ( ( ( ( ( ( ] ( ( ] H 7 %.%.%.%.",
++"%.%.%.%.%.7 S T ] ( ( ( ( ( ( ( T S 7 %.%.%.%.%.",
++"%.%.%.%.%.%.$ t B E / / / / E C t $ %.%.%.%.%.%.",
++"%.%.%.%.%.%.%.%.X i h f f h i X %.%.%.%.%.%.%.%.",
++"%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.",
++"%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%.%."
++};
+diff -rupN yacheckers-1.4.0.original/src/img/manblack.xpm yacheckers-1.4.0/src/img/manblack.xpm
+--- yacheckers-1.4.0.original/src/img/manblack.xpm	2009-07-20 19:05:08.000000000 +0200
++++ yacheckers-1.4.0/src/img/manblack.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -1,43 +1,160 @@
+ /* XPM */
+-static const char * manblack_xpm[] = {
+-"32 32 8 1",
+-" 	c None",
+-".	c #000000",
+-"+	c #808080",
+-"@	c #DCDCDC",
+-"#	c #585858",
+-"$	c #FFFFFF",
+-"%	c #BDBDBD",
+-"&	c #A0A0A0",
+-"                                ",
+-"                                ",
+-"            ........            ",
+-"          ..++++++++..          ",
+-"        ..@+........++..        ",
+-"       .@@#...........++.       ",
+-"      .$$#..............+.      ",
+-"     .$$.......####......+.     ",
+-"    .$$......++######.....+.    ",
+-"    .$.....$$%++#..###....+.    ",
+-"   .@$....$$%.......###....+.   ",
+-"   .@....$$%.........##..##..   ",
+-"  .++....$%.....###..###.###..  ",
+-"  .+....+$%.....###...##.###..  ",
+-"  .+....+%........##.....###..  ",
+-"  .+....#+.........+#....###..  ",
+-"  .+...###.........%$....+##..  ",
+-"  .+...##....#.....$$...++##..  ",
+-"  .+...###...##...$$....%%++..  ",
+-"  .+....##....#+%$$%...@@$@#..  ",
+-"   .+...###.....$$.....@$$%..   ",
+-"   .+....#####........@$$$...   ",
+-"    .+....####.......@$$$@..    ",
+-"    .+......##.....@@$$$@...    ",
+-"     .+........+%@@$$$@@...     ",
+-"      .+.....#+++@$$@@%...      ",
+-"       .++.#####&@@$%....       ",
+-"        ..+.#####@......        ",
+-"          ............          ",
+-"            ........            ",
+-"                                ",
+-"                                "};
++static char *manblack_xpm[] = {
++/* columns rows colors chars-per-pixel */
++"24 24 130 2 ",
++"   c #000300030003",
++".  c #00CB00CB00CB",
++"X  c #025102510251",
++"o  c #031B031B031B",
++"O  c #043604360436",
++"+  c #04E304E304E3",
++"@  c #062B062B062B",
++"#  c #072107210721",
++"$  c #07C907C907C9",
++"%  c #08EA08EA08EA",
++"&  c #0A210A210A21",
++"*  c #0AD20AD20AD2",
++"=  c #0C100C100C10",
++"-  c #0D6C0D6C0D6C",
++";  c #0D930D930D93",
++":  c #0EF50EF50EF5",
++">  c #112611261126",
++",  c #125312531253",
++"<  c #132213221322",
++"1  c #161816181618",
++"2  c #171B171B171B",
++"3  c #180F180F180F",
++"4  c #190919091909",
++"5  c #1A381A381A38",
++"6  c #1B771B771B77",
++"7  c #1BE01BE01BE0",
++"8  c #1D161D161D16",
++"9  c #1EE61EE61EE6",
++"0  c #205D205D205D",
++"q  c #216C216C216C",
++"w  c #21BF21BF21BF",
++"e  c #232D232D232D",
++"r  c #243524352435",
++"t  c #24F724F724F7",
++"y  c #267726772677",
++"u  c #26F126F126F1",
++"i  c #284928492849",
++"p  c #28D528D528D5",
++"a  c #2C252C252C25",
++"s  c #2D422D422D42",
++"d  c #2E952E952E95",
++"f  c #2FC62FC62FC6",
++"g  c #312831283128",
++"h  c #347034703470",
++"j  c #355C355C355C",
++"k  c #376337633763",
++"l  c #385738573857",
++"z  c #3C293C293C29",
++"x  c #3D4C3D4C3D4C",
++"c  c #3E6A3E6A3E6A",
++"v  c #3F143F143F14",
++"b  c #406340634063",
++"n  c #415741574157",
++"m  c #422942294229",
++"M  c #42DA42DA42DA",
++"N  c #448844884488",
++"B  c #46BC46BC46BC",
++"V  c #492549254925",
++"C  c #4ACF4ACF4ACF",
++"Z  c #4C6F4C6F4C6F",
++"A  c #4D1F4D1F4D1F",
++"S  c #4DE74DE74DE7",
++"D  c #4F604F604F60",
++"F  c #506B506B506B",
++"G  c #510C510C510C",
++"H  c #523B523B523B",
++"J  c #541854185418",
++"K  c #565B565B565B",
++"L  c #574D574D574D",
++"P  c #585E585E585E",
++"I  c #597859785978",
++"U  c #5A5D5A5D5A5D",
++"Y  c #5AE65AE65AE6",
++"T  c #5E6D5E6D5E6D",
++"R  c #5F745F745F74",
++"E  c #623562356235",
++"W  c #62F362F362F3",
++"Q  c #63EC63EC63EC",
++"!  c #651A651A651A",
++"~  c #665366536653",
++"^  c #69B769B769B7",
++"/  c #6AC76AC76AC7",
++"(  c #6B9A6B9A6B9A",
++")  c #6F786F786F78",
++"_  c #76C076C076C0",
++"`  c #777777777777",
++"'  c #78AD78AD78AD",
++"]  c #7A5E7A5E7A5E",
++"[  c #7CC57CC57CC5",
++"{  c #807B807B807B",
++"}  c #823382338233",
++"|  c #86D486D486D4",
++" . c #929892989298",
++".. c #973C973C973C",
++"X. c #9B069B069B06",
++"o. c #9C939C939C93",
++"O. c #9F1C9F1C9F1C",
++"+. c #A130A130A130",
++"@. c #A29AA29AA29A",
++"#. c #A6B5A6B5A6B5",
++"$. c #AE5DAE5DAE5D",
++"%. c #B009B009B009",
++"&. c #B120B120B120",
++"*. c #B746B746B746",
++"=. c #B8E1B8E1B8E1",
++"-. c #BDD0BDD0BDD0",
++";. c #BE97BE97BE97",
++":. c #BF4EBF4EBF4E",
++">. c #C298C298C298",
++",. c #C67EC67EC67E",
++"<. c #C8C0C8C0C8C0",
++"1. c #CF75CF75CF75",
++"2. c #D134D134D134",
++"3. c #D25BD25BD25B",
++"4. c #D7CFD7CFD7CF",
++"5. c #D906D906D906",
++"6. c #D974D974D974",
++"7. c #DB72DB72DB72",
++"8. c #DE3ADE3ADE3A",
++"9. c #DE9BDE9BDE9B",
++"0. c #E6E9E6E9E6E9",
++"q. c #E779E779E779",
++"w. c #ED38ED38ED38",
++"e. c #F4B4F4B4F4B4",
++"r. c #F972F972F972",
++"t. c #FB60FB60FB60",
++"y. c #FE38FE38FE38",
++"u. c #FEB3FEB3FEB3",
++"i. c #FF8FFF8FFF8F",
++"p. c None",
++/* pixels */
++"p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.",
++"p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.",
++"p.p.p.p.p.p.p.p.8 A G G G G A 5 p.p.p.p.p.p.p.p.",
++"p.p.p.p.p.p.c _ ! , - - - - , A c p p.p.p.p.p.p.",
++"p.p.p.p.p._ 3.W -               q m h p.p.p.p.p.",
++"p.p.p.p.] 4.V %     % g m m 5 @     g h p.p.p.p.",
++"p.p.p.B 3.m     g U { ( L m A m -     m r p.p.p.",
++"p.p.p...{     m 9.>.G c q   r L m -   q c p.p.p.",
++"p.p.r +.q   g 9.,.s     @ %   p U 8 , c s @ p.p.",
++"p.p.L A     R q.c     @ V G , , A A 8 U V @ p.p.",
++"p.p.G -   %  .o.5     @ p B h   2 p 5 U G @ p.p.",
++"p.p.G -   - / B           % R m     2 U G % p.p.",
++"p.p.G -   c G q   @ %       X.*.    l / A % p.p.",
++"p.p.G -   m A 2   5 m -   m 6./   -  .| W % p.p.",
++"p.p.A ,   2 L g   @ h U o.6.-.%   ] 9.6._   p.p.",
++"p.p.5 A   @ m L r 5 - 5 &./ ,   8 -.y.<.p   p.p.",
++"p.p.p.m q   - m U U s         8 $.y.y._   p.p.p.",
++"p.p.p.r m     % 8 A r % , , [ >.y.y.$.8   p.p.p.",
++"p.p.p.p.h g       - q ! #.1.e.r.w.#.5   p.p.p.p.",
++"p.p.p.p.p.h m q 8 l W ( +.q.r.=.! 5   p.p.p.p.p.",
++"p.p.p.p.p.p.p c s A G G { { m r     p.p.p.p.p.p.",
++"p.p.p.p.p.p.p.p.@ @ @ @ - @     p.p.p.p.p.p.p.p.",
++"p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.",
++"p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p."
++};
+diff -rupN yacheckers-1.4.0.original/src/img/manwhite.xpm yacheckers-1.4.0/src/img/manwhite.xpm
+--- yacheckers-1.4.0.original/src/img/manwhite.xpm	2009-07-20 19:05:08.000000000 +0200
++++ yacheckers-1.4.0/src/img/manwhite.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -1,45 +1,155 @@
+ /* XPM */
+-static const char * manwhite_xpm[] = {
+-"32 32 10 1",
+-" 	c None",
+-".	c #000000",
+-"+	c #D7D7D7",
+-"@	c #FFFFFF",
+-"#	c #F6F6F6",
+-"$	c #A0A0A0",
+-"%	c #DCDCDC",
+-"&	c #B3B3B3",
+-"*	c #808080",
+-"=	c #E1E1E1",
+-"                                ",
+-"                                ",
+-"            ........            ",
+-"          ..++++++++..          ",
+-"        ..+@@#@@@@@@$$..        ",
+-"       .+@@@%%%%%%%@@%$$.       ",
+-"      .+@@@%+&&&&&&&%@%%$.      ",
+-"     .+@@%+$&**$***$&%@@&$.     ",
+-"    .+@@%+&**%%%%%%**&%%%&$.    ",
+-"    .+@%+&*+@@@@@@@%%*&%@%$.    ",
+-"   .+@%+&*%@@%%%%%@@@%*&%@&$.   ",
+-"   .+@%&*%@@%$$$$$%%@@=*$@%$.   ",
+-"  .+@@+&*%@%$$****$=%@%*$%@&$.  ",
+-"  .+@%&*%@@%$***&&&&%@@+*$@%$.  ",
+-"  .+@%&*%@%$**&&+&&&%%@%*$@%$.  ",
+-"  .+@%&*%@%$**&++++&%%@%*$@%$.  ",
+-"  .+@%&*%@%$*&++%%+&%%@%*$@%$.  ",
+-"  .+#%&*%@%$*&+%%@@@%%@%*$@%$.  ",
+-"  .+@%&&%@%$*&&%+@@@%@@%*&#=$.  ",
+-"  .+#@=&*%@%$$&++@@@%@=&$==&$.  ",
+-"   .$@=&**%@%$$$&%%%@@=*&@=$.   ",
+-"   .$%@%&*%%@@%%%%%@@=*&@@=$.   ",
+-"    .$%%%&*%%@@@@@@@=*&@@=$.    ",
+-"    .$%@@%&**%=====&*&=@==$.    ",
+-"     .$%%@%&&******$&%@==$.     ",
+-"      .$%%@%%%=$$$$@@@#=$.      ",
+-"       .$$%%%@@@@@@%%=$$.       ",
+-"        ..$$%%%%%%%%$$..        ",
+-"          ..$$$$$$$$..          ",
+-"            ........            ",
+-"                                ",
+-"                                "};
++static char *manwhite_xpm[] = {
++/* columns rows colors chars-per-pixel */
++"24 24 125 2 ",
++"   c #1BCD1BCD1BCD",
++".  c #1D0A1D0A1D0A",
++"X  c #1FBC1FBC1FBC",
++"o  c #20A920A920A9",
++"O  c #26A626A626A6",
++"+  c #285428542854",
++"@  c #299C299C299C",
++"#  c #2A0F2A0F2A0F",
++"$  c #2B5D2B5D2B5D",
++"%  c #37C437C437C4",
++"&  c #3E2D3E2D3E2D",
++"*  c #4AD74AD74AD7",
++"=  c #4CC34CC34CC3",
++"-  c #4D374D374D37",
++";  c #625462546254",
++":  c #64EC64EC64EC",
++">  c #662866286628",
++",  c #686568656865",
++"<  c #694469446944",
++"1  c #6D7E6D7E6D7E",
++"2  c #6E186E186E18",
++"3  c #70E570E570E5",
++"4  c #76BF76BF76BF",
++"5  c #772177217721",
++"6  c #813481348134",
++"7  c #889088908890",
++"8  c #8AFD8AFD8AFD",
++"9  c #8B818B818B81",
++"0  c #8CD38CD38CD3",
++"q  c #8D938D938D93",
++"w  c #8E898E898E89",
++"e  c #8F388F388F38",
++"r  c #90A490A490A4",
++"t  c #938D938D938D",
++"y  c #946F946F946F",
++"u  c #95A895A895A8",
++"i  c #967996799679",
++"p  c #9AFC9AFC9AFC",
++"a  c #9B949B949B94",
++"s  c #9CB49CB49CB4",
++"d  c #9DBD9DBD9DBD",
++"f  c #9E709E709E70",
++"g  c #A091A091A091",
++"h  c #A1ABA1ABA1AB",
++"j  c #A39FA39FA39F",
++"k  c #A47DA47DA47D",
++"l  c #A574A574A574",
++"z  c #A6C1A6C1A6C1",
++"x  c #A778A778A778",
++"c  c #A9BCA9BCA9BC",
++"v  c #AAD2AAD2AAD2",
++"b  c #ABABABABABAB",
++"n  c #AC9EAC9EAC9E",
++"m  c #AD56AD56AD56",
++"M  c #AEF8AEF8AEF8",
++"N  c #B0DEB0DEB0DE",
++"B  c #B1E1B1E1B1E1",
++"V  c #B3ADB3ADB3AD",
++"C  c #B48AB48AB48A",
++"Z  c #B585B585B585",
++"A  c #B6CFB6CFB6CF",
++"S  c #B8ADB8ADB8AD",
++"D  c #BAC2BAC2BAC2",
++"F  c #BCEABCEABCEA",
++"G  c #BDCCBDCCBDCC",
++"H  c #BE8BBE8BBE8B",
++"J  c #BFE1BFE1BFE1",
++"K  c #C171C171C171",
++"L  c #C260C260C260",
++"P  c #C47BC47BC47B",
++"I  c #C640C640C640",
++"U  c #C666C666C666",
++"Y  c #C804C804C804",
++"T  c #C8EDC8EDC8ED",
++"R  c #C9B5C9B5C9B5",
++"E  c #CADCCADCCADC",
++"W  c #CB91CB91CB91",
++"Q  c #CC9DCC9DCC9D",
++"!  c #CD7CCD7CCD7C",
++"~  c #CECDCECDCECD",
++"^  c #D002D002D002",
++"/  c #D12FD12FD12F",
++"(  c #D206D206D206",
++")  c #D2A2D2A2D2A2",
++"_  c #D517D517D517",
++"`  c #D5D2D5D2D5D2",
++"'  c #D6DAD6DAD6DA",
++"]  c #D7EBD7EBD7EB",
++"[  c #D8CDD8CDD8CD",
++"{  c #D9A6D9A6D9A6",
++"}  c #DB81DB81DB81",
++"|  c #DC9FDC9FDC9F",
++" . c #DDE3DDE3DDE3",
++".. c #DED0DED0DED0",
++"X. c #DFE2DFE2DFE2",
++"o. c #E0DEE0DEE0DE",
++"O. c #E1E4E1E4E1E4",
++"+. c #E2F1E2F1E2F1",
++"@. c #E3C5E3C5E3C5",
++"#. c #E506E506E506",
++"$. c #E603E603E603",
++"%. c #E6E3E6E3E6E3",
++"&. c #E84DE84DE84D",
++"*. c #E8FEE8FEE8FE",
++"=. c #E970E970E970",
++"-. c #EAC8EAC8EAC8",
++";. c #EBDDEBDDEBDD",
++":. c #ECEDECEDECED",
++">. c #EE05EE05EE05",
++",. c #EEB8EEB8EEB8",
++"<. c #EFE9EFE9EFE9",
++"1. c #F1B3F1B3F1B3",
++"2. c #F2E5F2E5F2E5",
++"3. c #F436F436F436",
++"4. c #F50BF50BF50B",
++"5. c #F5C3F5C3F5C3",
++"6. c #F719F719F719",
++"7. c #F78AF78AF78A",
++"8. c #F8D0F8D0F8D0",
++"9. c #F9F6F9F6F9F6",
++"0. c #FB1CFB1CFB1C",
++"q. c #FC55FC55FC55",
++"w. c #FCCDFCCDFCCD",
++"e. c #FFF0FFF0FFF0",
++"r. c None",
++/* pixels */
++"r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.",
++"r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.",
++"r.r.r.r.r.r.r.r.$ u d d d d u X r.r.r.r.r.r.r.r.",
++"r.r.r.r.r.r.& e #.5.5.9.9.5.9.B < @ r.r.r.r.r.r.",
++"r.r.r.r.r.: #.e.2.' Y Y T Y ' >.' B - r.r.r.r.r.",
++"r.r.r.r.: #.9.o.D v u j u u d K >.2.v * r.r.r.r.",
++"r.r.r.% o.9...D a B ..o.....n a F o...l @ r.r.r.",
++"r.r.r.7 >...D j ..9.>.>.>.5.2...l F >.! ; r.r.r.",
++"r.r.O ' >.K a ..e.' n n v Y #.e...a K *.j . r.r.",
++"r.r.u 9.o.n n 5.#.l e 6 e a T *.2.v j #.! 2 r.r.",
++"r.r.d 9.T u ..5.Y e e d F B A ..5...e / #.5 r.r.",
++"r.r.d 5.Y u ..>.v 6 d T ' ! F ' >...e ! *.5 r.r.",
++"r.r.d 5.Y t ..>.v e K { ..#./ { >...e ! #.5 r.r.",
++"r.r.d 5.Y l o.>.n e F ' #.e.e.o.5...t / #.5 r.r.",
++"r.r.u 2.#.D v *.' j v T ..e.9.*.5.K v ..T 3 r.r.",
++"r.r.. B 2.Y 7 B 2.{ A B Y ..#.e...j / 2.l . r.r.",
++"r.r.r.< ' o.F j / 2.5.>.>.2.9.o.l ! e.{ < r.r.r.",
++"r.r.r.@ B 2.>.F a n ..o.o.o.T j K 5.*.A O r.r.r.",
++"r.r.r.r.- F *.>.Y B j t e e n T 2.>.F - r.r.r.r.",
++"r.r.r.r.r.* A ' o...>.{ ! / #.2...A - r.r.r.r.r.",
++"r.r.r.r.r.r.@ < v { #.#.#.#.' v < @ r.r.r.r.r.r.",
++"r.r.r.r.r.r.r.r.. 3 5 5 5 5 3 . r.r.r.r.r.r.r.r.",
++"r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.",
++"r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r.r."
++};
+diff -rupN yacheckers-1.4.0.original/src/img.originales/kingblack.xpm yacheckers-1.4.0/src/img.originales/kingblack.xpm
+--- yacheckers-1.4.0.original/src/img.originales/kingblack.xpm	1970-01-01 01:00:00.000000000 +0100
++++ yacheckers-1.4.0/src/img.originales/kingblack.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -0,0 +1,43 @@
++/* XPM */
++static const char * kingblack_xpm[] = {
++"32 32 8 1",
++" 	c None",
++".	c #000000",
++"+	c #A0A0A0",
++"@	c #808080",
++"#	c #DCDCDC",
++"$	c #585858",
++"%	c #FFFFFF",
++"&	c #303030",
++"                                ",
++"                                ",
++"            ........            ",
++"          ..+++@@@@@..          ",
++"        ..#+$$$$$$$$@@..        ",
++"       .###...........@@.       ",
++"      .%%$..............@.      ",
++"     .%%.................@.     ",
++"    .%%...................@.    ",
++"    .%..........%.........@.    ",
++"   .#%..........%..........@.   ",
++"   .#..........$%$.........@.   ",
++"  .++....#+....+%@....%+....@.  ",
++"  .++....@%+...#%+...+%@....@.  ",
++"  .+$....$#%...%##...%#$....@.  ",
++"  .+$.....#%+..%##..+%+.....@.  ",
++"  .+$.....+#%+.%##.+%#@.....@.  ",
++"  .+$......#%%.%##.%%#......@.  ",
++"  .+$......##%%%##%%#+......@.  ",
++"  .@$......+#########@......@.  ",
++"   .@.......#########......@.   ",
++"   .@.......########+......@.   ",
++"    .@......++++++++@.....@.    ",
++"    .@.......&&&&&&&&&....@.    ",
++"     .@..................@.     ",
++"      .@................@.      ",
++"       .@@............@@.       ",
++"        ..@@........@@..        ",
++"          ..@@@@@@@@..          ",
++"            ........            ",
++"                                ",
++"                                "};
+diff -rupN yacheckers-1.4.0.original/src/img.originales/kingwhite.xpm yacheckers-1.4.0/src/img.originales/kingwhite.xpm
+--- yacheckers-1.4.0.original/src/img.originales/kingwhite.xpm	1970-01-01 01:00:00.000000000 +0100
++++ yacheckers-1.4.0/src/img.originales/kingwhite.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -0,0 +1,43 @@
++/* XPM */
++static const char * kingwhite_xpm[] = {
++"32 32 8 1",
++" 	c None",
++".	c #000000",
++"+	c #FFFFFF",
++"@	c #DCDCDC",
++"#	c #A0A0A0",
++"$	c #303030",
++"%	c #585858",
++"&	c #808080",
++"                                ",
++"                                ",
++"            ........            ",
++"          ..++++++++..          ",
++"        ..+++@@@@@@@##..        ",
++"       .+++@@@@@@@@@@@##.       ",
++"      .++@@@@@@@@@@@@@@@#.      ",
++"     .++@@@@@@@@@@@@@@@@@#.     ",
++"    .++@@@@@@@@@@@@@@@@@@@#.    ",
++"    .+@@@@@@@@@+$@@@@@@@@@#.    ",
++"   .+@@@@@@@@@@+$@@@@@@@@@@#.   ",
++"   .+@@@@@@@@@@+$@@@@@@@@@@#.   ",
++"  .++@@@@.+@@@@+$@@@@@+.@@@@#.  ",
++"  .+@@@@@.$+@@+#.#@@@+%.@@@@#.  ",
++"  .+@@@@@+$$@@+&$&@@+&.%@@@@#.  ",
++"  .+@@@@@@%$#@+%$%@@+..#@@@@#.  ",
++"  .+@@@@@@#$$++$$$@+&$%@@@@@#.  ",
++"  .+@@@@@@@$$$+$$$+#$$#@@@@@#.  ",
++"  .+@@@@@@@%$$&$$$&$$%@@@@@@#.  ",
++"  .+@@@@@@@#$$$$$$$$$#@@@@@@#.  ",
++"   .#@@@@@@@$$$$$$$$%@@@@@@#.   ",
++"   .#@@@@@@@%$$$$$$$#@@@@@@#.   ",
++"    .#@@@@@@#&&&&&&&@@@@@@#.    ",
++"    .#@@@@@@@@@@@@@@@@@@@@#.    ",
++"     .#@@@@@@@@@@@@@@@@@@#.     ",
++"      .#@@@@@@@@@@@@@@@@#.      ",
++"       .##@@@@@@@@@@@@##.       ",
++"        ..##@@@@@@@@##..        ",
++"          ..########..          ",
++"            ........            ",
++"                                ",
++"                                "};
+diff -rupN yacheckers-1.4.0.original/src/img.originales/manblack.xpm yacheckers-1.4.0/src/img.originales/manblack.xpm
+--- yacheckers-1.4.0.original/src/img.originales/manblack.xpm	1970-01-01 01:00:00.000000000 +0100
++++ yacheckers-1.4.0/src/img.originales/manblack.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -0,0 +1,43 @@
++/* XPM */
++static const char * manblack_xpm[] = {
++"32 32 8 1",
++" 	c None",
++".	c #000000",
++"+	c #808080",
++"@	c #DCDCDC",
++"#	c #585858",
++"$	c #FFFFFF",
++"%	c #BDBDBD",
++"&	c #A0A0A0",
++"                                ",
++"                                ",
++"            ........            ",
++"          ..++++++++..          ",
++"        ..@+........++..        ",
++"       .@@#...........++.       ",
++"      .$$#..............+.      ",
++"     .$$.......####......+.     ",
++"    .$$......++######.....+.    ",
++"    .$.....$$%++#..###....+.    ",
++"   .@$....$$%.......###....+.   ",
++"   .@....$$%.........##..##..   ",
++"  .++....$%.....###..###.###..  ",
++"  .+....+$%.....###...##.###..  ",
++"  .+....+%........##.....###..  ",
++"  .+....#+.........+#....###..  ",
++"  .+...###.........%$....+##..  ",
++"  .+...##....#.....$$...++##..  ",
++"  .+...###...##...$$....%%++..  ",
++"  .+....##....#+%$$%...@@$@#..  ",
++"   .+...###.....$$.....@$$%..   ",
++"   .+....#####........@$$$...   ",
++"    .+....####.......@$$$@..    ",
++"    .+......##.....@@$$$@...    ",
++"     .+........+%@@$$$@@...     ",
++"      .+.....#+++@$$@@%...      ",
++"       .++.#####&@@$%....       ",
++"        ..+.#####@......        ",
++"          ............          ",
++"            ........            ",
++"                                ",
++"                                "};
+diff -rupN yacheckers-1.4.0.original/src/img.originales/manwhite.xpm yacheckers-1.4.0/src/img.originales/manwhite.xpm
+--- yacheckers-1.4.0.original/src/img.originales/manwhite.xpm	1970-01-01 01:00:00.000000000 +0100
++++ yacheckers-1.4.0/src/img.originales/manwhite.xpm	2014-02-24 15:25:09.000000000 +0100
+@@ -0,0 +1,45 @@
++/* XPM */
++static const char * manwhite_xpm[] = {
++"32 32 10 1",
++" 	c None",
++".	c #000000",
++"+	c #D7D7D7",
++"@	c #FFFFFF",
++"#	c #F6F6F6",
++"$	c #A0A0A0",
++"%	c #DCDCDC",
++"&	c #B3B3B3",
++"*	c #808080",
++"=	c #E1E1E1",
++"                                ",
++"                                ",
++"            ........            ",
++"          ..++++++++..          ",
++"        ..+@@#@@@@@@$$..        ",
++"       .+@@@%%%%%%%@@%$$.       ",
++"      .+@@@%+&&&&&&&%@%%$.      ",
++"     .+@@%+$&**$***$&%@@&$.     ",
++"    .+@@%+&**%%%%%%**&%%%&$.    ",
++"    .+@%+&*+@@@@@@@%%*&%@%$.    ",
++"   .+@%+&*%@@%%%%%@@@%*&%@&$.   ",
++"   .+@%&*%@@%$$$$$%%@@=*$@%$.   ",
++"  .+@@+&*%@%$$****$=%@%*$%@&$.  ",
++"  .+@%&*%@@%$***&&&&%@@+*$@%$.  ",
++"  .+@%&*%@%$**&&+&&&%%@%*$@%$.  ",
++"  .+@%&*%@%$**&++++&%%@%*$@%$.  ",
++"  .+@%&*%@%$*&++%%+&%%@%*$@%$.  ",
++"  .+#%&*%@%$*&+%%@@@%%@%*$@%$.  ",
++"  .+@%&&%@%$*&&%+@@@%@@%*&#=$.  ",
++"  .+#@=&*%@%$$&++@@@%@=&$==&$.  ",
++"   .$@=&**%@%$$$&%%%@@=*&@=$.   ",
++"   .$%@%&*%%@@%%%%%@@=*&@@=$.   ",
++"    .$%%%&*%%@@@@@@@=*&@@=$.    ",
++"    .$%@@%&**%=====&*&=@==$.    ",
++"     .$%%@%&&******$&%@==$.     ",
++"      .$%%@%%%=$$$$@@@#=$.      ",
++"       .$$%%%@@@@@@%%=$$.       ",
++"        ..$$%%%%%%%%$$..        ",
++"          ..$$$$$$$$..          ",
++"            ........            ",
++"                                ",
++"                                "};

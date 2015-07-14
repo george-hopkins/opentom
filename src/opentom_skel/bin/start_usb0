@@ -1,0 +1,20 @@
+#! /bin/sh -x
+
+# removing all kernel modules
+for i in `lsmod | cut -f1 -d" "`; do rmmod $i; done
+
+killall dhclient
+
+modprobe s3c24xx_udc
+modprobe g_ether
+
+flmessage "Plug you TomTom on your computer, please"
+
+ifconfig usb0 192.168.1.10 up
+
+# DHCPD Server              
+udhcpd -f /etc/udhcpd.conf & 
+
+echo Starting telnet daemon ...
+/usr/sbin/telnetd -F &
+

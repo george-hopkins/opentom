@@ -1,0 +1,55 @@
+diff -rupN caanoo-12swap-v1.0.original/Makefile caanoo-12swap-v1.0/Makefile
+--- caanoo-12swap-v1.0.original/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ caanoo-12swap-v1.0/Makefile	2014-02-24 12:48:24.000000000 +0100
+@@ -0,0 +1,15 @@
++install: ../../Downloads/caanoo-12swap-v1.0-bin.zip src/12swap
++	mkdir -p $(TOMDIST)/bin/12swap
++	cp -R game/12swap/graphics game/12swap/sounds $(TOMDIST)/bin/12swap
++	cp src/12swap $(TOMDIST)/bin/12swap
++	
++
++
++
++src/12swap:
++	cd src && $(CXX) -o 12swap -DCAANOO *.cpp -lSDL -lSDL_ttf
++
++clean:
++	rm -f src/*.o src/12swap
++
++
+diff -rupN caanoo-12swap-v1.0.original/src/object_swap_game.cpp caanoo-12swap-v1.0/src/object_swap_game.cpp
+--- caanoo-12swap-v1.0.original/src/object_swap_game.cpp	2011-07-01 22:35:40.000000000 +0200
++++ caanoo-12swap-v1.0/src/object_swap_game.cpp	2014-02-24 13:01:58.000000000 +0100
+@@ -255,15 +255,15 @@ void Swap_Game::run_game()
+ 
+ int Swap_Game::init_sdl()
+ {
+-	if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK) <0)
++	if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO/* CLM|SDL_INIT_JOYSTICK*/) <0)
+ 	{
+ 		printf("error: could not load sdl\n");
+ 		return 0;
+ 	}
+ 	
+ # ifdef CAANOO
+-  SDL_JoystickEventState(SDL_ENABLE);
+-  SDL_JoystickOpen(0);
++ /* CLM  SDL_JoystickEventState(SDL_ENABLE);
++  SDL_JoystickOpen(0); */
+ 
+ 	this->real_screen = SDL_SetVideoMode(320,240, 16, SDL_SWSURFACE);
+ 	this->main_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 
+@@ -438,11 +438,11 @@ void Swap_Game::handle_events()
+ 		switch( event.type ) 
+ 	{
+ # ifdef CAANOO
+-    case SDL_JOYBUTTONDOWN :
++    /* CLM case SDL_JOYBUTTONDOWN :
+        {
+          int button = event.jbutton.button;
+          if (button == CAANOO_HOME) exitkey = 1;
+-       }
++       } */
+       break;
+ # endif
+ 		case SDL_QUIT:

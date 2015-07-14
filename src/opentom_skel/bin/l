@@ -1,0 +1,3 @@
+#! /bin/sh
+
+ls /lib/modules/2.6.13/kernel/drivers/usb/*/*$1*

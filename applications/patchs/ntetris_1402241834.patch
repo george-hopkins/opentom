@@ -1,0 +1,12 @@
+diff -rupN ntetris.original/Makefile ntetris/Makefile
+--- ntetris.original/Makefile	2014-02-19 18:43:11.000000000 +0100
++++ ntetris/Makefile	2014-02-24 15:02:17.000000000 +0100
+@@ -3,7 +3,7 @@ APP=ntetris
+ $(APP): $(APP).c
+ 	$(CC) -o $@ $(APP).c -I$(ARM_SYSROOT)/usr/include/microwin -L$(ARM_SYSROOT)/usr/lib -lnano-X
+ 
+-install:
++install: $(APP)
+ 	cp $(APP) $(TOMDIST)/bin
+ 
+ clean:

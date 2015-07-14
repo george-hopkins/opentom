@@ -1,0 +1,24 @@
+diff -rupN src.original/CardSprite.cpp src/CardSprite.cpp
+--- src.original/CardSprite.cpp	2008-04-26 15:31:10.000000000 +0200
++++ src/CardSprite.cpp	2014-03-02 04:34:06.000000000 +0100
+@@ -9,7 +9,7 @@
+ 
+ /** Constructor */
+ CCardSprite::CCardSprite()
+-  : CGameSprite("/mnt/sdcard/catapps/freecell/cards5x7.bmp", 5, 7)
++  : CGameSprite("/mnt/sdcard/opentom/share/freecell/cards5x7.bmp", 5, 7)
+ {
+ }
+ 
+diff -rupN src.original/FreeCellCanvas.cpp src/FreeCellCanvas.cpp
+--- src.original/FreeCellCanvas.cpp	2008-04-26 15:33:10.000000000 +0200
++++ src/FreeCellCanvas.cpp	2014-03-02 04:34:06.000000000 +0100
+@@ -15,7 +15,7 @@ CFreeCellCanvas::CFreeCellCanvas()
+ void CFreeCellCanvas::Init()
+ {
+   SetTitle("FreeCell");
+-  m_pFontSprite = new CGameFont("/mnt/sdcard/catapps/freecell/font3x5.bmp",3,5,"0123456789:.-ABCDEFGHIJKLMNOPQRSTUVWXYZ");
++  m_pFontSprite = new CGameFont("/mnt/sdcard/opentom/share/freecell/font3x5.bmp",3,5,"0123456789:.-ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+   m_pBoard = new CFreeCellBoard(this);
+   m_pBoard->GenerateNewGame();
+ }

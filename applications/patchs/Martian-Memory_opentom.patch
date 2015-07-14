@@ -1,0 +1,526 @@
+diff -rupN Martian-Memory.original/configure Martian-Memory.opentom/configure
+--- Martian-Memory.original/configure	2003-06-16 12:59:27.000000000 +0200
++++ Martian-Memory.opentom/configure	2013-12-06 18:24:05.000000000 +0100
+@@ -1772,7 +1772,7 @@ _ACEOF
+ 
+ 
+ cat >>confdefs.h <<\_ACEOF
+-#define SCOREDIR "/var/lib/games/martian"
++#define SCOREDIR "."
+ _ACEOF
+ 
+ 
+@@ -4740,6 +4740,8 @@ if test "$enable_devel" = "yes"; then
+ else
+         DATADIR="$datadir/Martian"
+         SCOREDIR="/var/lib/games/Martian"
++        DATADIR="."
++        SCOREDIR="."
+ fi
+ 
+ eval DATAPATH=`eval echo "$DATADIR"`
+diff -rupN Martian-Memory.original/src/define.h Martian-Memory.opentom/src/define.h
+--- Martian-Memory.original/src/define.h	2003-06-15 19:28:49.000000000 +0200
++++ Martian-Memory.opentom/src/define.h	2013-12-06 18:24:05.000000000 +0100
+@@ -11,12 +11,12 @@ Mix_Chunk *touch, *match, *nomatch, *com
+ #define chips_x 8
+ #define chips_y 4
+ #define chips chips_x*chips_y
+-#define chips_start_x 36
+-#define chips_start_y 8
+-#define chips_spacing_x 8
+-#define chips_spacing_y 8
+-#define chip_w 64
+-#define chip_h 96
++#define chips_start_x 18
++#define chips_start_y 4
++#define chips_spacing_x 4
++#define chips_spacing_y 4
++#define chip_w 32
++#define chip_h 48
+ 
+ // --- definimos la matriz que contiene las chips
+ struct Cchip
+diff -rupN Martian-Memory.original/src/file.c Martian-Memory.opentom/src/file.c
+--- Martian-Memory.original/src/file.c	2003-06-16 10:31:24.000000000 +0200
++++ Martian-Memory.opentom/src/file.c	2013-12-06 18:24:05.000000000 +0100
+@@ -1,12 +1,12 @@
+ void stop_music();
+ void init_menu()
+ {
+-    menuback=T_LoadT8(DATADIR "/gfx/menuback.T8");
+-    menu_font_a=T_LoadT8(DATADIR "/fonts/menu_a.T8");
+-    menu_font_i=T_LoadT8(DATADIR "/fonts/menu_i.T8");
++    menuback=T_LoadT8( "./gfx/menuback.T8");
++    menu_font_a=T_LoadT8( "./fonts/menu_a.T8");
++    menu_font_i=T_LoadT8( "./fonts/menu_i.T8");
+     SDL_SetColorKey(menu_font_a, SDL_SRCCOLORKEY, SDL_MapRGB(menu_font_a->format,0,255,0));
+     SDL_SetColorKey(menu_font_i, SDL_SRCCOLORKEY, SDL_MapRGB(menu_font_i->format,0,255,0));
+-    option_sound=Mix_LoadWAV(DATADIR "/sounds/option.wav");
++    option_sound=Mix_LoadWAV("./sounds/option.wav");
+ }
+ 
+ void close_menu()
+@@ -19,26 +19,25 @@ void close_menu()
+ 
+ void init_game()
+ {
+-    touch=Mix_LoadWAV(DATADIR "/sounds/touch.wav");
+-    match=Mix_LoadWAV(DATADIR "/sounds/match.wav");
+-    nomatch=Mix_LoadWAV(DATADIR "/sounds/nomatch.wav");
+-    combo_sound=Mix_LoadWAV(DATADIR "/sounds/combo.wav");
+-    music=Mix_LoadMUS(DATADIR "/music/ingame.s3m");
+-    Schips=T_LoadT8(DATADIR "/gfx/chips.T8");
++    touch=Mix_LoadWAV( "./sounds/touch.wav");
++    match=Mix_LoadWAV( "./sounds/match.wav");
++    nomatch=Mix_LoadWAV( "./sounds/nomatch.wav");
++    combo_sound=Mix_LoadWAV( "./sounds/combo.wav");
++    music=Mix_LoadMUS( "./music/ingame.s3m");
++    Schips=T_LoadT8( "./gfx/chips.T8");
+     SDL_SetColorKey(Schips, SDL_SRCCOLORKEY, SDL_MapRGB(Schips->format,0,255,0));
+-    scorefont=T_LoadT8(DATADIR "/fonts/score.T8");
+-    bonusfont=T_LoadT8(DATADIR "/fonts/bonus.T8");
++    scorefont=T_LoadT8( "./fonts/score.T8");
++    bonusfont=T_LoadT8( "./fonts/bonus.T8");
+     SDL_SetColorKey(bonusfont, SDL_SRCCOLORKEY, SDL_MapRGB(bonusfont->format,0,255,0));
+ 
+-    Mix_Volume(1,48);
+-    Mix_Volume(2,48);
+-    Mix_Volume(3,48);
+-    Mix_Volume(4,128);
++    Mix_Volume(1,10);
++    Mix_Volume(2,10);
++    Mix_Volume(3,10);
++    Mix_Volume(4,14);
+     gametime=0;
+     score=0;
+     combo=0;
+ 
+-
+ }
+ 
+ void close_game()
+@@ -52,7 +51,7 @@ void close_game()
+     Mix_FreeChunk(combo_sound);
+     stop_music();
+ 
+-    Mix_Volume(-1,128);
++    Mix_Volume(-1,64);
+ }
+ 
+ void load_hiscoredata()
+diff -rupN Martian-Memory.original/src/fx.c Martian-Memory.opentom/src/fx.c
+--- Martian-Memory.original/src/fx.c	2003-06-15 14:06:18.000000000 +0200
++++ Martian-Memory.opentom/src/fx.c	2013-12-06 18:24:05.000000000 +0100
+@@ -1,6 +1,6 @@
+ void print_screen(SDL_Surface *surface);
+ 
+-#define total_bars 4
++#define total_bars 3
+ struct Cbar
+ {
+     float y;
+@@ -10,10 +10,10 @@ struct Cbar
+     int accel;
+ };
+ Cbar mbar[total_bars];
+-#define bar_top_speed 340
++#define bar_top_speed 170
+ #define bar_w screen_w
+ #define bar_h 10
+-#define floor 420
++#define floor 210
+ 
+ 
+ void init_bars()
+@@ -47,6 +47,7 @@ void bar_events(int number)
+ 
+ void draw_bar(int number)
+ {
++	return;
+     bar_events(number);
+     int x,y;
+     int scanpos=int(mbar[number].y);
+@@ -83,8 +84,8 @@ void draw_bars()
+ 
+ 
+ 
+-#define star_speed 50
+-#define total_stars 256
++#define star_speed 25
++#define total_stars 128
+ struct Cstar
+ {
+     int x,y;
+@@ -138,9 +139,9 @@ void draw_stars()
+ }
+ 
+ 
+-#define particles 2048
+-#define particle_accel 70
+-#define particle_max_speed 200
++#define particles 1024
++#define particle_accel 35
++#define particle_max_speed 100
+ struct Cparticle
+ {
+     float x, y;
+diff -rupN Martian-Memory.original/src/game.c Martian-Memory.opentom/src/game.c
+--- Martian-Memory.original/src/game.c	2003-06-18 11:48:07.000000000 +0200
++++ Martian-Memory.opentom/src/game.c	2013-12-06 18:24:05.000000000 +0100
+@@ -47,10 +47,10 @@ void print_panel()
+     int minutes=int(gametime/60);
+     int seconds=int(gametime-minutes*60);
+     if(seconds<10)
+-	T_Print(scorefont, 10, floor+32, "TIME: %d:0%d", minutes, seconds);
++	T_Print(scorefont, 10, floor+13, "TIME: %d:0%d", minutes, seconds);
+     else
+-	T_Print(scorefont, 10, floor+32, "TIME: %d:%d", minutes, seconds);
+-    T_Print(scorefont, 300, floor+32, "SCORE: %d", score);
++	T_Print(scorefont, 10, floor+13, "TIME: %d:%d", minutes, seconds);
++    T_Print(scorefont, 150, floor+13, "SCORE: %d", score);
+ }
+ 
+ void display_combo()
+@@ -66,10 +66,10 @@ void display_combo()
+     SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format,255,255,255));
+     SDL_Flip(screen);
+     SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format,0,0,0));
+-    #define combo_x 208
+-    #define combo_y 200
+-    #define combo_w 320
+-    #define combo_h 80
++    #define combo_x 104
++    #define combo_y 100
++    #define combo_w 160
++    #define combo_h 40
+     init_combo_fx(combo_x, combo_y, combo_w, combo_h);
+     while(showtime<3)
+     {
+@@ -241,14 +241,15 @@ int play()
+ 
+ void screen_mode()
+ {
++	return;
+     if(fullscreen)
+     {
+-        screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp,0);
++        screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp,SDL_DOUBLEBUF | SDL_HWSURFACE | SDL_ANYFORMAT);
+         fullscreen = 0;
+     }
+     else
+     {
+-        screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp,SDL_FULLSCREEN);
++        screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp,SDL_DOUBLEBUF | SDL_HWSURFACE | SDL_ANYFORMAT | SDL_FULLSCREEN);
+         fullscreen = 1;
+     }
+     SDL_BlitSurface(menuback, NULL, screen, NULL);
+diff -rupN Martian-Memory.original/src/gameover.c Martian-Memory.opentom/src/gameover.c
+--- Martian-Memory.original/src/gameover.c	2003-06-18 11:40:18.000000000 +0200
++++ Martian-Memory.opentom/src/gameover.c	2013-12-06 18:24:05.000000000 +0100
+@@ -34,23 +34,23 @@ void show_hiscores()
+ {
+     SDL_SetColorKey(scorefont2,SDL_SRCCOLORKEY,SDL_MapRGB(scorefont2->format,0,255,0));
+     char plyername[]="          ";
+-    T_Print(scorefont2,20,25,"   MARTIAN MEMORY     TOP TEN    ");
+-    T_Print(scorefont2,20,55,"NAME           TIME        SCORE ");
+-    T_Print(scorefont2,20,75,"---------------------------------");
++    T_Print(scorefont2,10,25/2,"   MARTIAN MEMORY     TOP TEN    ");
++    T_Print(scorefont2,10,55/2," NAME           TIME       SCORE ");
++    T_Print(scorefont2,10,75/2,"---------------------------------");
+ 
+-    T_Print(scorefont2,20,400,"---------------------------------");
+-    T_Print(scorefont2,20,425,"    PRESS RIGHT MOUSE BUTTON     ");
+-    T_Print(scorefont2,20,450,"            TO RETURN            ");
++    T_Print(scorefont2,10,400/2,"---------------------------------");
++    T_Print(scorefont2,10,425/2,"    PRESS RIGHT MOUSE BUTTON     ");
++    T_Print(scorefont2,10,450/2,"            TO RETURN            ");
+ 
+     for(int a=0; a < 10;a++)
+     {
+ 	strncpy(playername,scorename[a],10);
+-	T_Print(scorefont2,5,100+(25*a),"%s",playername);
++	T_Print(scorefont2,20,(100+(25*a))/2,"%s",playername);
+ 	int mins=int(scoretime[a]/60);
+ 	int secs=int(scoretime[a]-(mins*60));
+-	if(secs>9) T_Print(scorefont2,290,100+(25*a),"%d:%d",mins,secs);
+-	else T_Print(scorefont2,290,100+(25*a),"%d:0%d",mins,secs);
+-	T_Print(scorefont2,510,100+(25*a),"%d",scorescore[a]);
++	if(secs>9) T_Print(scorefont2,290/2,(100+(25*a))/2,"%d:%d",mins,secs);
++	else T_Print(scorefont2,290/2,(100+(25*a))/2,"%d:0%d",mins,secs);
++	T_Print(scorefont2,510/2,(100+(25*a))/2,"%d",scorescore[a]);
+     }
+     SDL_Flip(screen);
+ }
+@@ -109,7 +109,7 @@ void do_gameover()
+ 	}
+ 	inputloop=1;
+ 	SDL_Rect box;
+-	box.x=175;box.y=220;box.w=290;box.h=52;
++	box.x=175/2;box.y=220/2;box.w=290/2;box.h=52/2;
+ 	SDL_FillRect(screen,&box,SDL_MapRGB(screen->format,255,255,255));
+ 	box.x+=3;box.y+=3;box.w-=6;box.h-=6;
+ 	while(inputloop==1)
+diff -rupN Martian-Memory.original/src/gfx.h Martian-Memory.opentom/src/gfx.h
+--- Martian-Memory.original/src/gfx.h	2003-06-18 11:24:29.000000000 +0200
++++ Martian-Memory.opentom/src/gfx.h	2013-12-06 18:24:05.000000000 +0100
+@@ -1,3 +1,90 @@
++Uint32 GetPixel(SDL_Surface *surface, int x, int y)
++{
++    int bpp = surface->format->BytesPerPixel;
++    /* Here p is the address to the pixel we want to retrieve */
++    Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
++
++    switch(bpp) {
++    case 1:
++        return *p;
++        break;
++
++    case 2:
++        return *(Uint16 *)p;
++        break;
++
++    case 3:
++        if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
++            return p[0] << 16 | p[1] << 8 | p[2];
++        else
++            return p[0] | p[1] << 8 | p[2] << 16;
++        break;
++
++    case 4:
++        return *(Uint32 *)p;
++        break;
++
++    default:
++        return 0;       /* shouldn't happen, but avoids warnings */
++    }
++}
++void PutPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
++{
++    int bpp = surface->format->BytesPerPixel;
++    /* Here p is the address to the pixel we want to set */
++    Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
++
++    switch(bpp) {
++    case 1:
++        *p = pixel;
++        break;
++
++    case 2:
++        *(Uint16 *)p = pixel;
++        break;
++
++    case 3:
++        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
++            p[0] = (pixel >> 16) & 0xff;
++            p[1] = (pixel >> 8) & 0xff;
++            p[2] = pixel & 0xff;
++        } else {
++            p[0] = pixel & 0xff;
++            p[1] = (pixel >> 8) & 0xff;
++            p[2] = (pixel >> 16) & 0xff;
++        }
++        break;
++
++    case 4:
++        *(Uint32 *)p = pixel;
++        break;
++    }
++}
++SDL_Surface *ScaleSurface(SDL_Surface *Surface, Uint16 Width, Uint16 Height)
++{
++    if(!Surface || !Width || !Height)
++        return 0;
++    
++    SDL_Surface *_ret = SDL_CreateRGBSurface(Surface->flags, Width, Height, Surface->format->BitsPerPixel,
++        Surface->format->Rmask, Surface->format->Gmask, Surface->format->Bmask, Surface->format->Amask);
++
++    double    _stretch_factor_x = (static_cast<double>(Width)  / static_cast<double>(Surface->w)),
++        _stretch_factor_y = (static_cast<double>(Height) / static_cast<double>(Surface->h));
++
++    for(Sint32 y = 0; y < Surface->h; y++)
++        for(Sint32 x = 0; x < Surface->w; x++)
++            for(Sint32 o_y = 0; o_y < _stretch_factor_y; ++o_y)
++                for(Sint32 o_x = 0; o_x < _stretch_factor_x; ++o_x)
++                    PutPixel(_ret, static_cast<Sint32>(_stretch_factor_x * x) + o_x, 
++                        static_cast<Sint32>(_stretch_factor_y * y) + o_y, GetPixel(Surface, x, y));
++
++    return _ret;
++}
++
++
++
++
++
+ /*
+     LoadT8 carga un grafico en formato .T8 de 8 bits en una superficie SDL
+ */
+@@ -17,6 +104,10 @@ SDL_Surface * T_LoadT8(char *str)
+     // leemos tamaño del bitmap
+     int wh=getc(Tsrc);    int wl=getc(Tsrc);    int hh=getc(Tsrc);    int hl=getc(Tsrc);
+     int width=wh*256+wl;    int height=hh*256+hl;
++    
++    fprintf(stderr, "IMG %s %d %d \n", str, width, height);
++    fflush(stderr);
++
+     // leemos la paleta
+     int paleta[768];
+     for(int pal=0;pal<768;pal++)
+@@ -42,7 +133,7 @@ SDL_Surface * T_LoadT8(char *str)
+     }
+     if(SDL_MUSTLOCK(temp))
+ 	SDL_UnlockSurface(temp);
+-    Tsurface = SDL_DisplayFormat(temp);
++    Tsurface = ScaleSurface(SDL_DisplayFormat(temp),width/2, height/2);
+     SDL_FreeSurface(temp);
+     fclose(Tsrc);
+     return(Tsurface);
+diff -rupN Martian-Memory.original/src/initSDL.h Martian-Memory.opentom/src/initSDL.h
+--- Martian-Memory.original/src/initSDL.h	2003-06-16 12:26:02.000000000 +0200
++++ Martian-Memory.opentom/src/initSDL.h	2013-12-06 18:24:05.000000000 +0100
+@@ -1,36 +1,42 @@
+-#include<SDL/SDL.h>
+-#include<SDL/SDL_mixer.h>
++#include<SDL.h>
++#include<SDL_mixer.h>
+ SDL_Surface *screen;
+ 
+-#define screen_w 640
+-#define screen_h 480
++#define screen_w 320
++#define screen_h 240
+ #define screen_bpp 16
+ 
+-void initSDL()
++extern int fullscreen;
++
++void initSDL(int fs)
+ {
++	fullscreen =fs;
++	
+     if((SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO) < 0))
+     {
+         fprintf(stderr,"Could not Initialize SDL.\nError: %s\n", SDL_GetError());
+         exit (-1);
+     }
+-    SDL_Surface *icon;
+-    icon=SDL_LoadBMP(DATADIR "/gfx/icon.bmp");
+-    SDL_WM_SetIcon(icon, NULL);
+-    screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp, SDL_DOUBLEBUF|SDL_HWSURFACE);
++    screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp, (fullscreen?SDL_FULLSCREEN:0) | SDL_ANYFORMAT | SDL_DOUBLEBUF|SDL_HWSURFACE);
+     if (screen == NULL)
+     {
+         fprintf(stderr, "Can't set the video mode. Quitting.\nError; %s\n", SDL_GetError());
+         exit (1);
+     }
++    
++    fprintf(stderr,"Initialising audio");
++    
+     if(Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 2048) < 0)
+     {
+         fprintf(stderr,"Warning: Couldn't set 44100 Hz 16-bit audio\n: %s\n", SDL_GetError());
+     }
+ 
++    /*SDL_Surface *icon;
++    icon=SDL_LoadBMP(DATADIR "/gfx/icon.bmp");
++    SDL_WM_SetIcon(icon, NULL);
+ 
+-
+-    SDL_ShowCursor(1);
+-    SDL_WM_SetCaption("Martian memory", "Martian Memory");
++    SDL_ShowCursor(1); 
++    SDL_WM_SetCaption("Martian memory", "Martian Memory"); */
+     fprintf(stderr,"System init Ok.\n");
+     fprintf(stderr,"   Entering game...\n");
+ }
+diff -rupN Martian-Memory.original/src/input.c Martian-Memory.opentom/src/input.c
+--- Martian-Memory.original/src/input.c	2003-06-15 18:39:51.000000000 +0200
++++ Martian-Memory.opentom/src/input.c	2013-12-06 18:24:05.000000000 +0100
+@@ -104,7 +104,7 @@ void wait_mouse()
+     while(true)
+     {
+ 	SDL_PollEvent(&event);
+-	if(event.type==SDL_MOUSEBUTTONDOWN && event.button.button==SDL_BUTTON_RIGHT) break;
++	if(event.type==SDL_MOUSEBUTTONDOWN) break;
+ 	SDL_Delay(5);
+ 	play_music();
+     }
+diff -rupN Martian-Memory.original/src/martian.cpp Martian-Memory.opentom/src/martian.cpp
+--- Martian-Memory.original/src/martian.cpp	2003-09-23 16:16:33.000000000 +0200
++++ Martian-Memory.opentom/src/martian.cpp	2013-12-06 18:24:05.000000000 +0100
+@@ -2,7 +2,7 @@
+ #include<stdarg.h>
+ #include<string.h>
+ #include<stdlib.h>
+-#include<SDL/SDL.h>
++#include<SDL.h>
+ #include<math.h>
+ #include<time.h>
+ 
+@@ -22,11 +22,13 @@
+ 
+ int main (int argc, char * argv[])
+ {
+-    initSDL();
+-
++	int fulls = 0;
++	
+     if(argc > 1)
+ 	if(strcmp(argv[1], "--fullscreen")==0 || strcmp(argv[1], "-f")==0)
+-	    screen_mode();
++	    fulls=1;
++
++    initSDL(fulls);
+ 
+     int exit_game=0; // cuando se pone a 1 sale del juego
+     while(exit_game!=Kexit)
+diff -rupN Martian-Memory.original/src/menu.c Martian-Memory.opentom/src/menu.c
+--- Martian-Memory.original/src/menu.c	2003-06-18 11:47:22.000000000 +0200
++++ Martian-Memory.opentom/src/menu.c	2013-12-06 18:24:05.000000000 +0100
+@@ -1,13 +1,13 @@
+ int main_menu()
+ {
+-    int menu_x=166, menu_y=200;
++    int menu_x=83, menu_y=100;
+     int optionsc=4;
+     char * optionsv[]={
+     "    PLAY   ",
+-    "SCREEN MODE",
++    "           ",
+     "   SCORES  ",
+     "    EXIT   "};
+-    int menuspacing=35;
++    int menuspacing=18;
+     int option=1;
+     option=menu(menu_x,menu_y, menu_font_a, menu_font_i , menuspacing, optionsc, optionsv, option);
+     return(option);
+@@ -26,7 +26,7 @@ int do_menu()
+ 	if(option!=Kexit)
+ 	{
+ 	    if(option==1) option=play();
+-	    if(option==2) screen_mode();
++	    //if(option==2) screen_mode();
+ 	    if(option==3) do_hiscores();
+ 	    if(option==4) option=Kexit;
+ 	}
+diff -rupN Martian-Memory.original/src/menu.h Martian-Memory.opentom/src/menu.h
+--- Martian-Memory.original/src/menu.h	2003-06-15 19:08:01.000000000 +0200
++++ Martian-Memory.opentom/src/menu.h	2013-12-06 18:24:05.000000000 +0100
+@@ -26,13 +26,13 @@ int menu(int x, int y, SDL_Surface * ina
+ 	int mouse_x, mouse_y;
+ 	SDL_GetMouseState(&mouse_x, &mouse_y);
+ 	int oldpos=pos;
+-	if(mouse_x>=280 && mouse_x<=389 && mouse_y>=200 && mouse_y<=227)
++	if(mouse_x>=280/2 && mouse_x<=389/2 && mouse_y>=200/2 && mouse_y<=227/2)
+ 	    pos=1;
+-	if(mouse_x>=168 && mouse_x<=473 && mouse_y>=235 && mouse_y<=262)
++	if(mouse_x>=168/2 && mouse_x<=473/2 && mouse_y>=235/2 && mouse_y<=262/2)
+ 	    pos=2;
+-	if(mouse_x>=252 && mouse_x<=417 && mouse_y>=270 && mouse_y<=297)
++	if(mouse_x>=252/2 && mouse_x<=417/2 && mouse_y>=270/2 && mouse_y<=297/2)
+ 	    pos=3;
+-	if(mouse_x>=280 && mouse_x<=389 && mouse_y>=305 && mouse_y<=332)
++	if(mouse_x>=280/2 && mouse_x<=389/2 && mouse_y>=305/2 && mouse_y<=332/2)
+ 	    pos=4;
+ 
+ 	if(pos!=oldpos) Mix_PlayChannel(1, option_sound,0);

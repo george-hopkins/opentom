@@ -1,0 +1,1726 @@
+diff -rupN dosbox-0.74.original/configure dosbox-0.74/configure
+--- dosbox-0.74.original/configure	2010-05-10 20:59:04.000000000 +0200
++++ dosbox-0.74/configure	2014-02-19 18:17:13.000000000 +0100
+@@ -6842,7 +6842,7 @@ fi
+ 
+ ac_fn_c_check_header_mongrel "$LINENO" "X11/XKBlib.h" "ac_cv_header_X11_XKBlib_h" "$ac_includes_default"
+ if test "x$ac_cv_header_X11_XKBlib_h" = x""yes; then :
+-  have_x11_h=yes
++  have_x11_h=no
+ else
+   have_x11_h=no
+ fi
+diff -rupN dosbox-0.74.original/include/dos_system.h dosbox-0.74/include/dos_system.h
+--- dosbox-0.74.original/include/dos_system.h	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/include/dos_system.h	2014-02-19 18:17:01.000000000 +0100
+@@ -121,7 +121,8 @@ private:
+ /* The following variable can be lowered to free up some memory.
+  * The negative side effect: The stored searches will be turned over faster.
+  * Should not have impact on systems with few directory entries. */
+-#define MAX_OPENDIRS 2048
++// CLM #define MAX_OPENDIRS 2048
++#define MAX_OPENDIRS 256
+ //Can be high as it's only storage (16 bit variable)
+ 
+ class DOS_Drive_Cache {
+diff -rupN dosbox-0.74.original/include/paging.h dosbox-0.74/include/paging.h
+--- dosbox-0.74.original/include/paging.h	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/include/paging.h	2014-02-19 18:17:01.000000000 +0100
+@@ -30,7 +30,7 @@
+ 
+ // disable this to reduce the size of the TLB
+ // NOTE: does not work with the dynamic core (dynrec is fine)
+-#define USE_FULL_TLB
++// CLM #define USE_FULL_TLB
+ 
+ class PageDirectory;
+ 
+diff -rupN dosbox-0.74.original/include/render.h dosbox-0.74/include/render.h
+--- dosbox-0.74.original/include/render.h	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/include/render.h	2014-02-19 18:17:01.000000000 +0100
+@@ -23,7 +23,7 @@
+ // 1: complex scalers off, scaler cache off, all simple scalers on
+ // 2: complex scalers off, scaler cache on
+ // 3: complex scalers on
+-#define RENDER_USE_ADVANCED_SCALERS 3
++#define RENDER_USE_ADVANCED_SCALERS 2	// CLM
+ 
+ #include "../src/gui/render_scalers.h"
+ 
+diff -rupN dosbox-0.74.original/src/cpu/cpu.cpp dosbox-0.74/src/cpu/cpu.cpp
+--- dosbox-0.74.original/src/cpu/cpu.cpp	2010-05-12 11:57:31.000000000 +0200
++++ dosbox-0.74/src/cpu/cpu.cpp	2014-02-19 18:17:11.000000000 +0100
+@@ -30,6 +30,7 @@
+ #include "paging.h"
+ #include "lazyflags.h"
+ #include "support.h"
++#include "../save_state.h"
+ 
+ Bitu DEBUG_EnableDebugger(void);
+ extern void GFX_SetTitle(Bit32s cycles ,Bits frameskip,bool paused);
+@@ -2418,3 +2419,24 @@ void CPU_Init(Section* sec) {
+ }
+ //initialize static members
+ bool CPU::inited=false;
++
++//save state support
++namespace
++{
++class SerializeCPU : public SerializeGlobalPOD
++{
++public:
++    SerializeCPU() : SerializeGlobalPOD("CPU + Register")
++    {
++        registerPOD(CPU_Cycles);    //these seem to have a special role? -> PIC
++        registerPOD(CPU_CycleLeft); //
++
++        registerPOD(cpu_tss); //not really a POD, but can be saved as one
++        registerPOD(cpudecoder);
++        registerPOD(Segs);
++        registerPOD(cpu_regs);
++        registerPOD(cpu);
++        registerPOD(lflags);
++    }
++} dummy;
++}
+\ Pas de fin de ligne à la fin du fichier.
+diff -rupN dosbox-0.74.original/src/cpu/paging.cpp dosbox-0.74/src/cpu/paging.cpp
+--- dosbox-0.74.original/src/cpu/paging.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/cpu/paging.cpp	2014-02-19 18:17:10.000000000 +0100
+@@ -30,6 +30,7 @@
+ #include "cpu.h"
+ #include "debug.h"
+ #include "setup.h"
++#include "../save_state.h"
+ 
+ #define LINK_TOTAL		(64*1024)
+ 
+@@ -889,3 +890,18 @@ static PAGING* test;
+ void PAGING_Init(Section * sec) {
+ 	test = new PAGING(sec);
+ }
++
++//save state support
++namespace
++{
++class SerializePaging : public SerializeGlobalPOD
++{
++public:
++    SerializePaging() : SerializeGlobalPOD("Paging")
++    {
++        registerPOD(paging);
++        registerPOD(pf_queue.used);
++        registerPOD(pf_queue.entries);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/dos/dos_files.cpp dosbox-0.74/src/dos/dos_files.cpp
+--- dosbox-0.74.original/src/dos/dos_files.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/dos/dos_files.cpp	2014-02-19 18:17:13.000000000 +0100
+@@ -30,6 +30,7 @@
+ #include "dos_inc.h"
+ #include "drives.h"
+ #include "cross.h"
++#include "../save_state.h"
+ 
+ #define DOS_FILESTART 4
+ 
+@@ -1230,3 +1231,26 @@ void DOS_SetupFiles (void) {
+ 	}
+ 	Drives[25]=new Virtual_Drive();
+ }
++
++//save state support
++namespace
++{
++class SerializeDosFiles : public SaveState::Component
++{
++public:
++    SerializeDosFiles()
++    {
++        SaveState::instance().registerComponent("Dos Files", *this);
++    }
++
++private:
++    virtual void saveBytes(std::ostream& stream)
++    {
++        //writePOD(stream, xms_callback);
++    }
++    virtual void loadBytes(std::istream& stream)
++    {
++        //readPOD(stream, xms_callback);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74/src/dosbox.cpp dosbox-0.74_opentom/src/dosbox.cpp
+--- dosbox-0.74/src/dosbox.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74_opentom/src/dosbox.cpp	2014-03-02 07:33:42.000000000 +0100
+@@ -42,6 +42,7 @@
+ #include "mapper.h"
+ #include "ints/int10.h"
+ #include "render.h"
++#include "save_state.h"
+ 
+ Config * control;
+ MachineType machine;
+@@ -266,6 +267,124 @@ static void DOSBOX_UnlockSpeed( bool pre
+ 	}
+ }
+ 
++namespace
++{
++std::string getTime()
++{
++    const time_t current = time(NULL);
++    tm* timeinfo;
++    timeinfo = localtime(&current); //convert to local time
++    char buffer[50];
++    ::strftime(buffer, 50, "%H:%M:%S", timeinfo);
++    return buffer;
++}
++
++
++class SlotPos
++{
++public:
++    SlotPos() : slot(0) {}
++
++    void next()
++    {
++        ++slot;
++        slot %= SaveState::SLOT_COUNT;
++    }
++
++    void previous()
++    {
++        slot += SaveState::SLOT_COUNT - 1;
++        slot %= SaveState::SLOT_COUNT;
++    }
++
++    operator size_t() const
++    {
++        return slot;
++    }
++private:
++    size_t slot;
++} currentSlot;
++
++
++void notifyError(const std::string& message)
++{
++#ifdef WIN32
++    ::MessageBox(0, message.c_str(), "Error", 0);
++#endif
++    LOG_MSG(message.c_str());
++}
++
++
++void SaveGameState(bool pressed)
++{
++    if (!pressed) return;
++
++    try
++    {
++        SaveState::instance().save(currentSlot);
++        LOG_MSG("[%s]: State %d saved!", getTime().c_str(), currentSlot + 1);
++    }
++    catch (const SaveState::Error& err)
++    {
++        notifyError(err);
++    }
++}
++
++
++void LoadGameState(bool pressed)
++{
++    if (!pressed) return;
++#ifndef SAVE_SATATE_TO_FILE
++    if (SaveState::instance().isEmpty(currentSlot))
++    {
++        LOG_MSG("[%s]: State %d is empty!", getTime().c_str(), currentSlot + 1);
++        return;
++    }
++
++    try
++    {
++        SaveState::instance().load(currentSlot);
++        LOG_MSG("[%s]: State %d loaded!", getTime().c_str(), currentSlot + 1);
++    }
++    catch (const SaveState::Error& err)
++    {
++        notifyError(err);
++    }
++#else
++    SaveState::instance().load(currentSlot);
++#endif
++}
++
++
++void NextSaveSlot(bool pressed)
++{
++    if (!pressed) return;
++
++    currentSlot.next();
++
++    const bool emptySlot = SaveState::instance().isEmpty(currentSlot);
++    LOG_MSG("Active save slot: %d %s", currentSlot + 1,  emptySlot ? "[Empty]" : "");
++    char buff[200];
++    snprintf( buff, 200, "Active save slot: %d %s", currentSlot + 1,  emptySlot ? "[Empty]" : "");
++    SDL_WM_SetCaption(buff, 0);
++}
++
++
++void PreviousSaveSlot(bool pressed)
++{
++    if (!pressed) return;
++
++    currentSlot.previous();
++
++    const bool emptySlot = SaveState::instance().isEmpty(currentSlot);
++    LOG_MSG("Active save slot: %d %s", currentSlot + 1, emptySlot ? "[Empty]" : "");
++    char buff[200];
++    snprintf( buff, 200, "Active save slot: %d %s", currentSlot + 1,  emptySlot ? "[Empty]" : "");
++    SDL_WM_SetCaption(buff, 0);
++}
++}
++
++
+ static void DOSBOX_RealInit(Section * sec) {
+ 	Section_prop * section=static_cast<Section_prop *>(sec);
+ 	/* Initialize some dosbox internals */
+@@ -282,7 +401,15 @@ static void DOSBOX_RealInit(Section * se
+ 		//update value in config (else no matching against suggested values
+ 		section->HandleInputline(std::string("machine=") + cmd_machine);
+ 	}
++        
++#pragma message("WARNING: adapt save/restore states keys!!!!")
+ 
++    //add support for loading/saving game states
++    MAPPER_AddHandler(SaveGameState, MK_f5, 0,"savestate","Save State");
++    MAPPER_AddHandler(LoadGameState, MK_f6, 0,"loadstate","Load State");
++    MAPPER_AddHandler(PreviousSaveSlot, MK_f7, 0,"prevslot","Prev. Slot");
++    MAPPER_AddHandler(NextSaveSlot, MK_f8, 0,"nextslot","Next Slot");
++    
+ 	std::string mtype(section->Get_string("machine"));
+ 	svgaCard = SVGA_None; 
+ 	machine = MCH_VGA;
+diff -rupN dosbox-0.74.original/src/fpu/fpu.cpp dosbox-0.74/src/fpu/fpu.cpp
+--- dosbox-0.74.original/src/fpu/fpu.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/fpu/fpu.cpp	2014-02-19 18:17:09.000000000 +0100
+@@ -27,6 +27,7 @@
+ #include "mem.h"
+ #include "fpu.h"
+ #include "cpu.h"
++#include "../save_state.h"
+ 
+ FPU_rec fpu;
+ 
+@@ -628,4 +629,18 @@ void FPU_Init(Section*) {
+ 	FPU_FINIT();
+ }
+ 
++//save state support
++namespace
++{
++class SerializeFpu : public SerializeGlobalPOD
++{
++public:
++    SerializeFpu() : SerializeGlobalPOD("FPU")
++    {
++        registerPOD(fpu);
++    }
++} dummy;
++}
++
++
+ #endif
+diff -rupN dosbox-0.74.original/src/gui/sdlmain.cpp dosbox-0.74/src/gui/sdlmain.cpp
+--- dosbox-0.74.original/src/gui/sdlmain.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/gui/sdlmain.cpp	2014-02-19 18:17:09.000000000 +0100
+@@ -1316,8 +1316,8 @@ void GFX_Events() {
+ 	int time=GetTicks();
+ 	if (time-poll_delay>20) {
+ 		poll_delay=time;
+-		if (sdl.num_joysticks>0) SDL_JoystickUpdate();
+-		MAPPER_UpdateJoysticks();
++		// CLM if (sdl.num_joysticks>0) SDL_JoystickUpdate();
++		// CLM MAPPER_UpdateJoysticks();
+ 	}
+ #endif
+ 	while (SDL_PollEvent(&event)) {
+@@ -1743,7 +1743,7 @@ int main(int argc, char* argv[]) {
+ #if SDL_VERSION_ATLEAST(1, 2, 14)
+ 	putenv(const_cast<char*>("SDL_DISABLE_LOCK_KEYS=1"));
+ #endif
+-	if ( SDL_Init( SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_CDROM
++	if ( SDL_Init( SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_TIMER// CLM |SDL_INIT_CDROM
+ 		|SDL_INIT_NOPARACHUTE
+ 		) < 0 ) E_Exit("Can't init SDL %s",SDL_GetError());
+ 	sdl.inited = true;
+@@ -1786,8 +1786,9 @@ int main(int argc, char* argv[]) {
+ 			if (strcmp(sdl_drv_name,"windib")==0) LOG_MSG("SDL_Init: Starting up with SDL windib video driver.\n          Try to update your video card and directx drivers!");
+ 		}
+ #endif
+-	sdl.num_joysticks=SDL_NumJoysticks();
+-
++	// CLM sdl.num_joysticks=SDL_NumJoysticks();
++        sdl.num_joysticks=0;
++                
+ 	/* Parse configuration files */
+ 	std::string config_file,config_path;
+ 	bool parsed_anyconfigfile = false;
+diff -rupN dosbox-0.74.original/src/gui/sdl_mapper.cpp dosbox-0.74/src/gui/sdl_mapper.cpp
+--- dosbox-0.74.original/src/gui/sdl_mapper.cpp	2010-05-10 20:58:06.000000000 +0200
++++ dosbox-0.74/src/gui/sdl_mapper.cpp	2014-02-19 18:17:09.000000000 +0100
+@@ -634,17 +634,17 @@ public:
+ 		emulated_axes=2;
+ 		emulated_buttons=2;
+ 		emulated_hats=0;
+-		JOYSTICK_Enable(emustick,true);
++		// CLM JOYSTICK_Enable(emustick,true);
+ 
+-		sdl_joystick=SDL_JoystickOpen(_stick);
++		// CLM sdl_joystick=SDL_JoystickOpen(_stick);
+ 		if (sdl_joystick==NULL) {
+ 			button_wrap=emulated_buttons;
+ 			return;
+ 		}
+ 
+-		axes=SDL_JoystickNumAxes(sdl_joystick);
++		/* CLM axes=SDL_JoystickNumAxes(sdl_joystick);
+ 		buttons=SDL_JoystickNumButtons(sdl_joystick);
+-		hats=SDL_JoystickNumHats(sdl_joystick);
++		hats=SDL_JoystickNumHats(sdl_joystick); */
+ 		button_wrap=buttons;
+ 		button_cap=buttons;
+ 		if (button_wrapping_enabled) {
+@@ -656,10 +656,10 @@ public:
+ 		if (axes_cap>axes) axes_cap=axes;
+ 		hats_cap=emulated_hats;
+ 		if (hats_cap>hats) hats_cap=hats;
+-		LOG_MSG("Using joystick %s with %d axes, %d buttons and %d hat(s)",SDL_JoystickName(stick),axes,buttons,hats);
++		//LOG_MSG("Using joystick %s with %d axes, %d buttons and %d hat(s)",SDL_JoystickName(stick),axes,buttons,hats);
+ 	}
+ 	~CStickBindGroup() {
+-		SDL_JoystickClose(sdl_joystick);
++		// SDL_JoystickClose(sdl_joystick);
+ 		delete[] pos_axis_lists;
+ 		delete[] neg_axis_lists;
+ 		delete[] button_lists;
+@@ -760,6 +760,7 @@ public:
+ 	}
+ 
+ 	void ActivateJoystickBoundEvents() {
++#ifdef WITH_JOYSTICK
+ 		if (GCC_UNLIKELY(sdl_joystick==NULL)) return;
+ 
+ 		Bitu i;
+@@ -768,7 +769,7 @@ public:
+ 		for (i=0; i<MAXBUTTON; i++) button_pressed[i]=false;
+ 		/* read button states */
+ 		for (i=0; i<button_cap; i++) {
+-			if (SDL_JoystickGetButton(sdl_joystick,i))
++		 	if (SDL_JoystickGetButton(sdl_joystick,i))
+ 				button_pressed[i % button_wrap]=true;
+ 		}
+ 		for (i=0; i<button_wrap; i++) {
+@@ -834,6 +835,7 @@ public:
+ 			}
+ 			old_hat_state[i]=chat_state;
+ 		}
++#endif
+ 	}
+ 
+ private:
+@@ -862,8 +864,11 @@ private:
+ 		return configname;
+ 	}
+ 	const char * BindStart(void) {
++#ifdef WITH_JOYSTICK
+ 		if (sdl_joystick!=NULL) return SDL_JoystickName(stick);
+-		else return "[missing joystick]";
++		else 
++#endif 
++                    return "[missing joystick]";
+ 	}
+ 
+ protected:
+@@ -2187,8 +2192,10 @@ void BIND_MappingEvents(void) {
+ static void InitializeJoysticks(void) {
+ 	mapper.sticks.num=0;
+ 	mapper.sticks.num_groups=0;
++        
++#ifdef WITH_JOYSTICK
+ 	if (joytype != JOY_NONE) {
+-		mapper.sticks.num=SDL_NumJoysticks();
++                mapper.sticks.num=SDL_NumJoysticks();
+ 		if (joytype==JOY_AUTO) {
+ 			// try to figure out what joystick type to select
+ 			// depending on the number of physically attached joysticks
+@@ -2238,7 +2245,8 @@ static void InitializeJoysticks(void) {
+ 				joytype=JOY_NONE;
+ 			}
+ 		}
+-	}
++        }
++#endif
+ }
+ 
+ static void CreateBindGroups(void) {
+@@ -2247,11 +2255,11 @@ static void CreateBindGroups(void) {
+ 	if (joytype != JOY_NONE) {
+ #if defined (REDUCE_JOYSTICK_POLLING)
+ 		// direct access to the SDL joystick, thus removed from the event handling
+-		if (mapper.sticks.num) SDL_JoystickEventState(SDL_DISABLE);
++		//CLM if (mapper.sticks.num) SDL_JoystickEventState(SDL_DISABLE);
+ #else
+ 		// enable joystick event handling
+-		if (mapper.sticks.num) SDL_JoystickEventState(SDL_ENABLE);
+-		else return;
++		//CLM if (mapper.sticks.num) SDL_JoystickEventState(SDL_ENABLE);
++		//CLM else return;
+ #endif
+ 		Bit8u joyno=0;
+ 		switch (joytype) {
+@@ -2334,7 +2342,7 @@ void MAPPER_RunInternal() {
+ 	mapper.redraw=true;
+ 	SetActiveEvent(0);
+ #if defined (REDUCE_JOYSTICK_POLLING)
+-	SDL_JoystickEventState(SDL_ENABLE);
++	// CLM SDL_JoystickEventState(SDL_ENABLE);
+ #endif
+ 	while (!mapper.exit) {
+ 		if (mapper.redraw) {
+@@ -2345,7 +2353,7 @@ void MAPPER_RunInternal() {
+ 		SDL_Delay(1);
+ 	}
+ #if defined (REDUCE_JOYSTICK_POLLING)
+-	SDL_JoystickEventState(SDL_DISABLE);
++	// CLM SDL_JoystickEventState(SDL_DISABLE);
+ #endif
+ 	if(mousetoggle) GFX_CaptureMouse();
+ 	SDL_ShowCursor(cursor);
+diff -rupN dosbox-0.74.original/src/hardware/cmos.cpp dosbox-0.74/src/hardware/cmos.cpp
+--- dosbox-0.74.original/src/hardware/cmos.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/cmos.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -29,8 +29,9 @@
+ #include "bios_disk.h"
+ #include "setup.h"
+ #include "cross.h" //fmod on certain platforms
++#include "../save_state.h"
+ 
+-static struct {
++static struct _Scmos {
+ 	Bit8u regs[0x40];
+ 	bool nmi;
+ 	bool bcd;
+@@ -329,3 +330,17 @@ void CMOS_Init(Section* sec) {
+ 	test = new CMOS(sec);
+ 	sec->AddDestroyFunction(&CMOS_Destroy,true);
+ }
++
++
++//save state support
++namespace
++{
++class SerializeCmos : public SerializeGlobalPOD
++{
++public:
++    SerializeCmos() : SerializeGlobalPOD("CMOS")
++    {
++        registerPOD(cmos);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/dbopl.cpp dosbox-0.74/src/hardware/dbopl.cpp
+--- dosbox-0.74.original/src/hardware/dbopl.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/dbopl.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -41,7 +41,6 @@
+ #include "dosbox.h"
+ #include "dbopl.h"
+ 
+-
+ #ifndef PI
+ #define PI 3.14159265358979323846
+ #endif
+diff -rupN dosbox-0.74.original/src/hardware/dma.cpp dosbox-0.74/src/hardware/dma.cpp
+--- dosbox-0.74.original/src/hardware/dma.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/dma.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -26,6 +26,7 @@
+ #include "pic.h"
+ #include "paging.h"
+ #include "setup.h"
++#include "../save_state.h"
+ 
+ DmaController *DmaControllers[2];
+ 
+@@ -397,3 +398,16 @@ void DMA_Init(Section* sec) {
+ 		ems_board_mapping[i]=i;
+ 	}
+ }
++
++//save state support
++namespace
++{
++class SerializeDMA : public SerializeGlobalPOD
++{
++public:
++    SerializeDMA() : SerializeGlobalPOD("DMA")
++    {
++        registerPOD(ems_board_mapping);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/gus.cpp dosbox-0.74/src/hardware/gus.cpp
+--- dosbox-0.74.original/src/hardware/gus.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/gus.cpp	2014-02-19 18:17:08.000000000 +0100
+@@ -51,7 +51,8 @@ Bit8u adlib_commandreg;
+ static MixerChannel * gus_chan;
+ static Bit8u irqtable[8] = { 0, 2, 5, 3, 7, 11, 12, 15 };
+ static Bit8u dmatable[8] = { 0, 1, 3, 5, 6, 7, 0, 0 };
+-static Bit8u GUSRam[1024*1024]; // 1024K of GUS Ram
++// CLM static Bit8u GUSRam[1024*1024]; // 1024K of GUS Ram
++static Bit8u GUSRam[1]; // CLM NO GUS Ram
+ static Bit32s AutoAmp = 512;
+ static Bit16u vol16bit[4096];
+ static Bit32u pantable[16];
+diff -rupN dosbox-0.74.original/src/hardware/iohandler.cpp dosbox-0.74/src/hardware/iohandler.cpp
+--- dosbox-0.74.original/src/hardware/iohandler.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/iohandler.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -25,6 +25,7 @@
+ #include "cpu.h"
+ #include "../src/cpu/lazyflags.h"
+ #include "callback.h"
++#include "../save_state.h"
+ 
+ //#define ENABLE_PORTLOG
+ 
+@@ -512,3 +513,20 @@ void IO_Init(Section * sect) {
+ 	test = new IO(sect);
+ 	sect->AddDestroyFunction(&IO_Destroy);
+ }
++
++//save state support
++namespace
++{
++class SerializeIO : public SerializeGlobalPOD
++{
++public:
++    SerializeIO() : SerializeGlobalPOD("IO handler")
++    {
++        //io_writehandlers -> quasi constant
++        //io_readhandlers  -> quasi constant
++
++        registerPOD(iof_queue.used);
++        registerPOD(iof_queue.entries);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/joystick.cpp dosbox-0.74/src/hardware/joystick.cpp
+--- dosbox-0.74.original/src/hardware/joystick.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/joystick.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -25,6 +25,7 @@
+ #include "joystick.h"
+ #include "pic.h"
+ #include "support.h"
++#include "../save_state.h"
+ 
+ #define RANGE 64
+ #define TIMEOUT 10
+@@ -88,6 +89,7 @@ static Bitu read_p201(Bitu port,Bitu iol
+ }
+ 
+ static Bitu read_p201_timed(Bitu port,Bitu iolen) {
++#ifdef WITH_JOYSTICK
+ 	Bit8u ret=0xff;
+ 	double currentTick = PIC_FullIndex();
+ 	if( stick[0].enabled ){
+@@ -108,10 +110,14 @@ static Bitu read_p201_timed(Bitu port,Bi
+ 		if (stick[1].button[1]) ret&=~128;
+ 	}
+ 	return ret;
++#else
++        return 0xff;
++#endif
+ }
+ 
+ static void write_p201(Bitu port,Bitu val,Bitu iolen) {
+-	/* Store writetime index */
++#ifdef WITH_JOYSTICK
++    /* Store writetime index */
+ 	write_active = true;
+ 	last_write = PIC_Ticks;
+ 	if (stick[0].enabled) {
+@@ -122,9 +128,10 @@ static void write_p201(Bitu port,Bitu va
+ 		stick[1].xcount=(Bitu)(((swap34? stick[1].ypos : stick[1].xpos)*RANGE)+RANGE);
+ 		stick[1].ycount=(Bitu)(((swap34? stick[1].xpos : stick[1].ypos)*RANGE)+RANGE);
+ 	}
+-
++#endif
+ }
+ static void write_p201_timed(Bitu port,Bitu val,Bitu iolen) {
++#ifdef WITH_JOYSTICK
+ 	// Store writetime index
+ 	// Axes take time = 24.2 microseconds + ( 0.011 microsecons/ohm * resistance )
+ 	// to reset to 0
+@@ -142,6 +149,7 @@ static void write_p201_timed(Bitu port,B
+ 		stick[1].ytick = currentTick + 1000.0*( JOY_S_CONSTANT + S_PER_OHM *
+ 		                 (double)((swap34? stick[1].xpos : stick[1].ypos)+1.0) * OHMS);
+ 	}
++#endif
+ }
+ 
+ void JOYSTICK_Enable(Bitu which,bool enabled) {
+@@ -229,3 +237,23 @@ void JOYSTICK_Init(Section* sec) {
+ 	test = new JOYSTICK(sec);
+ 	sec->AddDestroyFunction(&JOYSTICK_Destroy,true); 
+ }
++
++
++//save state support
++namespace
++{
++class SerializeStick : public SerializeGlobalPOD
++{
++public:
++    SerializeStick() : SerializeGlobalPOD("Joystick")
++    {
++        registerPOD(joytype);
++        registerPOD(stick);
++        registerPOD(last_write);
++        registerPOD(write_active);
++        registerPOD(swap34);
++        registerPOD(button_wrapping_enabled);
++        registerPOD(autofire);
++    }
++} dummy;
++}
+\ Pas de fin de ligne à la fin du fichier.
+diff -rupN dosbox-0.74.original/src/hardware/keyboard.cpp dosbox-0.74/src/hardware/keyboard.cpp
+--- dosbox-0.74.original/src/hardware/keyboard.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/keyboard.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -25,6 +25,8 @@
+ #include "mem.h"
+ #include "mixer.h"
+ #include "timer.h"
++#include "../save_state.h"
++#include <set>
+ 
+ #define KEYBUFSIZE 32
+ #define KEYDELAY 0.300f			//Considering 20-30 khz serial clock and 11 bits/char
+@@ -36,7 +38,7 @@ enum KeyCommands {
+ 	CMD_SETOUTPORT
+ };
+ 
+-static struct {
++static struct _S_keyb {
+ 	Bit8u buffer[KEYBUFSIZE];
+ 	Bitu used;
+ 	Bitu pos;
+@@ -218,7 +220,15 @@ static Bitu read_p64(Bitu port,Bitu iole
+ 	return status;
+ }
+ 
++std::set<KBD_KEYS> pressedKeys; //info about currently pressed keys
++
+ void KEYBOARD_AddKey(KBD_KEYS keytype,bool pressed) {
++    
++    if (pressed)  //save info about currently pressed keys
++        pressedKeys.insert(keytype);
++    else
++        pressedKeys.erase(keytype);
++    
+ 	Bit8u ret=0;bool extend=false;
+ 	switch (keytype) {
+ 	case KBD_esc:ret=1;break;
+@@ -387,3 +397,40 @@ void KEYBOARD_Init(Section* sec) {
+ 	keyb.repeat.wait=0;
+ 	KEYBOARD_ClrBuffer();
+ }
++
++
++//save state support
++namespace
++{
++class SerializeKeyboard : public SerializeGlobalPOD
++{
++public:
++    SerializeKeyboard() : SerializeGlobalPOD("Keyboard")
++    {
++        registerPOD(keyb);
++        registerPOD(port_61_data);
++    }
++private:
++    virtual void saveBytes(std::ostream& stream)
++    {
++        SerializeGlobalPOD::saveBytes(stream);
++        writePODContainer(stream, pressedKeys); //currently pressed keys
++    }
++
++    virtual void loadBytes(std::istream& stream)
++    {
++        SerializeGlobalPOD::loadBytes(stream);
++        readPODContainer(stream, pressedKeys); //currently pressed keys
++    }
++
++    virtual void afterLoad()
++    {
++        SerializeGlobalPOD::afterLoad();
++
++        //release all currently pressed keys
++        const std::set<KBD_KEYS> tmp = pressedKeys;
++        std::for_each(tmp.begin(), tmp.end(), std::bind2nd(std::ptr_fun(KEYBOARD_AddKey), false));
++    }
++
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/memory.cpp dosbox-0.74/src/hardware/memory.cpp
+--- dosbox-0.74.original/src/hardware/memory.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/memory.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -24,7 +24,7 @@
+ #include "setup.h"
+ #include "paging.h"
+ #include "regs.h"
+-
++#include "../save_state.h"
+ #include <string.h>
+ 
+ #define PAGES_IN_BLOCK	((1024*1024)/MEM_PAGE_SIZE)
+@@ -59,6 +59,11 @@ static struct MemoryBlock {
+ 
+ HostPt MemBase;
+ 
++namespace
++{
++size_t memorySize;
++}
++
+ class IllegalPageHandler : public PageHandler {
+ public:
+ 	IllegalPageHandler() {
+@@ -559,6 +564,8 @@ public:	
+ 			LOG_MSG("Stick with the default values unless you are absolutely certain.");
+ 		}
+ 		MemBase = new Bit8u[memsize*1024*1024];
++                memorySize = sizeof(Bit8u) * memsize*1024*1024;
++                
+ 		if (!MemBase) E_Exit("Can't allocate main memory of %d MB",memsize);
+ 		/* Clear the memory, as new doesn't always give zeroed memory
+ 		 * (Visual C debug mode). We want zeroed memory though. */
+@@ -611,3 +618,32 @@ void MEM_Init(Section * sec) {
+ 	test = new MEMORY(sec);
+ 	sec->AddDestroyFunction(&MEM_ShutDown);
+ }
++
++
++//save state support
++namespace
++{
++class SerializeRam : public SerializeGlobalPOD
++{
++public:
++    SerializeRam() : SerializeGlobalPOD("Memory")
++    {
++        registerPOD(memory);
++    }
++
++private:
++    virtual void saveBytes(std::ostream& stream)
++    {
++        SerializeGlobalPOD::saveBytes(stream);
++
++        stream.write(reinterpret_cast<const char*>(MemBase), memorySize);
++    }
++
++    virtual void loadBytes(std::istream& stream)
++    {
++        SerializeGlobalPOD::loadBytes(stream);
++
++        stream.read(reinterpret_cast<char*>(MemBase), memorySize);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/opl.cpp dosbox-0.74/src/hardware/opl.cpp
+--- dosbox-0.74.original/src/hardware/opl.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/opl.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -30,7 +30,7 @@
+ #include "dosbox.h"
+ #include "opl.h"
+ 
+-
++#include "../../config.h"
+ static fltype recipsamp;	// inverse of sampling rate
+ static Bit16s wavtable[WAVEPREC*3];	// wave form table
+ 
+diff -rupN dosbox-0.74.original/src/hardware/opl.h dosbox-0.74/src/hardware/opl.h
+--- dosbox-0.74.original/src/hardware/opl.h	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/opl.h	2014-02-19 18:17:07.000000000 +0100
+@@ -46,7 +46,7 @@ typedef int8_t		Bit8s;
+ /*
+ 	define attribution that inlines/forces inlining of a function (optional)
+ */
+-#define OPL_INLINE INLINE
++#define OPL_INLINE
+ 
+ 
+ #undef NUM_CHANNELS
+diff -rupN dosbox-0.74.original/src/hardware/pic.cpp dosbox-0.74/src/hardware/pic.cpp
+--- dosbox-0.74.original/src/hardware/pic.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/pic.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -27,6 +27,8 @@
+ #include "pic.h"
+ #include "timer.h"
+ #include "setup.h"
++#include "../save_state.h"
++#include <list>
+ 
+ #define PIC_QUEUESIZE 512
+ 
+@@ -66,7 +68,7 @@ struct PICEntry {
+ 	PICEntry * next;
+ };
+ 
+-static struct {
++static struct PICQueue {
+ 	PICEntry entries[PIC_QUEUESIZE];
+ 	PICEntry * free_entry;
+ 	PICEntry * next_entry;
+@@ -498,6 +500,40 @@ struct TickerBlock {
+ 
+ static TickerBlock * firstticker=0;
+ 
++#ifndef WITHOUT_SAVESTATE
++namespace
++{
++std::list<TIMER_TickHandler> tickhandlers;
++}
++void TIMER_DelTickHandler(TIMER_TickHandler handler)
++{
++    tickhandlers.remove(handler);
++}
++
++void TIMER_AddTickHandler(TIMER_TickHandler handler)
++{
++    tickhandlers.push_front(handler);
++}
++
++void TIMER_AddTick(void)
++{
++    /* Setup new amount of cycles for PIC */
++    CPU_CycleLeft=CPU_CycleMax;
++    CPU_Cycles=0;
++    PIC_Ticks++;
++    /* Go through the list of scheduled events and lower their index with 1000 */
++    PICEntry * entry=pic_queue.next_entry;
++    while (entry)
++    {
++        entry->index -= 1.0;
++        entry=entry->next;
++    }
++    /* Call our list of ticker handlers */
++    for (std::list<TIMER_TickHandler>::const_iterator i = tickhandlers.begin(); i != tickhandlers.end(); ++i)
++        (*i)();
++}
++
++#else
+ 
+ void TIMER_DelTickHandler(TIMER_TickHandler handler) {
+ 	TickerBlock * ticker=firstticker;
+@@ -540,6 +576,7 @@ void TIMER_AddTick(void) {
+ 	}
+ }
+ 
++#endif
+ 
+ class PIC:public Module_base{
+ private:
+@@ -610,3 +647,39 @@ void PIC_Init(Section* sec) {
+ 	test = new PIC(sec);
+ 	sec->AddDestroyFunction(&PIC_Destroy);
+ }
++
++
++//save state support
++namespace
++{
++class SerializePic : public SerializeGlobalPOD
++{
++public:
++    SerializePic() : SerializeGlobalPOD("Pic")
++    {
++        registerPOD(PIC_Ticks);
++        registerPOD(PIC_IRQCheck);
++        registerPOD(PIC_IRQOnSecondPicActive);
++        registerPOD(PIC_IRQActive);
++        registerPOD(pic_queue);
++        registerPOD(irqs);
++        registerPOD(pics);
++        registerPOD(PIC_Special_Mode);
++        registerPOD(srv_lag);
++        registerPOD(InEventService);
++    }
++
++private:
++    virtual void saveBytes(std::ostream& stream)
++    {
++        SerializeGlobalPOD::saveBytes(stream);
++        writePODContainer(stream, tickhandlers); //contains static function pointers -> probably quasi-const (except for IPX)
++    }
++
++    virtual void loadBytes(std::istream& stream)
++    {
++        SerializeGlobalPOD::loadBytes(stream);
++        readPODContainer(stream, tickhandlers);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/timer.cpp dosbox-0.74/src/hardware/timer.cpp
+--- dosbox-0.74.original/src/hardware/timer.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/timer.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -26,6 +26,7 @@
+ #include "mixer.h"
+ #include "timer.h"
+ #include "setup.h"
++#include "../save_state.h"
+ 
+ static INLINE void BIN2BCD(Bit16u& val) {
+ 	Bit16u temp=val%10 + (((val/10)%10)<<4)+ (((val/100)%10)<<8) + (((val/1000)%10)<<12);
+@@ -459,3 +460,20 @@ void TIMER_Init(Section* sec) {
+ 	test = new TIMER(sec);
+ 	sec->AddDestroyFunction(&TIMER_Destroy);
+ }
++
++
++//save state support
++namespace
++{
++class SerializeTimer : public SerializeGlobalPOD
++{
++public:
++    SerializeTimer() : SerializeGlobalPOD("IntTimer10")
++    {
++        registerPOD(pit);
++        registerPOD(gate2);
++        registerPOD(latched_timerstatus);
++        registerPOD(latched_timerstatus_locked);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/hardware/vga.cpp dosbox-0.74/src/hardware/vga.cpp
+--- dosbox-0.74.original/src/hardware/vga.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/vga.cpp	2014-02-19 18:17:08.000000000 +0100
+@@ -23,7 +23,7 @@
+ #include "video.h"
+ #include "pic.h"
+ #include "vga.h"
+-
++#include "../save_state.h"
+ #include <string.h>
+ 
+ VGA_Type vga;
+@@ -258,7 +258,26 @@ void SVGA_Setup_Driver(void) {
+ 		SVGA_Setup_ParadisePVGA1A();
+ 		break;
+ 	default:
+-		vga.vmemsize = vga.vmemwrap = 256*1024;
++		// CLM vga.vmemsize = vga.vmemwrap = 256*1024;
++		vga.vmemsize = vga.vmemwrap = 128*1024; // CLM MAX EGA
+ 		break;
+ 	}
+ }
++
++
++//save state support
++namespace
++{
++class SerializeVGA : public SerializeGlobalPOD
++{
++public:
++    SerializeVGA() : SerializeGlobalPOD("VGA") {}
++
++private:
++    //virtual void loadBytes(std::istream& stream)
++    //{
++    //SerializeGlobalPOD::loadBytes(stream);
++    //}
++} dummy;
++}
++
+diff -rupN dosbox-0.74.original/src/hardware/vga_memory.cpp dosbox-0.74/src/hardware/vga_memory.cpp
+--- dosbox-0.74.original/src/hardware/vga_memory.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/hardware/vga_memory.cpp	2014-02-19 18:17:07.000000000 +0100
+@@ -27,7 +27,7 @@
+ #include "pic.h"
+ #include "inout.h"
+ #include "setup.h"
+-
++#include "../save_state.h"
+ 
+ #ifndef C_VGARAM_CHECKED
+ #define C_VGARAM_CHECKED 1
+@@ -947,3 +947,45 @@ void VGA_SetupMemory(Section* sec) {
+ 		//TODO map?	
+ 	} 
+ }
++
++
++//save state support
++namespace
++{
++class SerializeVgaMemory : public SerializeGlobalPOD
++{
++public:
++    SerializeVgaMemory() : SerializeGlobalPOD("Vga Memory")
++    {
++        //#pragma message("!!!!!!!WARNING!!!!!!WARNING!!!!!!!!WARNING!!!!!!!!!!")
++        //registerPOD(vga);
++        //registerPOD(svga);
++    }
++
++private:
++    virtual void saveBytes(std::ostream& stream)
++    {
++        SerializeGlobalPOD::saveBytes(stream);
++
++        stream.write(reinterpret_cast<const char*>(vga.mem.linear_orgptr), sizeof(Bit8u) * (std::max(vga.vmemsize, 512 * 1024U) + 2048 + 16));
++        stream.write(reinterpret_cast<const char*>(vga.fastmem_orgptr), sizeof(Bit8u) * ((vga.vmemsize << 1) + 4096 + 16));
++    }
++
++    virtual void loadBytes(std::istream& stream)
++    {
++        SerializeGlobalPOD::loadBytes(stream);
++
++        stream.read(reinterpret_cast<char*>(vga.mem.linear_orgptr), sizeof(Bit8u) * (std::max(vga.vmemsize, 512 * 1024U) + 2048 + 16));
++        stream.read(reinterpret_cast<char*>(vga.fastmem_orgptr), sizeof(Bit8u) * ((vga.vmemsize << 1) + 4096 + 16));
++    }
++
++    virtual void afterLoad()
++    {
++        SerializeGlobalPOD::afterLoad();
++
++        VGA_KillDrawing();
++        //#pragma message("!!!!!!!WARNING!!!!!!WARNING!!!!!!!!WARNING!!!!!!!!!!")
++    }
++} dummy;
++}
++
+diff -rupN dosbox-0.74.original/src/ints/ems.cpp dosbox-0.74/src/ints/ems.cpp
+--- dosbox-0.74.original/src/ints/ems.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/ints/ems.cpp	2014-02-19 18:17:09.000000000 +0100
+@@ -32,6 +32,9 @@
+ #include "setup.h"
+ #include "support.h"
+ #include "cpu.h"
++#include "../save_state.h"
++
++typedef unsigned char Bit8u;
+ 
+ #define EMM_PAGEFRAME	0xE000
+ #define EMM_PAGEFRAME4K	((EMM_PAGEFRAME*16)/4096)
+@@ -197,7 +200,7 @@ bool device_EMM::ReadFromControlChannel(
+ 	return false;
+ }
+ 
+-static struct {
++static struct _Svcpi {
+ 	bool enabled;
+ 	Bit16u ems_handle;
+ 	Bitu pm_interface;
+@@ -1419,3 +1422,21 @@ void EMS_Init(Section* sec) {
+ 
+ //Initialize static members
+ Bit16u EMS::ems_baseseg = 0;
++
++
++//save state support
++namespace
++{
++class SerializeEMS : public SerializeGlobalPOD
++{
++public:
++    SerializeEMS() : SerializeGlobalPOD("EMS")
++    {
++        registerPOD(emm_handles);
++        registerPOD(emm_mappings);
++        registerPOD(emm_segmentmappings);
++        registerPOD(GEMMIS_seg);
++        registerPOD(vcpi);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/ints/int10.cpp dosbox-0.74/src/ints/int10.cpp
+--- dosbox-0.74.original/src/ints/int10.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/ints/int10.cpp	2014-02-19 18:17:09.000000000 +0100
+@@ -25,6 +25,7 @@
+ #include "inout.h"
+ #include "int10.h"
+ #include "setup.h"
++#include "../save_state.h"
+ 
+ Int10Data int10;
+ static Bitu call_10;
+@@ -758,3 +759,24 @@ void INT10_Init(Section* /*sec*/) {
+ 	INT10_SetupRomMemoryChecksum();//SetupVesa modifies the rom as well.
+ 	INT10_SetVideoMode(0x3);
+ }
++
++
++
++//save state support
++namespace
++{
++class SerializeInt10 : public SerializeGlobalPOD
++{
++public:
++    SerializeInt10() : SerializeGlobalPOD("Int10")
++    {
++        registerPOD(int10);
++        registerPOD(CurMode);
++    }
++
++    //   virtual void loadBytes(std::istream& stream)
++    //{
++    //  SerializeGlobalPOD::loadBytes(stream);
++    //}
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/ints/xms.cpp dosbox-0.74/src/ints/xms.cpp
+--- dosbox-0.74.original/src/ints/xms.cpp	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/ints/xms.cpp	2014-02-19 18:17:09.000000000 +0100
+@@ -29,6 +29,7 @@
+ #include "inout.h"
+ #include "xms.h"
+ #include "bios.h"
++#include "../save_state.h"
+ 
+ #define XMS_HANDLES							50		/* 50 XMS Memory Blocks */ 
+ #define XMS_VERSION    						0x0300	/* version 3.00 */
+@@ -480,3 +481,17 @@ void XMS_Init(Section* sec) {
+ 	test = new XMS(sec);
+ 	sec->AddDestroyFunction(&XMS_ShutDown,true);
+ }
++
++
++//save state support
++namespace
++{
++class SerializeXMS : public SerializeGlobalPOD
++{
++public:
++    SerializeXMS() : SerializeGlobalPOD("XMS")
++    {
++        registerPOD(xms_handles);
++    }
++} dummy;
++}
+diff -rupN dosbox-0.74.original/src/Makefile.am dosbox-0.74/src/Makefile.am
+--- dosbox-0.74.original/src/Makefile.am	2010-05-10 19:43:54.000000000 +0200
++++ dosbox-0.74/src/Makefile.am	2014-02-19 18:17:06.000000000 +0100
+@@ -11,9 +11,10 @@ endif
+ .rc.o:
+ 	$(WINDRES) -o $@ $<
+ 
+-dosbox_SOURCES = dosbox.cpp $(ico_stuff)
++dosbox_SOURCES = dosbox.cpp save_state.cpp save_state.h $(ico_stuff)
+ dosbox_LDADD = cpu/libcpu.a debug/libdebug.a dos/libdos.a fpu/libfpu.a  hardware/libhardware.a gui/libgui.a \
+-               ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a
++               ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a 
++
+ 
+ EXTRA_DIST = winres.rc dosbox.ico
+ 
+diff -rupN dosbox-0.74.original/src/Makefile.in dosbox-0.74/src/Makefile.in
+--- dosbox-0.74.original/src/Makefile.in	2010-05-12 11:57:43.000000000 +0200
++++ dosbox-0.74/src/Makefile.in	2014-02-19 18:17:06.000000000 +0100
+@@ -48,9 +48,11 @@ CONFIG_CLEAN_FILES =
+ CONFIG_CLEAN_VPATH_FILES =
+ am__installdirs = "$(DESTDIR)$(bindir)"
+ PROGRAMS = $(bin_PROGRAMS)
+-am__dosbox_SOURCES_DIST = dosbox.cpp winres.rc
++am__dosbox_SOURCES_DIST = dosbox.cpp save_state.cpp save_state.h \
++	winres.rc
+ @HAVE_WINDRES_TRUE@am__objects_1 = winres.$(OBJEXT)
+-am_dosbox_OBJECTS = dosbox.$(OBJEXT) $(am__objects_1)
++am_dosbox_OBJECTS = dosbox.$(OBJEXT) save_state.$(OBJEXT) \
++	$(am__objects_1)
+ dosbox_OBJECTS = $(am_dosbox_OBJECTS)
+ dosbox_DEPENDENCIES = cpu/libcpu.a debug/libdebug.a dos/libdos.a \
+ 	fpu/libfpu.a hardware/libhardware.a gui/libgui.a \
+@@ -65,6 +67,10 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_IN
+ CXXLD = $(CXX)
+ CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+ 	-o $@
++COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
++	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
++CCLD = $(CC)
++LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+ SOURCES = $(dosbox_SOURCES)
+ DIST_SOURCES = $(am__dosbox_SOURCES_DIST)
+ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
+@@ -216,9 +222,9 @@ top_srcdir = @top_srcdir@
+ AM_CPPFLAGS = -I$(top_srcdir)/include
+ SUBDIRS = cpu debug dos fpu gui hardware libs ints misc shell platform 
+ @HAVE_WINDRES_TRUE@ico_stuff = winres.rc
+-dosbox_SOURCES = dosbox.cpp $(ico_stuff)
++dosbox_SOURCES = dosbox.cpp save_state.cpp save_state.h $(ico_stuff)
+ dosbox_LDADD = cpu/libcpu.a debug/libdebug.a dos/libdos.a fpu/libfpu.a  hardware/libhardware.a gui/libgui.a \
+-               ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a
++               ints/libints.a misc/libmisc.a shell/libshell.a hardware/serialport/libserial.a libs/gui_tk/libgui_tk.a 
+ 
+ EXTRA_DIST = winres.rc dosbox.ico
+ all: all-recursive
+@@ -303,6 +309,7 @@ distclean-compile:
+ 	-rm -f *.tab.c
+ 
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dosbox.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/save_state.Po@am__quote@
+ 
+ .cpp.o:
+ @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+diff -rupN dosbox-0.74/src/save_state.cpp dosbox-0.74_opentom/src/save_state.cpp
+--- dosbox-0.74/src/save_state.cpp	1970-01-01 01:00:00.000000000 +0100
++++ dosbox-0.74_opentom/src/save_state.cpp	2014-03-02 07:26:17.000000000 +0100
+@@ -0,0 +1,208 @@
++#include "save_state.h"
++#include "zlib.h"
++#include <cstring>
++#include <iostream>
++#include <fstream>
++
++SaveState& SaveState::instance()
++{
++    static SaveState singleton;
++    return singleton;
++}
++
++
++void SaveState::registerComponent(const std::string& uniqueName, Component& comp)
++{
++    components.insert(std::make_pair(uniqueName, CompData(comp)));
++}
++
++
++namespace Util
++{
++std::string compress(const std::string& input) //throw (SaveState::Error)
++{
++    if (input.empty())
++        return input;
++
++    const uLong bufferSize = ::compressBound(input.size()); //upper limit for buffer size
++
++    std::string output;
++    output.resize(bufferSize);
++
++    uLongf actualSize = bufferSize;
++    if (::compress2(reinterpret_cast<Bytef*>(&output[0]), &actualSize,
++                    reinterpret_cast<const Bytef*>(input.c_str()), input.size(), Z_BEST_SPEED) != Z_OK)
++        throw SaveState::Error("Compression failed!");
++
++    output.resize(actualSize);
++
++    //save size of uncompressed data
++    const size_t uncompressedSize = input.size(); //save size of uncompressed data
++    output.resize(output.size() + sizeof(uncompressedSize)); //won't trigger a reallocation if at least sizeof(size_t) bytes were saved
++    ::memcpy(&output[0] + output.size() - sizeof(uncompressedSize), &uncompressedSize, sizeof(uncompressedSize));
++
++    return std::string(&output[0], output.size()); //strip reserved space
++}
++
++
++std::string decompress(const std::string& input) //throw (SaveState::Error)
++{
++    if (input.empty())
++        return input;
++
++    //retrieve size of uncompressed data
++    size_t uncompressedSize = 0;
++    ::memcpy(&uncompressedSize, &input[0] + input.size() - sizeof(uncompressedSize), sizeof(uncompressedSize));
++
++    std::string output;
++    output.resize(uncompressedSize);
++
++    uLongf actualSize = uncompressedSize;
++    if (::uncompress(reinterpret_cast<Bytef*>(&output[0]), &actualSize,
++                     reinterpret_cast<const Bytef*>(input.c_str()), input.size() - sizeof(uncompressedSize)) != Z_OK)
++        throw SaveState::Error("Decompression failed!");
++
++    output.resize(actualSize); //should be superfluous!
++
++    return output;
++}
++}
++
++
++inline
++void SaveState::RawBytes::set(const std::string& stream)
++{
++    std::cout << "len=" << stream.length() << std::endl; // CLM
++    bytes = stream;
++    isCompressed = false;
++    dataExists   = true;
++}
++
++
++inline
++std::string SaveState::RawBytes::get() const //throw (Error)
++{
++    if (isCompressed) {
++        std::string s = Util::decompress(bytes);
++        bytes.swap( s);
++    }
++    isCompressed = false;
++    return bytes;
++}
++
++
++inline
++void SaveState::RawBytes::compress() const //throw (Error)
++{
++    if (!isCompressed) {
++        std::string s = Util::compress(bytes);
++        bytes.swap( s);
++    }
++    isCompressed = true;
++}
++
++
++inline
++bool SaveState::RawBytes::dataAvailable() const
++{
++    return dataExists;
++}
++
++#ifdef SAVE_SATATE_TO_FILE
++
++void SaveState::save(size_t slot)
++{
++    char buff[40];
++    snprintf(buff, 40, SAVE_STATE_NAME, slot);
++    std::ofstream fichierSortie(buff, std::ios::out);
++    
++    for (CompEntry::iterator i = components.begin(); i != components.end(); ++i)
++            i->second.comp.beforeSave();
++    
++    for (CompEntry::iterator i = components.begin(); i != components.end(); ++i)
++        i->second.comp.saveBytes(fichierSortie);
++    
++    fichierSortie.close();
++}
++
++void SaveState::load(size_t slot) const //throw (Error)
++{
++    char buff[40];
++    snprintf(buff, 40, SAVE_STATE_NAME, slot);
++    std::ifstream fichierSortie(buff, std::ios::in);
++    
++    for (CompEntry::const_iterator i = components.begin(); i != components.end(); ++i)        
++        i->second.comp.loadBytes(fichierSortie);
++
++    //finalize
++    for (CompEntry::const_iterator i = components.begin(); i != components.end(); ++i)
++        i->second.comp.afterLoad();
++} 
++
++#else
++void SaveState::save(size_t slot) //throw (Error)
++{
++    if (slot >= SLOT_COUNT)  return;
++
++    try
++    {
++        //prepare
++        for (CompEntry::iterator i = components.begin(); i != components.end(); ++i)
++            i->second.comp.beforeSave();
++
++        //actual save
++        for (CompEntry::iterator i = components.begin(); i != components.end(); ++i)
++        {
++            std::ostringstream ss;
++            i->second.comp.saveBytes(ss);
++            i->second.rawBytes[slot].set(ss.str());
++            //compress all other saved states except position "slot" (will process a single position at most)
++            const std::vector<RawBytes>& rb = i->second.rawBytes;
++            std::for_each(rb.begin(), rb.begin() + slot, std::mem_fun_ref(&RawBytes::compress));
++            std::for_each(rb.begin() + slot + 1, rb.end(), std::mem_fun_ref(&RawBytes::compress));
++        }
++    }
++    catch (const std::bad_alloc&)
++    {
++        throw Error("Save failed! Out of Memory!");
++    }
++}
++
++
++
++void SaveState::load(size_t slot) const //throw (Error)
++{
++    if (isEmpty(slot)) return;
++
++    for (CompEntry::const_iterator i = components.begin(); i != components.end(); ++i)
++    {
++        std::istringstream ss(i->second.rawBytes[slot].get());
++        i->second.comp.loadBytes(ss);
++        if (ss.rdbuf()->in_avail() != 0 || ss.eof()) //basic consistency check
++            throw Error("Save state corrupted! Program in inconsistent state!") + " - " + i->first;
++        //compress all other saved states except position "slot" (will process a single position at most)
++        const std::vector<RawBytes>& rb = i->second.rawBytes;
++        std::for_each(rb.begin(), rb.begin() + slot, std::mem_fun_ref(&RawBytes::compress));
++        std::for_each(rb.begin() + slot + 1, rb.end(), std::mem_fun_ref(&RawBytes::compress));
++    }
++
++    //finalize
++    for (CompEntry::const_iterator i = components.begin(); i != components.end(); ++i)
++        i->second.comp.afterLoad();
++}
++
++#endif
++
++bool SaveState::isEmpty(size_t slot) const
++{
++#ifdef SAVE_SATATE_TO_FILE
++    char buff[40];
++    snprintf( buff, 40, SAVE_STATE_NAME, slot);
++    int fd = open(SAVE_STATE_NAME, O_RDONLY);
++    if ( fd != -1) { close(fd); return false; }
++    return true;
++#else
++    if (slot >= SLOT_COUNT) return true;
++    return (components.empty() || !components.begin()->second.rawBytes[slot].dataAvailable());
++#endif
++}
+diff -rupN dosbox-0.74/src/save_state.h dosbox-0.74_opentom/src/save_state.h
+--- dosbox-0.74/src/save_state.h	1970-01-01 01:00:00.000000000 +0100
++++ dosbox-0.74_opentom/src/save_state.h	2014-03-02 07:26:59.000000000 +0100
+@@ -0,0 +1,231 @@
++#ifndef SAVE_STATE_H_INCLUDED
++#define SAVE_STATE_H_INCLUDED
++
++#include <string>
++#include <sstream>
++#include <map>
++#include <algorithm>
++#include <functional>
++#include <vector>
++#include <iterator>
++
++#define SAVE_SATATE_TO_FILE
++#ifdef  SAVE_SATATE_TO_FILE
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#define SAVE_STATE_NAME "dosbox_savestate_%d.data"
++#endif
++
++class SaveState
++{
++public:
++    static SaveState& instance();
++
++    typedef std::string Error;
++    static const size_t SLOT_COUNT = 10; //slot: [0,...,SLOT_COUNT - 1]
++
++    void save   (size_t slot);       //throw (Error)
++    void load   (size_t slot) const; //throw (Error)
++    bool isEmpty(size_t slot) const;
++
++    //initialization: register relevant components on program startup
++    struct Component
++    {
++        virtual ~Component() {}
++
++        virtual void saveBytes(std::ostream& stream) = 0;
++        virtual void loadBytes(std::istream& stream) = 0;
++
++        virtual void beforeSave() {}; //optional: adapt state of VM before starting save or after load
++        virtual void afterLoad()  {}; //
++    };
++
++    void registerComponent(const std::string& uniqueName, Component& comp); //comp must have global lifetime!
++
++private:
++    SaveState() {}
++    SaveState(const SaveState&);
++    SaveState& operator=(const SaveState&);
++
++    class RawBytes
++    {
++    public:
++        RawBytes() : dataExists(false), isCompressed(false) {}
++        void set(const std::string& stream);
++        std::string get() const; //throw (Error)
++        void compress() const;   //throw (Error)
++        bool dataAvailable() const;
++    private:
++        bool dataExists; //determine whether set method (even with empty string) was called
++        mutable bool isCompressed; //design for logical, not binary const
++        mutable std::string bytes; //
++    };
++
++    struct CompData
++    {
++        CompData(Component& cmp) : comp(cmp), rawBytes(SLOT_COUNT) {}
++        Component& comp;
++        std::vector<RawBytes> rawBytes;
++    };
++
++    typedef std::map<std::string, CompData> CompEntry;
++    CompEntry components;
++};
++
++
++//some helper functions
++template <class T>
++void writePOD(std::ostream& stream, const T& data);
++
++template <class T>
++void readPOD(std::istream& stream, T& data);
++
++template <class T>
++void writePODContainer(std::ostream& stream, const T& data);
++
++template <class T>
++void readPODContainer(std::istream& stream, T& data);
++
++void writeString(std::ostream& stream, const std::string& data);
++void readString(std::istream& stream, std::string& data);
++
++
++//Implementation of SaveState::Component for saving POD types only
++class SerializeGlobalPOD : public SaveState::Component
++{
++public:
++    SerializeGlobalPOD(const std::string& compName)
++    {
++        SaveState::instance().registerComponent(compName, *this);
++    }
++
++    template <class T>
++    void registerPOD(T& pod) //register POD for serialization
++    {
++        podRef.push_back(POD(pod));
++    }
++
++protected:
++    virtual void saveBytes(std::ostream& stream)
++    {
++        std::for_each(podRef.begin(), podRef.end(), std::bind1st(WriteGlobalPOD(), &stream));
++    }
++
++    virtual void loadBytes(std::istream& stream)
++    {
++        std::for_each(podRef.begin(), podRef.end(), std::bind1st(ReadGlobalPOD(), &stream));
++    }
++
++private:
++    struct POD
++    {
++        template <class T>
++        POD(T& pod) : address(&pod), size(sizeof(T)) {}
++        void* address;
++        size_t size;
++    };
++
++    struct WriteGlobalPOD : public std::binary_function<std::ostream*, POD, void>
++    {
++        void operator()(std::ostream* stream, const POD& data) const
++        {
++            stream->write(static_cast<const char*>(data.address), data.size);
++        }
++    };
++
++    struct ReadGlobalPOD : public std::binary_function<std::istream*, POD, void>
++    {
++        void operator()(std::istream* stream, const POD& data) const
++        {
++            stream->read(static_cast<char*>(data.address), data.size);
++        }
++    };
++
++    std::vector<POD> podRef;
++};
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++//---------------- inline implementation -------------------------
++template <class T>
++inline
++void writePOD(std::ostream& stream, const T& data)
++{
++    stream.write(reinterpret_cast<const char*>(&data), sizeof(T));
++}
++
++
++template <class T>
++inline
++void readPOD(std::istream& stream, T& data)
++{
++    stream.read(reinterpret_cast<char*>(&data), sizeof(T));
++}
++
++
++template <class T>
++inline
++void writePODContainer(std::ostream& stream, const T& data)
++{
++    const size_t count = data.size();
++    writePOD(stream, count);
++    for (typename T::const_iterator i = data.begin(); i != data.end(); ++i)
++        writePOD(stream, *i);
++}
++
++
++template <class T>
++inline
++void readPODContainer(std::istream& stream, T& data)
++{
++    data.clear();
++    size_t count = 0;
++    readPOD(stream, count);
++    while (count--)
++    {
++        typename T::value_type entry;
++        readPOD(stream, entry);
++        *std::inserter(data, data.end()) = entry;
++    }
++}
++
++
++
++inline
++void writeString(std::ostream& stream, const std::string& data)
++{
++    const size_t stringSize = data.size();
++    writePOD(stream, stringSize);
++    stream.write(data.c_str(), stringSize * sizeof(std::string::value_type));
++}
++
++
++inline
++void readString(std::istream& stream, std::string& data)
++{
++    size_t stringSize = 0;
++    readPOD(stream, stringSize);
++    data.resize(stringSize);
++    stream.read(&data[0], stringSize * sizeof(std::string::value_type));
++}
++
++#endif //SAVE_STATE_H_INCLUDED

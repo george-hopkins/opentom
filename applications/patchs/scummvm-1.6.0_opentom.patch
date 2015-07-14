@@ -1,0 +1,62 @@
+diff -rupN scummvm-1.6.0.original/backends/events/sdl/sdl-events.cpp scummvm-1.6.0/backends/events/sdl/sdl-events.cpp
+--- scummvm-1.6.0.original/backends/events/sdl/sdl-events.cpp	2013-05-26 22:21:47.000000000 +0200
++++ scummvm-1.6.0/backends/events/sdl/sdl-events.cpp	2013-11-16 08:03:43.000000000 +0100
+@@ -54,7 +54,7 @@ SdlEventSource::SdlEventSource()
+ 	// Reset mouse state
+ 	memset(&_km, 0, sizeof(_km));
+ 
+-	int joystick_num = ConfMan.getInt("joystick_num");
++	int joystick_num = -1; /* CLM ConfMan.getInt("joystick_num");
+ 	if (joystick_num > -1) {
+ 		// Initialize SDL joystick subsystem
+ 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) == -1) {
+@@ -67,11 +67,12 @@ SdlEventSource::SdlEventSource()
+ 			_joystick = SDL_JoystickOpen(joystick_num);
+ 		}
+ 	}
++	*/
+ }
+ 
+ SdlEventSource::~SdlEventSource() {
+ 	if (_joystick)
+-		SDL_JoystickClose(_joystick);
++		; // SDL_JoystickClose(_joystick);
+ }
+ 
+ int SdlEventSource::mapKey(SDLKey key, SDLMod mod, Uint16 unicode) {
+diff -rupN scummvm-1.6.0.original/Makefile scummvm-1.6.0/Makefile
+--- scummvm-1.6.0.original/Makefile	2013-05-26 22:21:47.000000000 +0200
++++ scummvm-1.6.0/Makefile	2013-12-07 01:31:45.000000000 +0100
+@@ -60,7 +60,7 @@ endif
+ CAT     ?= cat
+ CP      ?= cp
+ ECHO    ?= printf
+-INSTALL ?= install
++INSTALL ?= install --strip-program=arm-linux-strip
+ MKDIR   ?= mkdir -p
+ RM      ?= rm -f
+ RM_REC  ?= $(RM) -r
+diff -rupN scummvm-1.6.0.original/Makefile.common scummvm-1.6.0/Makefile.common
+--- scummvm-1.6.0.original/Makefile.common	2013-05-26 22:21:47.000000000 +0200
++++ scummvm-1.6.0/Makefile.common	2013-12-07 11:44:24.000000000 +0100
+@@ -6,6 +6,10 @@
+ # The default build target: just build the scummvm executable
+ ######################################################################
+ 
++AR=arm-linux-ar -q 
++AS=arm-linux-as -mfpu=softvfp
++RANLIB=arm-linux-ranlib
++
+ all: $(EXECUTABLE) plugins
+ 
+ 
+diff -rupN scummvm-1.6.0.original/tmp_find_type_with_size.cpp scummvm-1.6.0/tmp_find_type_with_size.cpp
+--- scummvm-1.6.0.original/tmp_find_type_with_size.cpp	1970-01-01 01:00:00.000000000 +0100
++++ scummvm-1.6.0/tmp_find_type_with_size.cpp	2013-12-19 13:13:44.000000000 +0100
+@@ -0,0 +1,6 @@
++typedef short ac__type_sizeof_;
++int main() {
++	static int test_array [1 - 2 * !(((long int) (sizeof (ac__type_sizeof_))) == 2)];
++	test_array [0] = 0;
++	return 0;
++}

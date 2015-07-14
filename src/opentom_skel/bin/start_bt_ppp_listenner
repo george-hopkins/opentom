@@ -1,0 +1,28 @@
+#! /bin/sh
+# Thank's to  Roberto Piola (http://www.ilpiola.it/roberto/tomtom)
+
+start_bt
+
+stty -hup < `tty`
+if [ ! -d /var/lock ]; then
+  mkdir /var/lock
+fi
+while [ true ] ; do
+    if ps w | grep rfcomm | grep listen | grep -v grep | grep -c rfcomm3
+    then
+      rfcomm listen /dev/rfcomm3 3 &
+	if ! echo "use on your computer:\nrfcomm connect /dev/rfcomm3 XX:XX:XX:XX:XX:XX 3\npppd debug nodetach 115200 /dev/rfcomm3" | flmessage -y -s
+	then
+		exit
+	fi
+    fi
+    if rfcomm show | grep rfcomm3 | grep connected
+    then
+        # set the speed and turn off echo on the device
+        stty -echo < /dev/rfcomm3
+        stty -echok < /dev/rfcomm3
+        pppd /dev/rfcomm3 921600 192.168.145.1:192.168.145.2 nodetach
+    fi
+    sleep 2
+done
+

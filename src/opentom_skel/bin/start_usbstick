@@ -1,0 +1,31 @@
+#! /bin/sh
+
+echo removing all modules
+for i in `lsmod | cut -f1 -d" "`; do rmmod $i; done
+
+sleep 1
+i ohci
+i scsi_mod
+i sd_mod
+i usb-storage
+sleep 3
+flmessage -y "Plug your USB device please."
+
+while ! grep sd /proc/partitions; do
+	test=X$test
+	if [ $test == "XXXXXXXXXXXXX" ]; then
+		if flmessage -y "Plug USB device please."
+		then
+			unset test
+		else
+			exit 1
+		fi
+	fi
+	sleep 1
+done
+
+grep sd /proc/partitions | while read  x x x part; do
+	mkdir /mnt/$part
+	mount /dev/$part /mnt/$part
+done
+

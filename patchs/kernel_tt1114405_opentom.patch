@@ -1,0 +1,923 @@
+diff -rupN linux-s3c24xx/drivers/barcelona/gacc/smb365.c linux-s3c24xx.tt1114405/drivers/barcelona/gacc/smb365.c
+--- linux-s3c24xx/drivers/barcelona/gacc/smb365.c	2013-05-31 14:28:26.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/barcelona/gacc/smb365.c	2014-02-14 14:30:52.000000000 +0100
+@@ -25,7 +25,7 @@
+ #include <linux/interrupt.h>
+ /* Include generic accelerometer interface definition	*/
+ #include <barcelona/gacc.h>
+-#include <barcelone/debug.h>
++#include <barcelona/debug.h>
+ #define SMB365_READING_MEM_SIZE	(6) 	/* need to read 6 bytes to get x, y and z	*/
+ #define SMB365_ADDR_READ		(0x80)		/* highest address bit indicates read or write	*/
+ 
+diff -rupN linux-s3c24xx/drivers/barcelona/pwm/pwm.c linux-s3c24xx.tt1114405/drivers/barcelona/pwm/pwm.c
+--- linux-s3c24xx/drivers/barcelona/pwm/pwm.c	2013-05-31 14:28:26.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/barcelona/pwm/pwm.c	2014-01-15 11:04:35.000000000 +0100
+@@ -456,7 +456,7 @@ static int pwm_probe(struct device *dev)
+ 	if (IO_HaveLightSensor())
+ 	{
+ 		PK_DBG("Registering ADC pollfunc\n");
+-		ret = adc_register_poll(photosensor_adc_poll, NULL );
++		ret = adc_register_poll(photosensor_adc_poll, NULL, ADC_LRATE);
+ 		if (ret < 0) {
+ 			PK_ERR("Unable to register ADC pollfunc (%d)\n", ret);
+ 			return ret;
+diff -rupN linux-s3c24xx/drivers/barcelona/ts/ts.c linux-s3c24xx.tt1114405/drivers/barcelona/ts/ts.c
+--- linux-s3c24xx/drivers/barcelona/ts/ts.c	2013-05-31 14:28:26.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/barcelona/ts/ts.c	2013-12-05 11:33:22.000000000 +0100
+@@ -270,7 +270,7 @@ static int ts_ioctl(struct inode *inode,
+ 		break;
+ 	case TS_ENABLE:
+ 		// Enable handling of TS
+-		adc_register_poll(ts_adc_poll, NULL );
++		adc_register_poll(ts_adc_poll, NULL, ADC_RATE_TS ); // CLM
+ 		ret = 0;
+ 		break;
+ 	case TS_DISABLE:
+@@ -319,7 +319,7 @@ static int ts_probe(struct device *dev)
+ 	init_waitqueue_head(&ts_wait);
+ 
+ 	PK_DBG("Registering ADC pollfunc\n");
+-	ret = adc_register_poll(ts_adc_poll, NULL );
++	ret = adc_register_poll(ts_adc_poll, NULL, ADC_RATE_TS ); // CLM
+ 	if (ret != 0) {
+ 		PK_ERR("Unable to register ADC pollfunc (%d)\n", ret);
+ 		return ret;
+diff -rupN linux-s3c24xx/drivers/barcelona/usbmode/s3c24xx_usbmode.c linux-s3c24xx.tt1114405/drivers/barcelona/usbmode/s3c24xx_usbmode.c
+--- linux-s3c24xx/drivers/barcelona/usbmode/s3c24xx_usbmode.c	2013-05-31 14:28:26.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/barcelona/usbmode/s3c24xx_usbmode.c	2013-12-11 13:22:35.000000000 +0100
+@@ -301,6 +301,7 @@ void s3c2443_resurrect_phy(void)
+ 	s3c2443_usbd_enable();
+ 	s3c2443_usbh_enable();
+ }
++EXPORT_SYMBOL(s3c2443_resurrect_phy);
+ 
+ /* Function used when we use poll based USB_HOST_DETECT monitoring */
+ int buspower_changed(struct notifier_block *self, unsigned long power_on,
+diff -rupN linux-s3c24xx/drivers/barcelona/usbmode/usbmode.c linux-s3c24xx.tt1114405/drivers/barcelona/usbmode/usbmode.c
+--- linux-s3c24xx/drivers/barcelona/usbmode/usbmode.c	2013-05-31 14:28:26.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/barcelona/usbmode/usbmode.c	2013-12-12 11:35:55.000000000 +0100
+@@ -61,7 +61,48 @@ static ssize_t usbmode_sysfs_read_mode(s
+ 
+ /* define driver_attr_mode variable this will be used to define the "mode"
+ entry in the sysfs*/
+-static DEVICE_ATTR(mode, S_IWUGO | S_IRUGO, usbmode_sysfs_read_mode, NULL);
++// CLM static DEVICE_ATTR(mode, S_IWUGO | S_IRUGO, usbmode_sysfs_read_mode, NULL);
++// CLM START
++static ssize_t usbmode_sysfs_write_mode (struct device *dev, struct device_attribute *attr, const char *buff, size_t n);
++
++static DEVICE_ATTR(mode, S_IWUGO | S_IRUGO, usbmode_sysfs_read_mode, usbmode_sysfs_write_mode); // CLM
++static ssize_t 
++usbmode_sysfs_write_mode (struct device *dev, struct device_attribute *attr,
++						 const char *buff, size_t n) 
++{
++	struct usbmode_data *data = (struct usbmode_data *)dev->driver_data;
++	if ( data->usb_state == USB_STATE_HOST) {
++		printk("usbmode: Allready in host mode : arbort\n");
++		return n;
++	}
++	if (!strncmp(buff, "host", 4)) {
++		if ( (data->usb_state != USB_STATE_HOST_DETECT) && (data->usb_state != USB_STATE_CLA)) {
++			printk("usbmode: changind to host mode (from idle/device mode)\n");
++			if (data->u_ops->device_detect_to_host_detect(data)) {
++				printk("usbmode: changind to host mode (ERROR)\n");
++			}
++			return n;
++		}
++		data->usb_state = USB_STATE_HOST; // whe are in MODE_CLA then
++		printk("usbmode: changind to host mode\n");
++		if (data->u_ops->host_detect_to_host(data)) {
++			printk("usbmode: changind to host mode (ERROR)\n");
++		}
++	}
++/*	if (!strncmp(buff, "device", 6)) {
++		printk("usbmode: changind to device mode (do nothing)\n");
++	}*/
++	return n;
++	
++/*	ret = sscanf (buf, "%u", &freq);
++	if (ret != 1)
++		return -EINVAL;
++
++	cpufreq_set(freq, policy->cpu);
++
++	return count; */
++}
++// CLM END
+ 
+ /*==== START change listener data code */
+ /* data members for the change listener callback */
+diff -rupN linux-s3c24xx/drivers/char/mep/driver.c linux-s3c24xx.tt1114405/drivers/char/mep/driver.c
+--- linux-s3c24xx/drivers/char/mep/driver.c	2013-05-31 14:28:31.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/char/mep/driver.c	2014-02-14 10:39:37.000000000 +0100
+@@ -155,7 +155,7 @@ mep_bus_probe(struct device *dev)
+ 	}
+ 	
+ #ifdef MEP_CONFIG_POLLED_MODE
+-	ret = adc_register_poll(mep_bus_poll, NULL );
++	ret = adc_register_poll(mep_bus_poll, NULL, ADC_LRATE );
+ 	if (ret) {
+ 		dev_err(dev, "cannot register polling function\n");
+ 		goto error;
+diff -rupN linux-s3c24xx/drivers/usb/gadget/ether.c linux-s3c24xx.tt1114405/drivers/usb/gadget/ether.c
+--- linux-s3c24xx/drivers/usb/gadget/ether.c	2013-05-31 14:29:28.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/usb/gadget/ether.c	2013-12-05 13:35:21.000000000 +0100
+@@ -274,6 +274,12 @@ MODULE_PARM_DESC(host_addr, "Host Ethern
+ #define DEV_CONFIG_CDC
+ #endif
+ 
++// CLM START
++#ifdef CONFIG_USB_GADGET_S3C_FS
++#define DEV_CONFIG_CDC
++#endif
++// CLM END
++
+ /*-------------------------------------------------------------------------*/
+ 
+ /* "main" config is either CDC, or its simple subset */
+@@ -2227,7 +2233,7 @@ eth_bind (struct usb_gadget *gadget)
+ 		device_desc.bcdDevice = __constant_cpu_to_le16 (0x0210);
+ 	} else if (gadget_is_pxa27x(gadget)) {
+ 		device_desc.bcdDevice = __constant_cpu_to_le16 (0x0211);
+-	} else if (gadget_is_s3c2410(gadget)) {
++	} else if (gadget_is_s3c24xx(gadget)) { // CLM
+ 		device_desc.bcdDevice = __constant_cpu_to_le16 (0x0212);
+ 	} else if (gadget_is_at91(gadget)) {
+ 		device_desc.bcdDevice = __constant_cpu_to_le16 (0x0213);
+diff -rupN linux-s3c24xx/drivers/usb/gadget/file_storage.c linux-s3c24xx.tt1114405/drivers/usb/gadget/file_storage.c
+--- linux-s3c24xx/drivers/usb/gadget/file_storage.c	2013-05-31 14:29:28.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/usb/gadget/file_storage.c	2013-12-05 16:59:15.000000000 +0100
+@@ -3747,7 +3747,7 @@ static int __init check_parameters(struc
+ 			mod_data.release = 0x0310;
+ 		else if (gadget_is_pxa27x(fsg->gadget))
+ 			mod_data.release = 0x0311;
+-		else if (gadget_is_s3c2410(gadget))
++		else if (gadget_is_s3c24xx(fsg->gadget)) // CLM
+ 			mod_data.release = 0x0312;
+ 		else if (gadget_is_at91(fsg->gadget))
+ 			mod_data.release = 0x0313;
+diff -rupN linux-s3c24xx/drivers/usb/gadget/gadget_chips.h linux-s3c24xx.tt1114405/drivers/usb/gadget/gadget_chips.h
+--- linux-s3c24xx/drivers/usb/gadget/gadget_chips.h	2013-05-31 14:29:28.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/usb/gadget/gadget_chips.h	2013-12-05 11:37:34.000000000 +0100
+@@ -74,11 +74,13 @@
+ #define	gadget_is_pxa27x(g)	0
+ #endif
+ 
+-#ifdef CONFIG_USB_GADGET_S3C
+-#define gadget_is_s3c24xx(g)    (!strcmp("s3c-udc", (g)->name) || !strcmp("s3c-udc-hs", (g)->name))
++// CLM START
++#ifdef CONFIG_USB_GADGET_S3C_FS
++#define gadget_is_s3c24xx(g)    !strcmp("s3c24xx_udc", (g)->name)
+ #else
+ #define gadget_is_s3c24xx(g)    0
+ #endif
++// CLM END
+ 
+ #ifdef CONFIG_USB_GADGET_AT91
+ #define gadget_is_at91(g)	!strcmp("at91_udc", (g)->name)
+diff -rupN linux-s3c24xx/drivers/usb/gadget/Makefile linux-s3c24xx.tt1114405/drivers/usb/gadget/Makefile
+--- linux-s3c24xx/drivers/usb/gadget/Makefile	2013-05-31 14:29:28.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/usb/gadget/Makefile	2013-12-10 12:52:26.000000000 +0100
+@@ -7,7 +7,8 @@ obj-$(CONFIG_USB_DUMMY_HCD)	+= dummy_hcd
+ obj-$(CONFIG_USB_NET2280)	+= net2280.o
+ obj-$(CONFIG_USB_PXA2XX)	+= pxa2xx_udc.o
+ obj-$(CONFIG_USB_GADGET_S3C_HS)	+= s3c-udc-hs.o
+-obj-$(CONFIG_USB_GADGET_S3C_FS)	+= s3c-udc-fs.o
++# CLM obj-$(CONFIG_USB_GADGET_S3C_FS)	+= s3c-udc-fs.o 
++#obj-$(CONFIG_USB_GADGET_S3C_FS)	+= s3c24xx_udc.o # CLM à commenter pour en faire un module
+ obj-$(CONFIG_USB_GOKU)		+= goku_udc.o
+ obj-$(CONFIG_USB_OMAP)		+= omap_udc.o
+ obj-$(CONFIG_USB_LH7A40X)	+= lh7a40x_udc.o
+@@ -31,4 +32,5 @@ obj-$(CONFIG_USB_ETH)		+= g_ether.o
+ obj-$(CONFIG_USB_GADGETFS)	+= gadgetfs.o
+ obj-$(CONFIG_USB_FILE_STORAGE)	+= g_file_storage.o
+ obj-$(CONFIG_USB_G_SERIAL)	+= g_serial.o
++obj-m				+= s3c24xx_udc.o # CLM 
+ 
+diff -rupN linux-s3c24xx/drivers/usb/gadget/s3c24xx_udc.c linux-s3c24xx.tt1114405/drivers/usb/gadget/s3c24xx_udc.c
+--- linux-s3c24xx/drivers/usb/gadget/s3c24xx_udc.c	2013-05-31 14:29:28.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/usb/gadget/s3c24xx_udc.c	2014-01-07 13:09:28.000000000 +0100
+@@ -24,7 +24,13 @@
+  *
+  */
+ 
++
+ #include "s3c24xx_udc.h"
++// CLM START
++#ifdef KBUILD_MODNAME
++s3c24xx_reg_t s3c24xx_misccr   = S3C2410_MISCCR;
++#endif
++// CLM END
+ 
+ #if CONFIG_MACH_TOMTOMGO // TO BE REMOVED FROM HERE!
+ 
+@@ -120,25 +126,25 @@ static void reconfig_usbd(void);
+ 
+ static __inline__ u32 usb_read(void* port, u8 ind)
+ {
+-	__raw_writel(ind, S3C2410_UDC_INDEX_REG);
++	__raw_writel(ind, S3C_UDC_INDEX_REG);
+ 	return __raw_readl(port);
+ }
+ 
+ static __inline__ void usb_write(u32 val, void* port, u8 ind)
+ {
+-	__raw_writel(ind, S3C2410_UDC_INDEX_REG);
++	__raw_writel(ind, S3C_UDC_INDEX_REG);
+ 	__raw_writel(val, port);
+ }
+ 
+ static __inline__ void usb_set(u32 val, void* port, u8 ind)
+ {
+-	__raw_writel(ind, S3C2410_UDC_INDEX_REG);
++	__raw_writel(ind, S3C_UDC_INDEX_REG);
+ 	__raw_writel(__raw_readl(port) | val, port);
+ }
+ 
+ static __inline__ void usb_clear(u32 val, void* port, u8 ind)
+ {
+-	__raw_writel(ind, S3C2410_UDC_INDEX_REG);
++	__raw_writel(ind, S3C_UDC_INDEX_REG);
+ 	__raw_writel(__raw_readl(port) & ~val, port);
+ }
+ 
+@@ -315,20 +321,20 @@ static int udc_enable(struct elfin_udc *
+ 	clk_enable(udc_clock);
+ 
+ 	val = (1<<0);
+-	usb_write(val, S3C2410_UDC_EP_INT_REG, 0);	//clear
++	usb_write(val, S3C_UDC_EP_INT_REG, 0);	//clear
+ 	val = (1<<2);   //UD_USBINTE_RESET
+-	usb_write(val, S3C2410_UDC_USB_INT_REG, 0);	//clear
++	usb_write(val, S3C_UDC_USB_INT_REG, 0);	//clear
+ 
+ 	/* Set MAXP values for each */
+-	usb_write(dev->ep[0].ep.maxpacket>>3, S3C2410_UDC_MAXP_REG, 0);
++	usb_write(dev->ep[0].ep.maxpacket>>3, S3C_UDC_MAXP_REG, 0);
+ 
+-	usb_write(dev->ep[1].ep.maxpacket>>3, S3C2410_UDC_MAXP_REG, 1);
++	usb_write(dev->ep[1].ep.maxpacket>>3, S3C_UDC_MAXP_REG, 1);
+ 
+-	usb_write(dev->ep[2].ep.maxpacket>>3, S3C2410_UDC_MAXP_REG, 2);
++	usb_write(dev->ep[2].ep.maxpacket>>3, S3C_UDC_MAXP_REG, 2);
+ 
+-	usb_write(dev->ep[3].ep.maxpacket>>3, S3C2410_UDC_MAXP_REG, 3);
++	usb_write(dev->ep[3].ep.maxpacket>>3, S3C_UDC_MAXP_REG, 3);
+ 
+-	usb_write(dev->ep[4].ep.maxpacket>>3, S3C2410_UDC_MAXP_REG, 4);
++	usb_write(dev->ep[4].ep.maxpacket>>3, S3C_UDC_MAXP_REG, 4);
+ 
+ 	return 0;
+ }
+@@ -454,15 +460,15 @@ static int write_fifo(struct elfin_ep *e
+ 	if (is_last) {
+ 		if(!ep_index(ep)){	// EP0 must not come here
+ 			BUG();
+-			//usb_set(S3C2410_UDC_EP0_CSR_IPKRDY | S3C2410_UDC_EP0_CSR_DE, 
+-			//		S3C2410_UDC_EP0_CSR_REG, 0);
++			//usb_set(S3C_UDC_EP0_CSR_IPKRDY | S3C_UDC_EP0_CSR_DE, 
++			//		S3C_UDC_EP0_CSR_REG, 0);
+ 		}else{
+-			usb_set(S3C2410_UDC_ICSR1_PKTRDY, ep->csr1, ep_index(ep));
++			usb_set(S3C_UDC_ICSR1_PKTRDY, ep->csr1, ep_index(ep));
+ 		}
+ 		done(ep, req, 0);
+ 		return 1;
+ 	} else{
+-		usb_set(S3C2410_UDC_ICSR1_PKTRDY, ep->csr1, ep_index(ep));
++		usb_set(S3C_UDC_ICSR1_PKTRDY, ep->csr1, ep_index(ep));
+ 	}
+ 
+ 	DEBUG_EP0("%s: wrote %s %d bytes%s%s %d left %p\n", __FUNCTION__,
+@@ -485,7 +491,7 @@ static int read_fifo(struct elfin_ep *ep
+ 
+ 	/* make sure there's a packet in the FIFO. */
+ 	csr = usb_read(ep->csr1, ep_index(ep));
+-	if (!(csr & S3C2410_UDC_OCSR1_PKTRDY)) {
++	if (!(csr & S3C_UDC_OCSR1_PKTRDY)) {
+ 		DPRINTK("%s: Packet NOT ready!\n", __FUNCTION__);
+ 		return -EINVAL;
+ 	}
+@@ -495,7 +501,7 @@ static int read_fifo(struct elfin_ep *ep
+ 	bufferspace = req->req.length - req->req.actual;
+ 
+ 	/* read all bytes from this packet */
+-	count = (( (usb_read(S3C2410_UDC_OUT_FIFO_CNT2_REG, ep_index(ep)) & 0xff ) << 8) | (usb_read(S3C2410_UDC_OUT_FIFO_CNT1_REG, ep_index(ep)) & 0xff));
++	count = (( (usb_read(S3C_UDC_OUT_FIFO_CNT2_REG, ep_index(ep)) & 0xff ) << 8) | (usb_read(S3C_UDC_OUT_FIFO_CNT1_REG, ep_index(ep)) & 0xff));
+ 	req->req.actual += min(count, bufferspace);
+ 
+ 	is_short = (count < ep->ep.maxpacket);
+@@ -520,7 +526,7 @@ static int read_fifo(struct elfin_ep *ep
+ 		}
+ 	}
+ 
+-	usb_clear(S3C2410_UDC_OCSR1_PKTRDY, ep->csr1, ep_index(ep));
++	usb_clear(S3C_UDC_OCSR1_PKTRDY, ep->csr1, ep_index(ep));
+ 
+ 	/* completion */
+ 	if (is_short || req->req.actual == req->req.length) {
+@@ -590,9 +596,9 @@ static void elfin_in_epn(struct elfin_ud
+ 	csr = usb_read(ep->csr1, ep_index(ep));
+ 	DPRINTK("%s: %d, csr %x\n", __FUNCTION__, ep_idx, csr);
+ 
+-	if (csr & S3C2410_UDC_ICSR1_SENTSTL) {
+-		printk("S3C2410_UDC_ICSR1_SENTSTL\n");
+-		usb_set(S3C2410_UDC_ICSR1_SENTSTL /*| S3C2410_UDC_ICSR1_SENDSTL */ ,
++	if (csr & S3C_UDC_ICSR1_SENTSTL) {
++		printk("S3C_UDC_ICSR1_SENTSTL\n");
++		usb_set(S3C_UDC_ICSR1_SENTSTL /*| S3C_UDC_ICSR1_SENDSTL */ ,
+ 			ep->csr1, ep_index(ep));
+ 		return;
+ 	}
+@@ -631,15 +637,15 @@ static void elfin_out_epn(struct elfin_u
+ 		csr = usb_read(ep->csr1, ep_index(ep));
+ 
+ 		while ((csr = usb_read(ep->csr1, ep_index(ep))) 
+-				& (S3C2410_UDC_OCSR1_PKTRDY | S3C2410_UDC_OCSR1_SENTSTL)) {
++				& (S3C_UDC_OCSR1_PKTRDY | S3C_UDC_OCSR1_SENTSTL)) {
+ 
+ 			DPRINTK("%s: %x\n", __FUNCTION__, csr);
+ 
+-			if (csr & S3C2410_UDC_OCSR1_SENTSTL) {
++			if (csr & S3C_UDC_OCSR1_SENTSTL) {
+ 				DPRINTK("%s: stall sent, flush fifo\n",
+ 				      __FUNCTION__);
+ 			/* usb_set(USB_OUT_CSR1_FIFO_FLUSH, ep->csr1, ep_index(ep)); */
+-			} else if (csr & S3C2410_UDC_OCSR1_PKTRDY) {
++			} else if (csr & S3C_UDC_OCSR1_PKTRDY) {
+ 				if (list_empty(&ep->queue))
+ 					req = 0;
+ 				else
+@@ -693,67 +699,67 @@ static void reconfig_usbd(void)
+ {
+ 	u32 val;
+ 
+-	usb_write(0, S3C2410_UDC_PWR_REG, 0);
++	usb_write(0, S3C_UDC_PWR_REG, 0);
+ 
+ 	/* EP0 */
+ 	val = EP0_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 0);
++	usb_write(val, S3C_UDC_MAXP_REG, 0);
+ 
+ 	val = (1<<6)|(1<<7);	//EP0_CSR_SOPKTRDY | EP0_CSR_SSE;
+-	usb_write(val, S3C2410_UDC_EP0_CSR_REG, 0);
++	usb_write(val, S3C_UDC_EP0_CSR_REG, 0);
+ 
+ 	/* EP3 -- INT */
+ 	val = EP_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 3);
++	usb_write(val, S3C_UDC_MAXP_REG, 3);
+ 
+ 	val = (1<<6)|(1<<3);	//UD_ICSR1_FFLUSH | UD_ICSR1_CLRDT;
+-	usb_write(val, S3C2410_UDC_IN_CSR1_REG, 3);
++	usb_write(val, S3C_UDC_IN_CSR1_REG, 3);
+ 
+ 	val = (1<<5)|(1<<4);	//UD_ICSR2_MODEIN | UD_ICSR2_DMAIEN; 
+-	usb_write(val, S3C2410_UDC_IN_CSR2_REG, 3);
++	usb_write(val, S3C_UDC_IN_CSR2_REG, 3);
+ 
+ 	/* EP2 -- IN */
+ 	val = EP_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 2);
++	usb_write(val, S3C_UDC_MAXP_REG, 2);
+ 
+ 	val = (1<<6)|(1<<3);	//UD_ICSR1_FFLUSH | UD_ICSR1_CLRDT;
+-	usb_write(val, S3C2410_UDC_IN_CSR1_REG, 2);
++	usb_write(val, S3C_UDC_IN_CSR1_REG, 2);
+ 
+ 	val = (1<<5)|(1<<4);	//UD_ICSR2_MODEIN | UD_ICSR2_DMAIEN; 
+-	usb_write(val, S3C2410_UDC_IN_CSR2_REG, 2);
++	usb_write(val, S3C_UDC_IN_CSR2_REG, 2);
+ 
+ 	/* EP1 -- OUT */
+ 	val = EP_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 1);
++	usb_write(val, S3C_UDC_MAXP_REG, 1);
+ 
+ 	val = (1<<6)|(1<<3);	//UD_ICSR1_FFLUSH | UD_ICSR1_CLRDT;
+-	usb_write(val, S3C2410_UDC_IN_CSR1_REG, 1);
++	usb_write(val, S3C_UDC_IN_CSR1_REG, 1);
+ 
+-	usb_write(0, S3C2410_UDC_IN_CSR2_REG, 1);	// output mode
++	usb_write(0, S3C_UDC_IN_CSR2_REG, 1);	// output mode
+ 
+ 	val = (1<<4)|(1<<7);	//UD_OCSR1_FFLUSH | UD_OCSR1_CLRDT;
+-	usb_write(val, S3C2410_UDC_OUT_CSR1_REG, 1);
++	usb_write(val, S3C_UDC_OUT_CSR1_REG, 1);
+ 
+ 	val = (1<<5);		//UD_OCSR2_DMAIEN;
+-	usb_write(val, S3C2410_UDC_OUT_CSR2_REG, 1);
++	usb_write(val, S3C_UDC_OUT_CSR2_REG, 1);
+ 
+ 	val = EP_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 3);
++	usb_write(val, S3C_UDC_MAXP_REG, 3);
+ 
+ 	val = EP_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 2);
++	usb_write(val, S3C_UDC_MAXP_REG, 2);
+ 
+ 	val = EP_FIFO_SIZE>>3;
+-	usb_write(val, S3C2410_UDC_MAXP_REG, 1);
++	usb_write(val, S3C_UDC_MAXP_REG, 1);
+ 
+ 	//val = (1<<0)|(1<<1)|(1<<2);	//UD_INTE_EP0 | UD_INTE_EP2 | UD_INTE_EP1;
+ 	val = (1<<0)|(1<<1)|(1<<2)|(1<<3); //UD_INTE_EP0 | UD_INTE_EP2 | UD_INTE_EP1;
+-	usb_write(val, S3C2410_UDC_EP_INT_EN_REG, 0);
+-	usb_write(val & ~(1<<0), S3C2410_UDC_EP_INT_REG, 0);	//clear
++	usb_write(val, S3C_UDC_EP_INT_EN_REG, 0);
++	usb_write(val & ~(1<<0), S3C_UDC_EP_INT_REG, 0);	//clear
+ 
+ 	val = (1<<0)|(1<<2);	//UD_USBINTE_RESET | UD_USBINTE_SUSPND;
+-	usb_write(val, S3C2410_UDC_USB_INT_EN_REG, 0);
+-	usb_write(val, S3C2410_UDC_USB_INT_REG, 0);	//clear
++	usb_write(val, S3C_UDC_USB_INT_EN_REG, 0);
++	usb_write(val, S3C_UDC_USB_INT_REG, 0);	//clear
+ }
+ 
+ /*
+@@ -768,12 +774,12 @@ static irqreturn_t elfin_udc_irq(int irq
+ 	u32 intr_out, intr_in;
+ 	u32 intr_int;
+ 
+-	intr_out = intr_in = usb_read(S3C2410_UDC_EP_INT_REG, 0);
+-	intr_int = usb_read(S3C2410_UDC_USB_INT_REG, 0);
++	intr_out = intr_in = usb_read(S3C_UDC_EP_INT_REG, 0);
++	intr_int = usb_read(S3C_UDC_USB_INT_REG, 0);
+ 
+ 	/* We have only 3 usable eps now 	-jassi */
+-	intr_in &= (S3C2410_UDC_INT_EP3 | S3C2410_UDC_INT_EP2 | S3C2410_UDC_INT_EP0);
+-	intr_out &= S3C2410_UDC_INT_EP1;
++	intr_in &= (S3C_UDC_INT_EP3 | S3C_UDC_INT_EP2 | S3C_UDC_INT_EP0);
++	intr_out &= S3C_UDC_INT_EP1;
+ 
+ 	if (!intr_out && !intr_in && !intr_int){
+ 		spin_unlock(&dev->lock);
+@@ -787,39 +793,39 @@ static irqreturn_t elfin_udc_irq(int irq
+ 	DPRINTK("intr_int = %x\n", intr_int);
+ 
+ 	if (intr_in) {
+-		if (intr_in & S3C2410_UDC_INT_EP0){
++		if (intr_in & S3C_UDC_INT_EP0){
+ 			//printk("EP0 ");
+-			usb_write(S3C2410_UDC_INT_EP0, S3C2410_UDC_EP_INT_REG, 0);
++			usb_write(S3C_UDC_INT_EP0, S3C_UDC_EP_INT_REG, 0);
+ 			elfin_handle_ep0(dev);
+-		}else if (intr_in & S3C2410_UDC_INT_EP2){
++		}else if (intr_in & S3C_UDC_INT_EP2){
+ 			//printk("EP2 ");
+-			usb_write(S3C2410_UDC_INT_EP2, S3C2410_UDC_EP_INT_REG, 2);
++			usb_write(S3C_UDC_INT_EP2, S3C_UDC_EP_INT_REG, 2);
+ 			elfin_in_epn(dev, 2);	// hard coded !!!   -jassi
+ 		}else{
+ 			//printk("EP3 ");
+-			usb_write(S3C2410_UDC_INT_EP3, S3C2410_UDC_EP_INT_REG, 3);
++			usb_write(S3C_UDC_INT_EP3, S3C_UDC_EP_INT_REG, 3);
+ 			elfin_in_epn(dev, 3);	// hard coded !!!   -jassi
+ 		}
+ 	}
+ 
+ 	if (intr_out) {
+ 		//printk("EP1 ");
+-		usb_write(S3C2410_UDC_INT_EP1, S3C2410_UDC_EP_INT_REG, 1);
++		usb_write(S3C_UDC_INT_EP1, S3C_UDC_EP_INT_REG, 1);
+ 		elfin_out_epn(dev, 1);		// hard coded !!!   -jassi
+ 	}
+ 
+ 	if (intr_int) {
+-		if (intr_int & S3C2410_UDC_USBINT_RESET) {
++		if (intr_int & S3C_UDC_USBINT_RESET) {
+ 			reconfig_usbd();
+ 			dev->gadget.speed = USB_SPEED_FULL;
+ 			dev->ep0state = WAIT_FOR_SETUP;
+-			usb_write(S3C2410_UDC_USBINT_RESET, S3C2410_UDC_USB_INT_REG, 0);
++			usb_write(S3C_UDC_USBINT_RESET, S3C_UDC_USB_INT_REG, 0);
+ 			DEBUG_SETUP("RESET");
+ 		}
+ 
+-		usb_write(intr_int, S3C2410_UDC_USB_INT_REG, 0);
++		usb_write(intr_int, S3C_UDC_USB_INT_REG, 0);
+ 
+-		if (intr_int & S3C2410_UDC_USBINT_RESUME) {
++		if (intr_int & S3C_UDC_USBINT_RESUME) {
+ 			DEBUG_SETUP("USB resume\n");
+ 
+ 			if (dev->gadget.speed != USB_SPEED_UNKNOWN
+@@ -829,7 +835,7 @@ static irqreturn_t elfin_udc_irq(int irq
+ 			}
+ 		}
+ 
+-		if (intr_int & S3C2410_UDC_USBINT_SUSPEND) {
++		if (intr_int & S3C_UDC_USBINT_SUSPEND) {
+ 			if (dev->gadget.speed !=
+ 				   USB_SPEED_UNKNOWN && dev->driver
+ 				   && dev->driver->suspend) {
+@@ -882,7 +888,7 @@ static int elfin_ep_enable(struct usb_ep
+ 
+ 	dev = ep->dev;
+ 	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN) {
+-		DPRINTK("%s, bogus device state\n", __FUNCTION__);
++		DPRINTK("%s, bogus device state (%p)\n", __FUNCTION__, dev->driver);
+ 		return -ESHUTDOWN;
+ 	}
+ 
+@@ -1034,7 +1040,7 @@ static int elfin_queue(struct usb_ep *_e
+ 			req = 0;
+ 		} else if (ep_is_in(ep)) {
+ 			csr = usb_read(ep->csr1, ep_index(ep));
+-			if(!(csr & S3C2410_UDC_ICSR1_PKTRDY)&&(write_fifo(ep, req) == 1))
++			if(!(csr & S3C_UDC_ICSR1_PKTRDY)&&(write_fifo(ep, req) == 1))
+ 				req = 0;
+ 		} else {
+ 			csr = usb_read(ep->csr1, ep_index(ep));
+@@ -1113,9 +1119,9 @@ static int elfin_fifo_status(struct usb_
+ 
+ 	csr = usb_read(ep->csr1, ep_index(ep));
+ 	if (ep->dev->gadget.speed != USB_SPEED_UNKNOWN ||
+-	    csr & S3C2410_UDC_OCSR1_PKTRDY) {
+-		count = ( ((usb_read(S3C2410_UDC_OUT_FIFO_CNT2_REG, ep_index(ep)) & 0xff) << 8) 
+-			| (usb_read(S3C2410_UDC_OUT_FIFO_CNT1_REG, ep_index(ep)) & 0xff));
++	    csr & S3C_UDC_OCSR1_PKTRDY) {
++		count = ( ((usb_read(S3C_UDC_OUT_FIFO_CNT2_REG, ep_index(ep)) & 0xff) << 8) 
++			| (usb_read(S3C_UDC_OUT_FIFO_CNT1_REG, ep_index(ep)) & 0xff));
+ 	}
+ 
+ 	return count;
+@@ -1180,8 +1186,8 @@ static __inline__ int elfin_fifo_read(st
+ 	int count;
+ 	void* fifo = ep->fifo;
+ 
+-	count = ( ((usb_read(S3C2410_UDC_OUT_FIFO_CNT2_REG, ep_index(ep)) & 0xff ) << 8) 
+-			| (usb_read(S3C2410_UDC_OUT_FIFO_CNT1_REG, ep_index(ep)) & 0xff) );
++	count = ( ((usb_read(S3C_UDC_OUT_FIFO_CNT2_REG, ep_index(ep)) & 0xff ) << 8) 
++			| (usb_read(S3C_UDC_OUT_FIFO_CNT1_REG, ep_index(ep)) & 0xff) );
+ 
+ 	if (count != max){
+ 		printk("count=%d max=%d\n", count, max);
+@@ -1212,8 +1218,8 @@ static int read_fifo_ep0(struct elfin_ep
+ 
+ 	DEBUG_EP0("%s\n", __FUNCTION__);
+ 
+-	csr = usb_read(S3C2410_UDC_EP0_CSR_REG, ep_index(ep));
+-	if (!(csr & S3C2410_UDC_OCSR1_PKTRDY))
++	csr = usb_read(S3C_UDC_EP0_CSR_REG, ep_index(ep));
++	if (!(csr & S3C_UDC_OCSR1_PKTRDY))
+ 		return 0;
+ 
+ 	buf = req->req.buf + req->req.actual;
+@@ -1221,7 +1227,7 @@ static int read_fifo_ep0(struct elfin_ep
+ 	bufferspace = req->req.length - req->req.actual;
+ 
+ 	/* read all bytes from this packet */
+-	if (likely(csr & S3C2410_UDC_EP0_CSR_OPKRDY)) {
++	if (likely(csr & S3C_UDC_EP0_CSR_OPKRDY)) {
+ 		count = 8;	// I do !!!
+ 		req->req.actual += min(count, bufferspace);
+ 	} else	{		// zlp 
+@@ -1269,16 +1275,16 @@ static void udc_set_address(struct elfin
+ {
+ 	DEBUG_EP0("%s: %d\n", __FUNCTION__, address);
+ 	dev->usb_address = address;
+-	usb_set((1<<7) | (address & 0x7f), S3C2410_UDC_FUNC_ADDR_REG, 0);
++	usb_set((1<<7) | (address & 0x7f), S3C_UDC_FUNC_ADDR_REG, 0);
+ }
+ 
+ /*
+  * DATA_STATE_RECV (OUT_PKT_RDY)
+  *      - if error
+- *              set S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE | S3C2410_UDC_EP0_CSR_SENDSTL bits
++ *              set S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE | S3C_UDC_EP0_CSR_SENDSTL bits
+  *      - else
+- *              set S3C2410_UDC_EP0_CSR_SOPKTRDY bit
+- 				if last set S3C2410_UDC_EP0_CSR_DE bit
++ *              set S3C_UDC_EP0_CSR_SOPKTRDY bit
++ 				if last set S3C_UDC_EP0_CSR_DE bit
+  */
+ static int first_time = 1;
+ 
+@@ -1294,8 +1300,8 @@ static void elfin_ep0_read(struct elfin_
+ 		BUG();	//logic ensures		-jassi
+ 
+ 	if(req->req.length == 0) {
+-		usb_set((S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE),
+-				 S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set((S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE),
++				 S3C_UDC_EP0_CSR_REG, 0);
+ 		dev->ep0state = WAIT_FOR_SETUP;
+ 		first_time = 1;
+ 		done(ep, req, 0);
+@@ -1303,21 +1309,21 @@ static void elfin_ep0_read(struct elfin_
+ 	}
+ 
+ 	if(!req->req.actual && first_time){	//for SetUp packet
+-		usb_set(S3C2410_UDC_EP0_CSR_SOPKTRDY, S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set(S3C_UDC_EP0_CSR_SOPKTRDY, S3C_UDC_EP0_CSR_REG, 0);
+ 		first_time = 0;
+ 		return;
+ 	}
+ 
+ 	ret = read_fifo_ep0(ep, req);
+ 	if (ret) {
+-		usb_set((S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE),
+-					 S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set((S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE),
++					 S3C_UDC_EP0_CSR_REG, 0);
+ 		dev->ep0state = WAIT_FOR_SETUP;
+ 		first_time = 1;
+ 		done(ep, req, 0);
+ 		return;
+ 	}
+-	usb_set(S3C2410_UDC_EP0_CSR_SOPKTRDY, S3C2410_UDC_EP0_CSR_REG, 0);
++	usb_set(S3C_UDC_EP0_CSR_SOPKTRDY, S3C_UDC_EP0_CSR_REG, 0);
+ }
+ 
+ /*
+@@ -1342,8 +1348,8 @@ static int elfin_ep0_write(struct elfin_
+ 	}
+ 
+ 	if (req->req.length == 0) {	
+-		usb_set((S3C2410_UDC_EP0_CSR_IPKRDY | S3C2410_UDC_EP0_CSR_DE),
+-				 S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set((S3C_UDC_EP0_CSR_IPKRDY | S3C_UDC_EP0_CSR_DE),
++				 S3C_UDC_EP0_CSR_REG, 0);
+ 		dev->ep0state = WAIT_FOR_SETUP;
+ 	   	done(ep, req, 0);
+ 		return 1;
+@@ -1361,12 +1367,12 @@ static int elfin_ep0_write(struct elfin_
+ 		/* Last packet */
+ 		DEBUG_EP0("%s: finished, waiting for status\n", __FUNCTION__);
+ 
+-		usb_set((S3C2410_UDC_EP0_CSR_IPKRDY | S3C2410_UDC_EP0_CSR_DE), 
+-				S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set((S3C_UDC_EP0_CSR_IPKRDY | S3C_UDC_EP0_CSR_DE), 
++				S3C_UDC_EP0_CSR_REG, 0);
+ 		dev->ep0state = WAIT_FOR_SETUP;
+ 	} else {
+ 		DEBUG_EP0("%s: not finished\n", __FUNCTION__);
+-		usb_set(S3C2410_UDC_EP0_CSR_IPKRDY, S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set(S3C_UDC_EP0_CSR_IPKRDY, S3C_UDC_EP0_CSR_REG, 0);
+ 	}
+ 
+ 	if (need_zlp) {
+@@ -1419,17 +1425,17 @@ static int elfin_handle_get_status(struc
+ 		switch (qep->ep_type) {
+ 		case ep_control:
+ 			val =
+-			    (usb_read(qep->csr1, ep_index(qep)) & S3C2410_UDC_EP0_CSR_SENDSTL) ==
+-			    S3C2410_UDC_EP0_CSR_SENDSTL;
++			    (usb_read(qep->csr1, ep_index(qep)) & S3C_UDC_EP0_CSR_SENDSTL) ==
++			    S3C_UDC_EP0_CSR_SENDSTL;
+ 			break;
+ 		case ep_bulk_in:
+ 		case ep_interrupt:
+ 			val = (usb_read(qep->csr1, ep_index(qep))
+-				 & S3C2410_UDC_ICSR1_SENDSTL) == S3C2410_UDC_ICSR1_SENDSTL;
++				 & S3C_UDC_ICSR1_SENDSTL) == S3C_UDC_ICSR1_SENDSTL;
+ 			break;
+ 		case ep_bulk_out:
+ 			val = (usb_read(qep->csr1, ep_index(qep)) 
+-				& S3C2410_UDC_OCSR1_SENDSTL) == S3C2410_UDC_OCSR1_SENDSTL;
++				& S3C_UDC_OCSR1_SENDSTL) == S3C_UDC_OCSR1_SENDSTL;
+ 			break;
+ 		}
+ 
+@@ -1443,12 +1449,12 @@ static int elfin_handle_get_status(struc
+ 	}
+ 
+ 	/* Clear "out packet ready" */
+-	usb_set((S3C2410_UDC_EP0_CSR_SOPKTRDY), S3C2410_UDC_EP0_CSR_REG, 0);
++	usb_set((S3C_UDC_EP0_CSR_SOPKTRDY), S3C_UDC_EP0_CSR_REG, 0);
+ 	/* Put status to FIFO */
+ 	elfin_fifo_write(ep0, (u8 *) & val, sizeof(val));
+ 	/* Issue "In packet ready" */
+-	usb_set((S3C2410_UDC_EP0_CSR_IPKRDY | S3C2410_UDC_EP0_CSR_DE),
+-			 S3C2410_UDC_EP0_CSR_REG, 0);
++	usb_set((S3C_UDC_EP0_CSR_IPKRDY | S3C_UDC_EP0_CSR_DE),
++			 S3C_UDC_EP0_CSR_REG, 0);
+ 
+ 	return 0;
+ }
+@@ -1459,9 +1465,9 @@ static int elfin_handle_get_status(struc
+  *      - read data packet from EP0 FIFO
+  *      - decode command
+  *      - if error
+- *              set S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE | S3C2410_UDC_EP0_CSR_SENDSTL bits
++ *              set S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE | S3C_UDC_EP0_CSR_SENDSTL bits
+  *      - else
+- *              set S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE bits
++ *              set S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE bits
+  */
+ static void elfin_ep0_setup(struct elfin_udc *dev, u32 csr)
+ {
+@@ -1503,7 +1509,7 @@ static void elfin_ep0_setup(struct elfin
+ 
+ 		DEBUG_SETUP("USB_REQ_SET_ADDRESS (%d)\n", ctrl.wValue);
+ 		udc_set_address(dev, ctrl.wValue);
+-		usb_set((S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE), S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set((S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE), S3C_UDC_EP0_CSR_REG, 0);
+ 		return;
+ #if 0
+ 	case USB_REQ_GET_STATUS: 
+@@ -1526,8 +1532,8 @@ static void elfin_ep0_setup(struct elfin
+ 			/* setup processing failed, force stall */
+ 			printk("  --> ERROR: gadget setup FAILED (stalling), \
+ 				setup returned %d\n", i);
+-			usb_set((S3C2410_UDC_EP0_CSR_SOPKTRDY | S3C2410_UDC_EP0_CSR_DE 
+-				|S3C2410_UDC_EP0_CSR_SENDSTL), S3C2410_UDC_EP0_CSR_REG, 0);
++			usb_set((S3C_UDC_EP0_CSR_SOPKTRDY | S3C_UDC_EP0_CSR_DE 
++				|S3C_UDC_EP0_CSR_SENDSTL), S3C_UDC_EP0_CSR_REG, 0);
+ 			/* ep->stopped = 1; */
+ 			dev->ep0state = WAIT_FOR_SETUP;
+ 		}
+@@ -1548,8 +1554,8 @@ static void elfin_ep0_in_zlp(struct elfi
+ {
+ 	DEBUG_EP0("%s: %x\n", __FUNCTION__, csr);
+ 
+-	usb_set((S3C2410_UDC_EP0_CSR_IPKRDY | S3C2410_UDC_EP0_CSR_DE), 
+-			S3C2410_UDC_EP0_CSR_REG, 0);
++	usb_set((S3C_UDC_EP0_CSR_IPKRDY | S3C_UDC_EP0_CSR_DE), 
++			S3C_UDC_EP0_CSR_REG, 0);
+ 	dev->ep0state = WAIT_FOR_SETUP;
+ }
+ 
+@@ -1561,7 +1567,7 @@ static void elfin_handle_ep0(struct elfi
+ 	struct elfin_ep *ep = &dev->ep[0];
+ 	u32 csr;
+ 
+- 	csr = usb_read(S3C2410_UDC_EP0_CSR_REG, ep_index(ep));
++ 	csr = usb_read(S3C_UDC_EP0_CSR_REG, ep_index(ep));
+ 
+ 	DEBUG_EP0("%s: csr = %x\n", __FUNCTION__, csr);
+ 
+@@ -1569,18 +1575,18 @@ static void elfin_handle_ep0(struct elfi
+ 	 * if SENT_STALL is set
+ 	 *      - clear the SENT_STALL bit
+ 	 */
+-	if (csr & S3C2410_UDC_EP0_CSR_SENTSTL) {
+-		printk("%s: S3C2410_UDC_EP0_CSR_SENTSTL is set: %x\n", __FUNCTION__, csr);
+-		usb_write(0, S3C2410_UDC_EP0_CSR_REG, 0);
++	if (csr & S3C_UDC_EP0_CSR_SENTSTL) {
++		printk("%s: S3C_UDC_EP0_CSR_SENTSTL is set: %x\n", __FUNCTION__, csr);
++		usb_write(0, S3C_UDC_EP0_CSR_REG, 0);
+ 		nuke(ep, -ECONNABORTED);
+ 		dev->ep0state = WAIT_FOR_SETUP;
+ 		return;
+ 	}
+ 
+ 	/* ... and do the same for the SEND_STALL bit as it seems Linux doesn't reset it properly */
+-	if (csr & S3C2410_UDC_EP0_CSR_SENDSTL) {
+-		printk("%s: S3C2410_UDC_EP0_CSR_SENDSTL is still set, clearing...\n", __FUNCTION__);
+-		usb_clear(S3C2410_UDC_EP0_CSR_SENDSTL, S3C2410_UDC_EP0_CSR_REG, 0);
++	if (csr & S3C_UDC_EP0_CSR_SENDSTL) {
++		printk("%s: S3C_UDC_EP0_CSR_SENDSTL is still set, clearing...\n", __FUNCTION__);
++		usb_clear(S3C_UDC_EP0_CSR_SENDSTL, S3C_UDC_EP0_CSR_REG, 0);
+ 		//dev->ep0state = WAIT_FOR_SETUP;
+ 		//nuke(ep, -ECONNABORTED);
+ 		//return;
+@@ -1591,11 +1597,11 @@ static void elfin_handle_ep0(struct elfi
+ 	 *      - abort the last transfer
+ 	 *      - set SERVICED_SETUP_END_BIT
+ 	 */
+-	if (csr & S3C2410_UDC_EP0_CSR_SE) {
+-		DEBUG_EP0("%s: S3C2410_UDC_EP0_CSR_SE is set: %x\n", __FUNCTION__, csr);
++	if (csr & S3C_UDC_EP0_CSR_SE) {
++		DEBUG_EP0("%s: S3C_UDC_EP0_CSR_SE is set: %x\n", __FUNCTION__, csr);
+ 
+-		usb_clear(0xc0, S3C2410_UDC_EP0_CSR_REG, 0);
+-		usb_set(S3C2410_UDC_EP0_CSR_SSE, S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_clear(0xc0, S3C_UDC_EP0_CSR_REG, 0);
++		usb_set(S3C_UDC_EP0_CSR_SSE, S3C_UDC_EP0_CSR_REG, 0);
+ 
+ 		nuke(ep, 0);
+ 		dev->ep0state = WAIT_FOR_SETUP;
+@@ -1609,7 +1615,7 @@ static void elfin_handle_ep0(struct elfi
+ 	 *      - else
+ 	 *              set IN_PKT_RDY
+ 	 */
+-	if (!(csr & (S3C2410_UDC_EP0_CSR_IPKRDY | S3C2410_UDC_EP0_CSR_OPKRDY))) {
++	if (!(csr & (S3C_UDC_EP0_CSR_IPKRDY | S3C_UDC_EP0_CSR_OPKRDY))) {
+ 		switch (dev->ep0state) {
+ 		case DATA_STATE_XMIT:
+ 			DEBUG_EP0("continue with DATA_STATE_XMIT\n");
+@@ -1625,13 +1631,13 @@ static void elfin_handle_ep0(struct elfi
+ 				  state_names[dev->ep0state]);
+ 			dev->ep0state = WAIT_FOR_SETUP;
+ 			/* nuke(ep, 0); */
+-			/* usb_set(S3C2410_UDC_EP0_CSR_SENDSTL, ep->csr1, ep_index(ep)); */
++			/* usb_set(S3C_UDC_EP0_CSR_SENDSTL, ep->csr1, ep_index(ep)); */
+ 			break;
+ 		}
+ 	}
+ 
+ 	/*
+-	 * if S3C2410_UDC_EP0_CSR_OPKRDY is set
++	 * if S3C_UDC_EP0_CSR_OPKRDY is set
+ 	 *      - read data packet from EP0 FIFO
+ 	 *      - decode command
+ 	 *      - if error
+@@ -1639,7 +1645,7 @@ static void elfin_handle_ep0(struct elfi
+ 	 *      - else
+ 	 *              set SERVICED_OUT_PKT_RDY | DATA_END bits
+ 	 */
+-	if (csr & S3C2410_UDC_EP0_CSR_OPKRDY) {
++	if (csr & S3C_UDC_EP0_CSR_OPKRDY) {
+ 		switch (dev->ep0state) {
+ 		case WAIT_FOR_SETUP:
+ 			DEBUG_EP0("WAIT_FOR_SETUP\n");
+@@ -1664,7 +1670,7 @@ static void elfin_ep0_kick(struct elfin_
+ {
+ 	if (ep_is_in(ep)) {
+ 		/* Clear "out packet ready" */
+-		usb_set(S3C2410_UDC_EP0_CSR_SOPKTRDY, S3C2410_UDC_EP0_CSR_REG, 0);
++		usb_set(S3C_UDC_EP0_CSR_SOPKTRDY, S3C_UDC_EP0_CSR_REG, 0);
+ 		udelay(5);	// time to settle things down
+ 
+ 		dev->ep0state = DATA_STATE_XMIT;
+@@ -1682,8 +1688,8 @@ static void elfin_ep0_kick(struct elfin_
+ 
+ static int elfin_udc_get_frame(struct usb_gadget *_gadget)
+ {
+-	u32 frame1 = usb_read(S3C2410_UDC_FRAME_NUM1_REG, 0);/* Least significant 8 bits */
+-	u32 frame2 = usb_read(S3C2410_UDC_FRAME_NUM1_REG, 0);/* Most significant 3 bits */
++	u32 frame1 = usb_read(S3C_UDC_FRAME_NUM1_REG, 0);/* Least significant 8 bits */
++	u32 frame2 = usb_read(S3C_UDC_FRAME_NUM1_REG, 0);/* Most significant 3 bits */
+ 	DPRINTK("%s, %p\n", __FUNCTION__, _gadget);
+ 	return ((frame2 & 0x07) << 8) | (frame1 & 0xff);
+ }
+@@ -1730,9 +1736,9 @@ static struct elfin_udc memory = {
+ 		  .bmAttributes = 0,
+ 
+ 		  .ep_type = ep_control,
+-		  .fifo = S3C2410_UDC_EP0_FIFO_REG,
+-		  .csr1 = S3C2410_UDC_EP0_CSR_REG,
+-		  .csr2 = S3C2410_UDC_EP0_CSR_REG,
++		  .fifo = S3C_UDC_EP0_FIFO_REG,
++		  .csr1 = S3C_UDC_EP0_CSR_REG,
++		  .csr2 = S3C_UDC_EP0_CSR_REG,
+ 		  },
+ 
+ 	/* first group of endpoints */
+@@ -1748,9 +1754,9 @@ static struct elfin_udc memory = {
+ 		  .bmAttributes = USB_ENDPOINT_XFER_BULK,
+ 
+ 		  .ep_type = ep_bulk_out,
+-		  .fifo = S3C2410_UDC_EP1_FIFO_REG,
+-		  .csr1 = S3C2410_UDC_OUT_CSR1_REG,
+-		  .csr2 = S3C2410_UDC_OUT_CSR2_REG,
++		  .fifo = S3C_UDC_EP1_FIFO_REG,
++		  .csr1 = S3C_UDC_OUT_CSR1_REG,
++		  .csr2 = S3C_UDC_OUT_CSR2_REG,
+ 		  },
+ 
+ 	.ep[2] = {
+@@ -1765,9 +1771,9 @@ static struct elfin_udc memory = {
+ 		  .bmAttributes = USB_ENDPOINT_XFER_BULK,
+ 
+ 		  .ep_type = ep_bulk_in,
+-		  .fifo = S3C2410_UDC_EP2_FIFO_REG,
+-		  .csr1 = S3C2410_UDC_IN_CSR1_REG,
+-		  .csr2 = S3C2410_UDC_IN_CSR2_REG,
++		  .fifo = S3C_UDC_EP2_FIFO_REG,
++		  .csr1 = S3C_UDC_IN_CSR1_REG,
++		  .csr2 = S3C_UDC_IN_CSR2_REG,
+ 		  },
+ 
+ 	.ep[3] = {				// Though NOT USED XXX
+@@ -1782,9 +1788,9 @@ static struct elfin_udc memory = {
+ 		  .bmAttributes = USB_ENDPOINT_XFER_INT,
+ 
+ 		  .ep_type = ep_interrupt,
+-		  .fifo = S3C2410_UDC_EP3_FIFO_REG,
+-		  .csr1 = S3C2410_UDC_IN_CSR1_REG,
+-		  .csr2 = S3C2410_UDC_IN_CSR2_REG,
++		  .fifo = S3C_UDC_EP3_FIFO_REG,
++		  .csr1 = S3C_UDC_IN_CSR1_REG,
++		  .csr2 = S3C_UDC_IN_CSR2_REG,
+ 		  },
+ 	.ep[4] = {				// Though NOT USED XXX
+ 		  .ep = {
+@@ -1798,9 +1804,9 @@ static struct elfin_udc memory = {
+ 		  .bmAttributes = USB_ENDPOINT_XFER_INT,
+ 
+ 		  .ep_type = ep_interrupt,
+-		  .fifo = S3C2410_UDC_EP4_FIFO_REG,
+-		  .csr1 = S3C2410_UDC_IN_CSR1_REG,
+-		  .csr2 = S3C2410_UDC_IN_CSR2_REG,
++		  .fifo = S3C_UDC_EP4_FIFO_REG,
++		  .csr1 = S3C_UDC_IN_CSR1_REG,
++		  .csr2 = S3C_UDC_IN_CSR2_REG,
+ 		  },
+ };
+ 
+diff -rupN linux-s3c24xx/drivers/usb/host/ohci-s3c2410.c linux-s3c24xx.tt1114405/drivers/usb/host/ohci-s3c2410.c
+--- linux-s3c24xx/drivers/usb/host/ohci-s3c2410.c	2013-05-31 14:29:28.000000000 +0200
++++ linux-s3c24xx.tt1114405/drivers/usb/host/ohci-s3c2410.c	2014-01-07 13:05:49.000000000 +0100
+@@ -27,6 +27,7 @@
+ #include <asm/arch/regs-gpio.h>
+ #include <asm/arch/regs-clock.h>
+ #include <asm/arch/regs-udc.h>
++#include <asm/arch/io.h> // CLM
+ #ifdef CONFIG_MACH_TOMTOMGO
+ 	#include <barcelona/gopins.h>
+ #endif

@@ -1,0 +1,16 @@
+#! /bin/sh
+
+# Setup variables to be inherited by called shell scripts
+for i in /proc/barcelona/*; do
+      export hw_${i##*/}="$(cat $i)"
+done
+
+killall -TERM rfcomm
+killall -TERM hciattach
+hciconfig hci0 down
+csrinit bcsp /dev/${hw_btdev} ${hw_btspeed} ${hw_btclock} -c disable_tx
+rm /dev/bt
+
+if [ "$1" != "-s" ]; then
+	echo "Bluetooth id down\nTX if off\n" | flmessage -s
+fi

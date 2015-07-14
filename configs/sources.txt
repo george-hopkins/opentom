@@ -1,0 +1,53 @@
+# How to get source archives
+# Libs
+wget http://freefr.dl.sourceforge.net/project/libpng/libpng12/1.2.50/libpng-1.2.50.tar.gz
+wget http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
+wget http://www.tomtom.com/gpl/golinux-tt1114405.tar.gz
+wget http://zlib.net/zlib-1.2.8.tar.gz
+wget ftp://ftp.pl.freebsd.org/vol/rzm1/GraphicsMagick/delegates/libjpeg-6b.tar.gz
+wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
+wget ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng12/libpng-1.2.51.tar.gz
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && tar czf ../Downloads/microwin_git.tgz microwin; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && tar czf ../Downloads/nxlib_nanox_git.tgz nxlib; }
+wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz
+wget http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
+wget http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
+wget http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.11.tar.gz
+wget http://fltk.org/pub/fltk/1.3.2/fltk-1.3.2-source.tar.gz
+wget ftp://microwindows.org/pub/microwindows/microwindows-fonts-snapshot.tar.gz
+wget http://prdownloads.sourceforge.net/mad/libmad-0.15.1b.tar.gz
+wget http://www.tomtom.com/gpl/csrinit-tt531604.tar.gz
+svn co svn://svn.berlios.de/tslib/trunk/tslib tslib
+wget http://pkgs.fedoraproject.org/repo/pkgs/tslib/tslib-1.0.tar.bz2/92b2eb55b1e4ef7e2c0347069389390e/tslib-1.0.tar.bz2
+wget http://ftp.gnome.org/pub/gnome/sources/glib/1.2/glib-1.2.10.tar.gz
+wget http://ftp.gnome.org/pub/gnome/sources/glib/2.14/glib-2.14.6.tar.gz
+wget http://www.tomtom.com/gpl/bluez-libs-2.15-tt350126.tar.gz
+wget http://curl.haxx.se/download/curl-7.35.0.tar.gz
+wget http://freefr.dl.sourceforge.net/project/mad/libid3tag/0.15.1b/libid3tag-0.15.1b.tar.gz
+wget http://kent.dl.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
+wget http://freefr.dl.sourceforge.net/project/espeak/espeak/espeak-1.48/espeak-1.48.02-source.zip
+# Apps
+wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
+wget http://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz
+wget https://matt.ucc.asn.au/dropbear/dropbear-2013.62.tar.bz2
+wget http://pkgs.fedoraproject.org/repo/pkgs/bluez-utils/bluez-utils-2.15.tar.gz/4e86dfd4449ff49e82696d8a3b254002/bluez-utils-2.15.tar.gz
+wget https://picocom.googlecode.com/files/picocom-1.7.tar.gz
+wget http://freefr.dl.sourceforge.net/project/mad/madplay/0.15.2b/madplay-0.15.2b.tar.gz
+wget http://mupdf.googlecode.com/files/mupdf-1.3-source.tar.gz
+#wget http://nab.pcug.org.au/spreadsheet1.2.2.tar.gz
+[ -f $1 ] || { cd ../build && wget -nH --max-redirect=0 -r -l 2 -k -L -np -R \*index.html\* http://nab.pcug.org.au/spreadsheet1.2.2/ && tar czf ../Downloads/spreadsheet1.2.2.tar.gz spreadsheet1.2.2; }
+wget http://fedorchenko.net/src/yacheckers-1.4.0.tar.bz2
+wget --no-check-certificate https://fireforge.net/frs/download.php/711/yareversi-1.0.2.tar.bz2
+wget --no-check-certificate https://pkgs.fedoraproject.org/repo/pkgs/dillo/dillo-3.0.3.tar.bz2/726cd0b7a18c5e25f4d80ebeffe7607e/dillo-3.0.3.tar.bz2
+# Games
+wget http://heanet.dl.sourceforge.net/project/scummvm/scummvm/1.6.0/scummvm-1.6.0.tar.bz2
+wget http://optimate.dl.sourceforge.net/project/linapple/linapple/linapple-2a/linapple-src_2a.tar.bz2
+[ -f $1 ] || { cd ../build && git clone https://github.com/OpenDUNE/OpenDUNE.git && tar czf ../Downloads/OpenDUNE_git.tgz OpenDUNE; }
+wget http://www.users.waitrose.com/~thunor/pipepanic/dload/pipepanic-0.1.3-source.tar.gz
+wget http://heanet.dl.sourceforge.net/project/dragontech/Martian%20Memory/Martian%20Memory%201.2/martian_source.tgz
+wget wget http://switch.dl.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_src.zip
+wget http://switch.dl.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_win32_bin.zip
+wget http://www.tomtomheaven.com/data/zip/TomTom_FreeCell.zip
+wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-bin.zip
+wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-src.zip
+wget http://sylar-stuff.googlecode.com/files/gnuboy-1.0.3.tar.gz

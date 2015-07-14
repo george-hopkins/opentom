@@ -1,0 +1,63 @@
+ (voir traduction française à la suite de la version anglaise)
+
+                       OpenTom LICENSE
+                  Version 1 - 4 March 2014
+
+ Copyright (C) 2014 Clément GERARDIN - opentom@free.fr
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+
+
+ 1) OpenTom 
+ ------------
+
+ OpenTom is a Linux distribution : you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ OpenTom is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with OpenTom. If not, see http://www.gnu.org/licenses/
+ OpenTom source is available from http://opentom.free.fr/ 
+
+
+
+____________________________________________________________________________
+                  (official French translation)
+
+                      LICENCE de OpenTom
+                   Version 1 - 4 Mars 2014
+
+ Copyright (C) 2014 Clément GERARDIN - opentom@free.fr
+ Chacun est autorise a copier et distribuer des copies conformes de
+ ce document de licence, mais toute modification en est proscrite.
+
+
+
+ 1) OpenTom
+ ------------
+
+ OpenTom est une distribution linux libre ; vous pouvez le redistribuer ou
+ le modifier suivant les termes de la “GNU General Public License”
+ telle que publiee par la Free Software Foundation : soit la version
+ 3 de cette licence, soit (a votre gre) toute version ulterieure.
+  
+ OpenTom est distribue dans l’espoir qu’il vous sera utile, mais
+ SANS AUCUNE GARANTIE : sans meme la garantie implicite de
+ COMMERCIALISABILITE ni d’ADEQUATION À UN OBJECTIF PARTICULIER.
+ Consultez la Licence Generale Publique GNU pour plus de details.
+  
+ Vous devriez avoir reçu une copie de la Licence Generale Publique
+ GNU avec OpenTom. Si ce n’est pas le cas, consultez
+ http://www.gnu.org/licenses/
+ Les sources d'OpenTom sont disponibles a http://OpenTom.free.fr/ 
+
+
+
+

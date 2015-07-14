@@ -1,0 +1,92 @@
+#! /bin/sh
+
+sdcard=/mnt/sdcard
+flash_gl=/mnt/flash/extra_settings
+ramdisk_gl=/var/run/gl
+def_baudrate="115200"
+gl_baudrate=${def_baudrate}
+stop_timeout_in_sec=10
+stop_counter=""
+def_fix_start="normal"
+par_fix_start=${def_fix_start}
+
+stop_count() {
+    echo ${stop_counter} | wc -c
+}
+
+stop_inc() {
+    stop_counter=${stop_counter}"1"
+}
+
+start() {
+    echo "* Starting gltt ${par_fix_start}"
+
+    # Create the GL folder
+    mkdir -p ${ramdisk_gl}
+
+    # Create communication pipe for the application
+    mknod /var/run/gpspipe p
+
+    # Create log folder
+    mkdir -p ${sdcard}/gl/log
+
+    # get the gps receiver type (can we use ${hw_gpstype} here?)
+    gpstype=`cat /proc/barcelona/gpstype` 
+    if [ ${gpstype} = 128 ]
+    then
+      rftype_param='-rftype HH_4L'
+    elif [ ${gpstype} = 129 ]
+    then
+      rftype_param='-rftype HH_4L_INT_ON'
+    else
+      rftype_param=''
+      echo "error determining rftype for gpstype $gpstype"
+    fi
+
+    # Start gltt
+    gltt -baud ${gl_baudrate} -periodic 2000 -fix_start ${par_fix_start} ${rftype_param} &
+}
+
+stop() {
+    echo "Stopping gltt"
+    # killall -KILL gltt
+    killall gltt
+    while [ `stop_count` -le ${stop_timeout_in_sec} ]; do
+       pids=`pidof gltt`
+       if [ -z "${pids}" ]; then
+         echo "Stopping break"
+         break;
+       fi
+       echo Stopping $stop_counter `stop_count`
+       stop_inc
+       sleep 1
+    done
+}
+
+case "${1}" in
+    start)
+	if [ "${2}" = "" ] ; then 
+          gl_baudrate=${def_baudrate}
+	else 
+          gl_baudrate=${2}
+        fi
+	if [ "${3}" = "" ] ; then 
+          par_fix_start=${def_fix_start}
+	else 
+          par_fix_start=${3}
+        fi
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    *)
+        echo "Usage: ${0} {start|stop}"
+        exit 1
+        ;;
+
+esac
+
+exit 0

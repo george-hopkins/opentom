@@ -1,0 +1,12 @@
+prefix=ARM_APPROOT
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Xext
+Description: Misc X Extension Library
+Version: 1.1.1
+Requires: 
+Requires.private: x11
+Cflags: -I${includedir}
+Libs:  

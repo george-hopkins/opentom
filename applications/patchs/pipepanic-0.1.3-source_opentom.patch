@@ -1,0 +1,56 @@
+diff -rupN pipepanic-0.1.3-source.original/main.c pipepanic-0.1.3-source/main.c
+--- pipepanic-0.1.3-source.original/main.c	2006-05-16 22:11:29.000000000 +0200
++++ pipepanic-0.1.3-source/main.c	2014-02-27 09:37:31.000000000 +0100
+@@ -172,8 +172,6 @@ int main(int argc, char *argv[]) {
+ 		return 1;
+ 	}
+ 
+-	atexit(SDL_Quit);
+-
+ 	#ifdef DEBUG
+ 	printf("Setting video mode %ix%i\n", xres, yres);
+ 	#endif
+@@ -184,6 +182,10 @@ int main(int argc, char *argv[]) {
+ 		printf("%s: Cannot initialise screen: %s\n", __func__, SDL_GetError());
+ 		exit(1);
+ 	}
++
++        SDL_Delay(1000);
++        SDL_Flip( screen);
++        atexit(SDL_Quit);
+ 	
+ 	#ifdef DEBUG	
+ 	printf ("Loading bitmaps\n");
+@@ -707,7 +709,8 @@ void draw_game(void) {
+ 		}
+ 	}
+ 	
+-	if (redraw != REDRAWNONE) SDL_Flip(screen);
++//	if (redraw != REDRAWNONE)
++		SDL_Flip(screen);
+ 	
+ 	if (fpstest) {
+ 		frames++;
+@@ -1086,6 +1089,7 @@ void manage_user_input(void) {
+ 							   I've purposely made the hit area big. */
+ 							if (game_mode == GAMESHOWHELP) {
+ 								if (((xres == 320 || xres == 640) && (mx >= xres - 1 * tilew) && (mx < xres) && (my >= (BOARDH - 1) * tileh) && (my < BOARDH * tileh)) || ((xres == 240 || xres == 480) && (mx >= xres - 1 * tilew) && (mx < xres) && (my >= (BOARDH - 1) * tileh + 2 * tileh) && (my < BOARDH * tileh + 2 * tileh))) {
++									quit = 1; // CLM
+ 									manage_help_input(SDLK_RIGHT);
+ 								}
+ 							}
+diff -rupN pipepanic-0.1.3-source.original/Makefile pipepanic-0.1.3-source/Makefile
+--- pipepanic-0.1.3-source.original/Makefile	2006-05-16 22:11:29.000000000 +0200
++++ pipepanic-0.1.3-source/Makefile	2014-02-27 09:37:56.000000000 +0100
+@@ -3,9 +3,9 @@ OBJECTS=main.o
+ TARGET=pipepanic
+ 
+ # Settings for x86.
+-CC=gcc
++#CC=gcc
+ CFLAGS=-O2 -Wall -pedantic `sdl-config --cflags`
+-LINK=gcc
++LINK=$(CC)
+ LDFLAGS=
+ LIBS=`sdl-config --libs`
+ 

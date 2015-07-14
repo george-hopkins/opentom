@@ -1,0 +1,24 @@
+#!/bin/sh
+# Thank's to  Roberto Piola (http://www.ilpiola.it/roberto/tomtom)
+
+start_bt
+
+stty -hup < `tty`
+while [ true ] ; do
+    if ps w | grep rfcomm | grep listen | grep -v grep | grep -c rfcomm1
+    then
+      /mnt/sdcard/wildtom/rfcomm listen /dev/rfcomm1 1 &
+	if ! echo "on your computer:\nsudo rfcomm connect /dev/rfcomm1 XX:XX:XX:XX:XX:XX 1\n will connect your PC's /dev/rfcomm1 directly to the GPS receiver;\n you will be able to dump NMEA data with any communication program" | flmessage -y -s
+	then
+		exit
+	fi
+    fi
+    /mnt/sdcard/wildtom/rfcomm show | grep rfcomm1 | grep connected
+    if [ $? -eq 0 ] ; then
+        # set the speed 
+        stty speed 115200 < /dev/rfcomm1
+        cat /dev/gpsdata >/dev/rfcomm1
+    fi
+    sleep 2
+done
+

@@ -1,0 +1,16 @@
+#! /bin/sh -x
+
+# removing all kernel modules
+for i in `lsmod | cut -f1 -d" "`; do rmmod $i; done
+
+killall dhclient
+
+modprobe s3c24xx_udc
+insmod $DIST/../dm9601.ko $1
+sleep 3
+
+ifconfig eth0 hw ether 12:23:45:66:77:88 up
+
+sleep 1
+dhclient -sf $DIST/etc/dhclient_script eth0
+

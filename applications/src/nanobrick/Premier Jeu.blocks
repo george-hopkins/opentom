@@ -1,0 +1,13 @@
+#name Premier Jeu.blocks
+#bonus 100
+#next Premier Jeu-1.blocks
+#dim_brick 20 10
+#dim_tab 8 6
+#bricks
+0 0 0 0 0 0 0 0 
+0 0 1 1 0 0 0 0 
+0 0 0 1 1 1 1 0 
+0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 
+

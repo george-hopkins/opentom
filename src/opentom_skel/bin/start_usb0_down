@@ -1,0 +1,10 @@
+#! /bin/sh -x
+
+ifconfig usb0 down
+rmmod g_ether
+rmmod s3c24xx_udc
+
+sleep 10
+modprobe s3c24xx_udc
+modprobe g_ether
+ifconfig usb0 192.168.1.10 up

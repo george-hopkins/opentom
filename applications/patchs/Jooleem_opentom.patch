@@ -1,0 +1,659 @@
+diff -rupN Jooleem/compile_jooleem.sh jooleem.opentom/compile_jooleem.sh
+--- Jooleem/compile_jooleem.sh	1970-01-01 01:00:00.000000000 +0100
++++ jooleem.opentom/compile_jooleem.sh	2013-12-06 18:23:49.000000000 +0100
+@@ -0,0 +1 @@
++arm-linux-g++ -O2 -I/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root/include -I/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root/include/SDL main.cpp engine/*.cpp common/*.cpp game/*.cpp UI/*.cpp -lSDL -L-I/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root/lib -lSDL_ttf -lfreetype -lSDL_image -Icommon -Iengine -Igame -IUI -lSDL_mixer
+diff -rupN Jooleem/Makefile jooleem.opentom/Makefile
+--- Jooleem/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ jooleem.opentom/Makefile	2014-01-02 07:11:42.000000000 +0100
+@@ -0,0 +1,8 @@
++jooleem:
++	cd src && $(CXX) -O2 -o ../jooleem -I$(ARM_SYSROOT)/usr/include -I$(ARM_SYSROOT)/usr/include/SDL main.cpp engine/*.cpp common/*.cpp game/*.cpp UI/*.cpp -lSDL -L-I$(ARM_SYSROOT)/usr/lib -lSDL_ttf -lSDL_image -Icommon -Iengine -Igame -IUI -lSDL_mixer -lpng
++#	cd src && $(CXX) -ggdb -o ../jooleem -I$(ARM_SYSROOT)/usr/include -I$(ARM_SYSROOT)/usr/include/SDL main.cpp engine/*.cpp common/*.cpp game/*.cpp UI/*.cpp -lSDL -L-I$(ARM_SYSROOT)/usr/lib -lSDL_ttf -lSDL_image -Icommon -Iengine -Igame -IUI -lSDL_mixer -lpng
++	$(STRIP) jooleem
++
++install:
++	$(STRIP) jooleem
++	cp jooleem $(TOMTOM)/bin
+diff -rupN Jooleem/src/common/common.h jooleem.opentom/src/common/common.h
+--- Jooleem/src/common/common.h	2005-09-25 20:38:30.000000000 +0200
++++ jooleem.opentom/src/common/common.h	2014-01-01 13:24:42.000000000 +0100
+@@ -40,8 +40,8 @@ static const string ICON = "data/interfa
+ 
+ 
+ // Screen dimensions:
+-static const int SCREEN_WIDTH = 640;
+-static const int SCREEN_HEIGHT = 480;
++static const int SCREEN_WIDTH = 320;
++static const int SCREEN_HEIGHT = 240;
+ 
+ // Takes a screenshot.
+ // The file is saved as a Windows bitmap.
+diff -rupN Jooleem/src/common/filenames.h jooleem.opentom/src/common/filenames.h
+--- Jooleem/src/common/filenames.h	2005-09-10 21:04:40.000000000 +0200
++++ jooleem.opentom/src/common/filenames.h	2014-01-02 05:22:02.000000000 +0100
+@@ -124,43 +124,47 @@ const std::string MUSIC_RESOURCES[] = {
+ 
+ // Fonts:
+ const std::string FONT_RESOURCES[] = {
++// CLM
++		"FontCLM",						"data/fonts/Vera.ttf",		"12"
++/*	
+ 		// ID						Filename					Size
+ 		// Window:	
+-		"WindowTitleFont",			"data/fonts/Vera.ttf",		"16",
++		"WindowTitleFont",			"data/fonts/Vera.ttf",		"8",
+ 	
+ 		// Buttons:
+-		"MediumButtonFont",			"data/fonts/Vera.ttf",		"16",
+-		"LargeButtonFont",			"data/fonts/Vera.ttf",		"24",
+-		"TooltipFont",				"data/fonts/Vera.ttf",		"10",
++		"MediumButtonFont",			"data/fonts/Vera.ttf",		"8",
++		"LargeButtonFont",			"data/fonts/Vera.ttf",		"12",
++		"TooltipFont",				"data/fonts/Vera.ttf",		"7",
+ 
+ 		// Text box:
+-		"TextBoxFont",				"data/fonts/VeraBd.ttf",	"16",
++		"TextBoxFont",				"data/fonts/Vera.ttf",	"8",
+ 
+ 		// About window:
+-		"AppVersionFont",			"data/fonts/VeraBd.ttf",	"16",
+-		"LinkFont",					"data/fonts/Vera.ttf",		"14",
+-		"CreditsFont",				"data/fonts/Vera.ttf",		"13",
+-		"LicenseFont",				"data/fonts/Vera.ttf",		"11",
++		"AppVersionFont",			"data/fonts/Vera.ttf",	"8",
++		"LinkFont",					"data/fonts/Vera.ttf",		"7",
++		"CreditsFont",				"data/fonts/Vera.ttf",		"7",
++		"LicenseFont",				"data/fonts/Vera.ttf",		"7",
+ 
+ 		// Game over window:
+-		"GameOverScoreFont",		"data/fonts/VeraBd.ttf",	"16",
+-		"GameOverCongratsFont",		"data/fonts/Vera.ttf",		"16",
+-		"GameOverStatsFont",		"data/fonts/Vera.ttf",		"16",
++		"GameOverScoreFont",		"data/fonts/Vera.ttf",	"8",
++		"GameOverCongratsFont",		"data/fonts/Vera.ttf",		"8",
++		"GameOverStatsFont",		"data/fonts/Vera.ttf",		"8",
+ 
+ 		// High scores window:
+-		"HighScoresFont",			"data/fonts/VeraBd.ttf",	"16",
++		"HighScoresFont",			"data/fonts/Vera.ttf",	"8",
+ 
+ 		// Main window:
+-		"ScoreFont",				"data/fonts/VeraBd.ttf",	"32",
+-		"LevelFont",				"data/fonts/VeraBd.ttf",	"24",
++		"ScoreFont",				"data/fonts/Vera.ttf",	"16",
++		"LevelFont",				"data/fonts/Vera.ttf",	"12",
+ 
+ 		// Quit window:
+-		"DialogTextFont",			"data/fonts/Vera.ttf",		"16",
++		"DialogTextFont",			"data/fonts/Vera.ttf",		"8",
+ 
+ 		// Text effects:
+-		"ScoreEffect",				"data/fonts/VeraBd.ttf",	"64",
+-		"LevelEffect",				"data/fonts/VeraBd.ttf",	"100",
+-		"GameOverEffect",			"data/fonts/VeraBd.ttf",	"64",
++		"ScoreEffect",				"data/fonts/Vera.ttf",	"32",
++		"LevelEffect",				"data/fonts/Vera.ttf",	"50",
++		"GameOverEffect",			"data/fonts/Vera.ttf",	"32",
++CLM		*/
+ 	};
+ 		
+ #endif
+diff -rupN Jooleem/src/common/fontmanager.cpp jooleem.opentom/src/common/fontmanager.cpp
+--- Jooleem/src/common/fontmanager.cpp	2005-08-31 21:28:36.000000000 +0200
++++ jooleem.opentom/src/common/fontmanager.cpp	2014-01-02 05:24:47.000000000 +0100
+@@ -75,7 +75,8 @@ Font *FontManager::GetFont(string ID)
+ {
+ 	map<string, Font*>::iterator itr = m_map.find(ID);
+ 	if (itr == m_map.end())
+-		return NULL;
++		// CLM return NULL;
++		return m_map["FontCLM"];
+ 
+ 	return itr->second;
+ }
+diff -rupN Jooleem/src/common/musicmanager.cpp jooleem.opentom/src/common/musicmanager.cpp
+--- Jooleem/src/common/musicmanager.cpp	2005-09-03 21:17:52.000000000 +0200
++++ jooleem.opentom/src/common/musicmanager.cpp	2014-01-02 07:19:27.000000000 +0100
+@@ -54,6 +54,8 @@ MusicManager* MusicManager::GetInstance(
+ // Otherwise, the method returns a pointer to the new surface.
+ Mix_Music *MusicManager::AddTrack(string ID, string fileName)
+ {
++	return NULL; // CLM
++	
+ 	// Make sure the ID does not already exist in the map:
+ 	map<string, Mix_Music*>::iterator itr = m_map.find(ID);
+ 	if (itr != m_map.end())
+@@ -85,7 +87,7 @@ Mix_Music *MusicManager::GetTrack(string
+ 
+ // Plays a track.
+ void MusicManager::PlayTrack(string ID)
+-{
++{return; // CLM
+ 	map<string, Mix_Music*>::iterator itr = m_map.find(ID);
+ 	if (itr != m_map.end())
+ 	{
+@@ -99,6 +101,7 @@ void MusicManager::PlayTrack(string ID)
+ // Plays a random track
+ void MusicManager::PlayRandomTrack()
+ {
++	return; // CLM
+ 	int i = rand() % (int) m_map.size(); // NOTE: We assume the RNG has already been seeded
+ 
+ 	map<string, Mix_Music*>::iterator itr = m_map.begin();
+@@ -116,7 +119,7 @@ void MusicManager::PlayRandomTrack()
+ // Plays the next track.
+ // The track order is set by their order in the map.
+ void MusicManager::PlayNextTrack()
+-{
++{return; // CLM
+ 	m_currentTrack++;
+ 
+ 	if (m_currentTrack == m_map.end())
+@@ -129,14 +132,14 @@ void MusicManager::PlayNextTrack()
+ 
+ // Pauses the currently playing track.
+ void MusicManager::Pause()
+-{
++{return; // CLM
+ 	Mix_PauseMusic();
+ }
+ 
+ 
+ // Resumes playing.
+ void MusicManager::Resume()
+-{
++{return; // CLM
+ 	Mix_ResumeMusic();
+ }
+ 
+@@ -151,7 +154,7 @@ bool MusicManager::IsPlaying()
+ // Sets the music volume.
+ // 0.0f - Silence, 1.0f - Max volume
+ void MusicManager::SetVolume(float volume)
+-{
++{return; // CLM
+ 	if (volume < 0.0f || volume > 1.0f)
+ 		return;
+ 
+@@ -161,7 +164,7 @@ void MusicManager::SetVolume(float volum
+ 
+ // Releases all the loaded tracks.
+ void MusicManager::Cleanup()
+-{
++{return; // CLM
+ 	// FIX: This causes an exception on UIButton::TriggerTooltip
+ 	// Add a nice fadeout:
+ 	// Mix_FadeOutMusic(500);
+diff -rupN Jooleem/src/common/soundmanager.cpp jooleem.opentom/src/common/soundmanager.cpp
+--- Jooleem/src/common/soundmanager.cpp	2005-09-11 19:07:56.000000000 +0200
++++ jooleem.opentom/src/common/soundmanager.cpp	2013-12-06 18:23:49.000000000 +0100
+@@ -50,6 +50,9 @@ SoundManager* SoundManager::GetInstance(
+ // Otherwise, the method returns a pointer to the new surface.
+ Mix_Chunk *SoundManager::AddSound(string ID, string fileName)
+ {
++	
++	return NULL; // CLM
++	
+ 	// Make sure the ID does not already exist in the map:
+ 	map<string, pair<Mix_Chunk*, int> >::iterator itr = m_map.find(ID);
+ 	if (itr != m_map.end())
+diff -rupN Jooleem/src/compile_jooleem.sh jooleem.opentom/src/compile_jooleem.sh
+--- Jooleem/src/compile_jooleem.sh	1970-01-01 01:00:00.000000000 +0100
++++ jooleem.opentom/src/compile_jooleem.sh	2013-12-06 18:23:49.000000000 +0100
+@@ -0,0 +1 @@
++arm-linux-g++ -O2 -I/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root/include -I/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root/include/SDL main.cpp engine/*.cpp common/*.cpp game/*.cpp UI/*.cpp -lSDL -L-I/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root/lib -lSDL_ttf -lfreetype -lSDL_image -Icommon -Iengine -Igame -IUI -lSDL_mixer
+diff -rupN Jooleem/src/engine/engine.cpp jooleem.opentom/src/engine/engine.cpp
+--- Jooleem/src/engine/engine.cpp	2005-09-11 19:22:32.000000000 +0200
++++ jooleem.opentom/src/engine/engine.cpp	2014-01-02 07:11:13.000000000 +0100
+@@ -96,20 +96,27 @@ Engine::Engine()
+ 		exit(-1);
+ 	}
+ 
+-
++	cout << "InitState\n"; // CLM
++	cout.flush();
+ 	// Initialize the game states while updating the progress bar:
+ 	InitStates(0.9f, 0.1f);
+ 
++cout << "Init Effect Mng\n"; // CLM
++	cout.flush();
+ 	// Initialize effects manager:
+ 	EffectManager::GetInstance()->Init();
+ 
+ 	// Show the loading screen for a little while more
+ 	SDL_Delay(500);
+-
++	
++cout << "InitAudio\n"; // CLM
++	cout.flush();
+ 	// Set initial audio levels:
+ 	MusicManager::GetInstance()->SetVolume(0.25f);
+ 	SoundManager::GetInstance()->SetVolume(1.0f);
+ 
++cout << "Push state intro\n"; // CLM
++	cout.flush();
+ 	// Set the initial engine state:
+ 	PushState(IntroState::GetInstance());
+ }
+@@ -150,7 +157,7 @@ Engine::~Engine()
+ void Engine::Run()
+ {
+ 	Uint32 prevFrame;							// Time of previous rendered frame
+-	
++	cout << "ENGINE RUN\n"; cout.flush(); // CLM
+ 	while (m_quit == false)
+ 	{
+ 		prevFrame = SDL_GetTicks();
+@@ -258,7 +265,10 @@ void Engine::InitSDL()
+ 	// Initialize sound mixer:
+ 	if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) != 0)
+ 	{
+-		ERR("Engine::InitSDL() - Mix_OpenAudio failed (" << SDL_GetError() << ")");
++		fprintf(stderr,"Warning: Couldn't set 44100 Hz 16-bit audio\n: %s\n", SDL_GetError());
++/* CLM
++ * 		ERR("Engine::InitSDL() - Mix_OpenAudio failed (" << SDL_GetError() << ")");
++ */
+ 	}
+ 	
+ 	// Allocate the audio channels. One for each sound chunk plus one for music:
+@@ -336,7 +346,7 @@ void Engine::UpdateProgressBar(float val
+ {
+ 	m_progessBar.SetClipping((Sint16)(SurfaceManager::GetInstance()->GetSurface("TimeBar")->w * val), -1);
+ 	m_progessBar.Draw(m_screen);
+-	SDL_Flip(m_screen); 
++	SDL_Flip(m_screen);
+ }
+ 
+ 
+@@ -392,6 +402,7 @@ void Engine::LoadResources(float basePer
+ 	FontManager *fontMgr = FontManager::GetInstance();
+ 	for (int i = 0 ; i < numOfFonts ; ++i)
+ 	{
++		cout << "Load font n° " << i << "\n"; // CLM
+ 		fontMgr->AddFont(FONT_RESOURCES[3 * i], 
+ 			FONT_RESOURCES [3 * i + 1],
+ 			atoi((FONT_RESOURCES [3 * i + 2]).c_str()));
+@@ -425,7 +436,7 @@ void Engine::InitStates(float basePercen
+ 
+ 	GameOverState::GetInstance()->Init(this);
+ 	UpdateProgressBar(basePercentage + step * 4.0f);
+-
++	
+ 	AboutState::GetInstance()->Init(this);
+ 	UpdateProgressBar(basePercentage + step * 5.0f);
+ 
+diff -rupN Jooleem/src/engine/engine.h jooleem.opentom/src/engine/engine.h
+--- Jooleem/src/engine/engine.h	2005-09-13 21:29:30.000000000 +0200
++++ jooleem.opentom/src/engine/engine.h	2014-01-02 06:35:13.000000000 +0100
+@@ -98,7 +98,7 @@ class Engine
+ 		
+ 
+ 		// Frame rate:
+-		static const Uint32 FPS = 60;								// Frames per second
++		static const Uint32 FPS = 25; // 60;								// Frames per second
+ 		static const Uint32 FRAME_DELAY = (Uint32) (1000 / FPS);	// Delay between frames, in ms
+ 
+ #ifdef WIN32
+diff -rupN Jooleem/src/game/board.cpp jooleem.opentom/src/game/board.cpp
+--- Jooleem/src/game/board.cpp	2005-09-10 20:23:32.000000000 +0200
++++ jooleem.opentom/src/game/board.cpp	2014-01-01 13:25:52.000000000 +0100
+@@ -711,4 +711,4 @@ void Board::PrintBoard(Coordinate *coord
+ 		cout << endl;
+ 	}
+ }
+-#endif // _DEBUG
+\ Pas de fin de ligne à la fin du fichier.
++#endif // _DEBUG
+diff -rupN Jooleem/src/game/board.h jooleem.opentom/src/game/board.h
+--- Jooleem/src/game/board.h	2005-09-10 20:30:52.000000000 +0200
++++ jooleem.opentom/src/game/board.h	2014-01-02 07:31:45.000000000 +0100
+@@ -43,11 +43,11 @@ enum COLOR {BLUE, GREEN, RED, YELLOW, NU
+ static const int NUM_OF_MARBLE_COLORS = NUM_OF_COLORS;
+ 										
+ // Size of a marble image (in pixels):
+-static const Uint16 MARBLE_IMAGE_SIZE = 44;
++static const Uint16 MARBLE_IMAGE_SIZE = 22; // CLM 44;
+ 
+ // This is the difference between the actual size of the marble image, and its
+ // "logical" size, which is used to position it on screen.
+-static const Uint16 MARBLE_IMAGE_DELTA = 64 - 44;
++static const Uint16 MARBLE_IMAGE_DELTA = 32 - 22; // CLM 64 - 44;
+ 
+ // Gravity affecting dropping marble rectangles, in pixels per second per second:
+ static const float RECT_DROP_GRAVITY = 0.75f;
+diff -rupN Jooleem/src/UI/aboutwindow.cpp jooleem.opentom/src/UI/aboutwindow.cpp
+--- Jooleem/src/UI/aboutwindow.cpp	2005-09-11 18:53:54.000000000 +0200
++++ jooleem.opentom/src/UI/aboutwindow.cpp	2014-01-02 06:32:04.000000000 +0100
+@@ -65,7 +65,8 @@ void AboutWindow::InitControls()
+ 		SDL_Color linkHoverColor = {75, 147, 255, 0};
+ 		SDL_Color linkClickColor = {131, 194, 255, 0};
+ 		Font *linkFont = fontMgr->GetFont("LinkFont");
+-		linkFont->SetStyle(Font::STYLE_UNDERLINE);		// Make the font underline
++		
++		// CLM linkFont->SetStyle(Font::STYLE_UNDERLINE);		// Make the font underline
+ 		SDL_Surface *linkNormalSurface = surfaceMgr->AddSurface("LinkNormal",
+ 			linkFont->RenderPlain(Font::ALN_LEFT, linkNormalColor, APP_URL));
+ 		SDL_Surface *linkHoverSurface = surfaceMgr->AddSurface("LinkHover",
+@@ -78,7 +79,7 @@ void AboutWindow::InitControls()
+ 			linkNormalSurface, linkNormalSurface, linkHoverSurface, linkClickSurface, 
+ 			linkNormalSurface, NULL);
+ 		linkButton->AddState(EVENT_WEBSITE, fontMgr->GetFont("MediumButtonFont"), " ", buttonTextColor);
+-		linkButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 241);
++		linkButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 121); // CLM 320, 241);
+ 		linkButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_LINK, linkButton);	
+ 
+@@ -89,7 +90,7 @@ void AboutWindow::InitControls()
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonClicked"), 
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonMask"));
+ 		closeButton->AddState(EVENT_CLOSE, fontMgr->GetFont("MediumButtonFont"), "Close", buttonTextColor);
+-		closeButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 355);
++		closeButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 178); // CLM 320, 355);
+ 		closeButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_CLOSE, closeButton);	
+ 
+@@ -101,20 +102,21 @@ void AboutWindow::InitControls()
+ 		UILabel *titleLabel = new UILabel();
+ 		titleLabel->Set(0, 0, NULL, fontMgr->GetFont("WindowTitleFont"), titleColor);
+ 		titleLabel->SetText(UIControl::HALN_LEFT, "About");
+-		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 320, 125);
++		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 160, 63); // CLM 320, 125);
+ 		AddControl(LBL_TITLE, titleLabel);
+ 
+ 		// Logo:
+ 		UILabel *logoLabel = new UILabel();
+ 		logoLabel->Set(0, 0, surfaceMgr->GetSurface("Logo"), NULL, labelTextColor);
+-		logoLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 320, 153);
++		logoLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 160, 77); // CLM 320, 153);
+ 		AddControl(LBL_LOGO, logoLabel);
+ 
++
+ 		// Application name and version:
+ 		UILabel *appVersionLabel = new UILabel();
+ 		appVersionLabel->Set(0, 0, NULL, fontMgr->GetFont("AppVersionFont"), labelTextColor);
+ 		appVersionLabel->SetText(UIControl::HALN_LEFT, "%s %s", APP_NAME.c_str(), APP_VERSION.c_str());
+-		appVersionLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 219);
++		appVersionLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 109); // CLM 320, 219);
+ 		AddControl(LBL_APP, appVersionLabel);
+ 
+ 		// Credits:
+@@ -124,7 +126,7 @@ void AboutWindow::InitControls()
+ 								"Developed by Chai Braudo\n"
+ 								"Music by Ryan Reilly\n"
+ 								"Sound design by Dale North");
+-		creditsLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 289);
++		creditsLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 145); // CLM 320, 289);
+ 		AddControl(LBL_CREDITS, creditsLabel);
+ 
+ 		// License:
+@@ -133,7 +135,7 @@ void AboutWindow::InitControls()
+ 		licenseLabel->SetText(	UIControl::HALN_LEFT,
+ 								"This program is free, open source software\n"
+ 								"released under the GNU General Public License.");
+-		licenseLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 318);
++		licenseLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 159); // CLM 320, 318);
+ 		AddControl(LBL_LICENSE, licenseLabel);
+ 		
+ 	}
+@@ -141,5 +143,6 @@ void AboutWindow::InitControls()
+ 	{
+ 		ERR("AboutWindow::InitControls() - Control allocation failed");
+ 	}
++
+ }
+ 
+diff -rupN Jooleem/src/UI/gameoverwindow.cpp jooleem.opentom/src/UI/gameoverwindow.cpp
+--- Jooleem/src/UI/gameoverwindow.cpp	2005-09-11 18:53:54.000000000 +0200
++++ jooleem.opentom/src/UI/gameoverwindow.cpp	2014-01-02 07:53:21.000000000 +0100
+@@ -64,7 +64,7 @@ void GameOverWindow::InitControls()
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonClicked"), 
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonMask"));
+ 		okButton->AddState(EVENT_CLOSE, fontMgr->GetFont("MediumButtonFont"), "OK", buttonTextColor);
+-		okButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 373);
++		okButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 186); // CLM , 320, 373);
+ 		okButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_OK, okButton);	
+ 
+@@ -77,7 +77,7 @@ void GameOverWindow::InitControls()
+ 		SDL_Event event;
+ 		event.type = SDL_QUIT;
+ 		quitButton->AddState(event, fontMgr->GetFont("MediumButtonFont"), "Quit", buttonTextColor);
+-		quitButton->Align(UIControl::HALN_RIGHT, UIControl::VALN_BOTTOM, 435, 373);
++		quitButton->Align(UIControl::HALN_RIGHT, UIControl::VALN_BOTTOM, 217, 186); // CLM 435, 373);
+ 		quitButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_QUIT, quitButton);	
+ 
+@@ -88,7 +88,7 @@ void GameOverWindow::InitControls()
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonClicked"), 
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonMask"));
+ 		restartButton->AddState(EVENT_RESTART, fontMgr->GetFont("MediumButtonFont"), "Restart", buttonTextColor);
+-		restartButton->Align(UIControl::HALN_LEFT, UIControl::VALN_BOTTOM, 205, 373);
++		restartButton->Align(UIControl::HALN_LEFT, UIControl::VALN_BOTTOM, 105, 186); // CLM 205, 373);
+ 		restartButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_RESTART, restartButton);	
+ 
+@@ -100,7 +100,7 @@ void GameOverWindow::InitControls()
+ 		UILabel *titleLabel = new UILabel();
+ 		titleLabel->Set(0, 0, NULL, fontMgr->GetFont("WindowTitleFont"), titleColor);
+ 		titleLabel->SetText(UIControl::HALN_LEFT, "Game Over");
+-		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 320, 108);
++		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 160, 54); // CLM 320, 108);
+ 		AddControl(LBL_TITLE, titleLabel);
+ 
+ 		// Congratulations message:
+@@ -110,7 +110,7 @@ void GameOverWindow::InitControls()
+ 			"Congratulations, you got a\n"
+ 			"high score!\n"
+ 			"Please enter your name.");
+-		congratsLabel->Align(UIControl::HALN_LEFT, UIControl::VALN_TOP, 204, 133);
++		congratsLabel->Align(UIControl::HALN_LEFT, UIControl::VALN_TOP, 54, 66); // CLM 204, 133);
+ 		AddControl(LBL_CONGRATS, congratsLabel);
+ 
+ 		// Final score:
+@@ -130,7 +130,7 @@ void GameOverWindow::InitControls()
+ 								"Best move:\n"
+ 								"Perfect moves:");
+ 		statsDescLabel->Align(UIControl::HALN_LEFT, UIControl::VALN_BOTTOM,
+-			203, 337);
++			101, 186); // CLM 203, 337);
+ 		AddControl(LBL_STATS_DESC, statsDescLabel);
+ 
+ 		// Statistics values:
+@@ -140,7 +140,7 @@ void GameOverWindow::InitControls()
+ 
+ 		// Text box:
+ 		UITextBox *textBox = new UITextBox();
+-		textBox->Set(205, 188,
++		textBox->Set(102, 94, // CLM 205, 188,
+ 			16, 6,
+ 			surfaceMgr->GetSurface("TextBoxBackground"),
+ 			surfaceMgr->GetSurface("TextBoxCursor"),
+diff -rupN Jooleem/src/UI/highscoreswindow.cpp jooleem.opentom/src/UI/highscoreswindow.cpp
+--- Jooleem/src/UI/highscoreswindow.cpp	2005-09-11 18:53:54.000000000 +0200
++++ jooleem.opentom/src/UI/highscoreswindow.cpp	2014-01-02 07:38:26.000000000 +0100
+@@ -63,7 +63,7 @@ void HighScoresWindow::InitControls()
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonClicked"), 
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonMask"));
+ 		closeButton->AddState(EVENT_CLOSE, fontMgr->GetFont("MediumButtonFont"), "Close", buttonTextColor);
+-		closeButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 375);
++		closeButton->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 187); // CLM 320, 375);
+ 		closeButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_CLOSE, closeButton);	
+ 
+@@ -108,7 +108,7 @@ void HighScoresWindow::InitControls()
+ 			
+ 			index->Set(0, 0, NULL, fontMgr->GetFont("HighScoresFont"), tableTextColor);
+ 			index->SetText(UIControl::HALN_LEFT, "%d", i + 1);
+-			index->Align(UIControl::HALN_LEFT, UIControl::VALN_TOP, 207, 136 + 20 * i);
++			index->Align(UIControl::HALN_LEFT, UIControl::VALN_TOP, 103, 68 + 10 * i); // CLM 207, 136 + 20 * i);
+ 
+ 			indexVec.push_back(index);
+ 
+@@ -118,7 +118,7 @@ void HighScoresWindow::InitControls()
+ 			
+ 			name->Set(0, 0, NULL, fontMgr->GetFont("HighScoresFont"), tableTextColor);
+ 			name->SetText(UIControl::HALN_LEFT, "-");
+-			name->Align(UIControl::HALN_LEFT, UIControl::VALN_TOP, 233, 136 + 20 * i);
++			name->Align(UIControl::HALN_LEFT, UIControl::VALN_TOP, 115, 68 + 10 * i); // CLM 233, 136 + 20 * i);
+ 
+ 			namesVec.push_back(name);
+ 
+@@ -128,7 +128,7 @@ void HighScoresWindow::InitControls()
+ 			
+ 			score->Set(0, 0, NULL, fontMgr->GetFont("HighScoresFont"), tableTextColor);
+ 			score->SetText(UIControl::HALN_LEFT, "-");
+-			score->Align(UIControl::HALN_RIGHT, UIControl::VALN_TOP, 435, 136 + 20 * i);
++			score->Align(UIControl::HALN_RIGHT, UIControl::VALN_TOP, 217, 68 + 10 * i); // CLM 435, 136 + 20 * i);
+ 
+ 			scoresVec.push_back(score);
+ 		}
+@@ -144,7 +144,7 @@ void HighScoresWindow::InitControls()
+ 		UILabel *titleLabel = new UILabel();
+ 		titleLabel->Set(0, 0, NULL, fontMgr->GetFont("WindowTitleFont"), titleColor);
+ 		titleLabel->SetText(UIControl::HALN_LEFT, "High Scores");
+-		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 320, 106);
++		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 160, 103); // CLM 320, 106);
+ 		AddControl(LBL_TITLE, titleLabel);
+ 
+ 	}
+diff -rupN Jooleem/src/UI/mainwindow.cpp jooleem.opentom/src/UI/mainwindow.cpp
+--- Jooleem/src/UI/mainwindow.cpp	2005-09-11 18:54:00.000000000 +0200
++++ jooleem.opentom/src/UI/mainwindow.cpp	2014-01-02 08:09:46.000000000 +0100
+@@ -58,7 +58,7 @@ void MainWindow::InitControls()
+ 		
+ 		// Start / restart:
+ 		UIButton *startButton = new UIButton();
+-		startButton->Set(20, 344, "ButtonClick",
++		startButton->Set(10, 167, "ButtonClick", // CLM 20, 344, "ButtonClick",
+ 			surfaceMgr->GetSurface("LargeButtonNormal"), surfaceMgr->GetSurface("LargeButtonDisabled"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonClicked"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonMask"));
+@@ -70,7 +70,7 @@ void MainWindow::InitControls()
+ 		
+ 		// Pause / resume:
+ 		UIButton *pauseButton = new UIButton();
+-		pauseButton->Set(20, 276, "ButtonClick",
++		pauseButton->Set(10, 138, "ButtonClick",
+ 			surfaceMgr->GetSurface("LargeButtonNormal"), surfaceMgr->GetSurface("LargeButtonDisabled"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonClicked"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonMask"));
+@@ -82,7 +82,7 @@ void MainWindow::InitControls()
+ 
+ 		// Quit:
+ 		UIButton *quitButton = new UIButton();
+-		quitButton->Set(20, 412, "ButtonClick",
++		quitButton->Set(10, 206, "ButtonClick",
+ 			surfaceMgr->GetSurface("LargeButtonNormal"), surfaceMgr->GetSurface("LargeButtonDisabled"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonClicked"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonMask"));
+@@ -93,7 +93,7 @@ void MainWindow::InitControls()
+ 
+ 		// Hint:
+ 		UIButton *hintButton = new UIButton();
+-		hintButton->Set(20, 208, "ButtonClick",
++		hintButton->Set(10, 104, "ButtonClick",
+ 			surfaceMgr->GetSurface("LargeButtonNormal"), surfaceMgr->GetSurface("LargeButtonDisabled"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonClicked"), 
+ 			surfaceMgr->GetSurface("LargeButtonHover"), surfaceMgr->GetSurface("LargeButtonMask"));
+@@ -104,7 +104,7 @@ void MainWindow::InitControls()
+ 
+ 		// Mute / unmute:
+ 		UIButton *muteButton = new UIButton();
+-		muteButton->Set(20, 140, "ButtonClick",
++		muteButton->Set(10, 70, "ButtonClick",
+ 			surfaceMgr->GetSurface("SmallButtonNormal"), surfaceMgr->GetSurface("SmallButtonDisabled"), 
+ 			surfaceMgr->GetSurface("SmallButtonHover"), surfaceMgr->GetSurface("SmallButtonClicked"), 
+ 			surfaceMgr->GetSurface("SmallButtonHover"), surfaceMgr->GetSurface("SmallButtonMask"));
+@@ -118,7 +118,7 @@ void MainWindow::InitControls()
+ 
+ 		// About:
+ 		UIButton *aboutButton = new UIButton();
+-		aboutButton->Set(120, 140, "ButtonClick",
++		aboutButton->Set(60, 70, "ButtonClick",
+ 			surfaceMgr->GetSurface("SmallButtonNormal"), surfaceMgr->GetSurface("SmallButtonDisabled"), 
+ 			surfaceMgr->GetSurface("SmallButtonHover"), surfaceMgr->GetSurface("SmallButtonClicked"), 
+ 			surfaceMgr->GetSurface("SmallButtonHover"), surfaceMgr->GetSurface("SmallButtonMask"));
+@@ -129,7 +129,7 @@ void MainWindow::InitControls()
+ 
+ 		// High scores:
+ 		UIButton *hiscoreButton = new UIButton();
+-		hiscoreButton->Set(70, 140, "ButtonClick",
++		hiscoreButton->Set(35, 70, "ButtonClick",
+ 			surfaceMgr->GetSurface("SmallButtonNormal"), surfaceMgr->GetSurface("SmallButtonDisabled"), 
+ 			surfaceMgr->GetSurface("SmallButtonHover"), surfaceMgr->GetSurface("SmallButtonClicked"), 
+ 			surfaceMgr->GetSurface("SmallButtonHover"), surfaceMgr->GetSurface("SmallButtonMask"));
+@@ -144,13 +144,13 @@ void MainWindow::InitControls()
+ 
+ 		// Score:
+ 		UILabel *scoreLabel = new UILabel();
+-		scoreLabel->Set(20, 70, surfaceMgr->GetSurface("ScoreLabel"), fontMgr->GetFont("ScoreFont"),
++		scoreLabel->Set(10, 35, surfaceMgr->GetSurface("ScoreLabel"), fontMgr->GetFont("ScoreFont"),
+ 			scoreTextColor);
+ 		AddControl(LBL_SCORE, scoreLabel);
+ 
+ 		// Level:
+ 		UILabel *levelLabel = new UILabel();
+-		levelLabel->Set(20, 55, NULL, fontMgr->GetFont("LevelFont"),
++		levelLabel->Set(0, 33, /* CLM 10, 28,*/ NULL, fontMgr->GetFont("LevelFont"),
+ 			scoreTextColor);
+ 		AddControl(LBL_LEVEL, levelLabel);
+ 				
+@@ -163,7 +163,7 @@ void MainWindow::InitControls()
+ 
+ 		/////// Progress bar ///////
+ 		UIProgressBar *timeBar = new UIProgressBar();
+-		timeBar->Set(192, 454, NULL, surfaceMgr->GetSurface("TimeBar"), surfaceMgr->GetSurface("TimeBarFlash"),
++		timeBar->Set(96, 227, NULL, surfaceMgr->GetSurface("TimeBar"), surfaceMgr->GetSurface("TimeBarFlash"),
+ 			surfaceMgr->GetSurface("TimeBarPaused"));
+ 		AddControl(PRG_TIMEBAR, timeBar);
+ 
+diff -rupN Jooleem/src/UI/quitwindow.cpp jooleem.opentom/src/UI/quitwindow.cpp
+--- Jooleem/src/UI/quitwindow.cpp	2005-09-11 18:54:00.000000000 +0200
++++ jooleem.opentom/src/UI/quitwindow.cpp	2014-01-02 08:08:20.000000000 +0100
+@@ -63,7 +63,7 @@ void QuitWindow::InitControls()
+ 		SDL_Event event;
+ 		event.type = SDL_QUIT;
+ 		quitButton->AddState(event, fontMgr->GetFont("MediumButtonFont"), "Quit", buttonTextColor);
+-		quitButton->Align(UIControl::HALN_LEFT, UIControl::VALN_BOTTOM, 328, 290);
++		quitButton->Align(UIControl::HALN_LEFT, UIControl::VALN_BOTTOM, 164, 145); // CLM 328, 290);
+ 		quitButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_QUIT, quitButton);
+ 
+@@ -74,7 +74,7 @@ void QuitWindow::InitControls()
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonClicked"), 
+ 			surfaceMgr->GetSurface("MediumButtonHover"), surfaceMgr->GetSurface("MediumButtonMask"));
+ 		playButton->AddState(EVENT_CLOSE, fontMgr->GetFont("MediumButtonFont"), "Play", buttonTextColor);
+-		playButton->Align(UIControl::HALN_RIGHT, UIControl::VALN_BOTTOM, 312, 290);
++		playButton->Align(UIControl::HALN_RIGHT, UIControl::VALN_BOTTOM, 166, 145); // CLM 312, 290);
+ 		playButton->SetMode(UIButton::MODE_NORMAL);
+ 		AddControl(BTN_PLAY, playButton);
+ 
+@@ -86,7 +86,7 @@ void QuitWindow::InitControls()
+ 		UILabel *titleLabel = new UILabel();
+ 		titleLabel->Set(0, 0, NULL, fontMgr->GetFont("WindowTitleFont"), titleColor);
+ 		titleLabel->SetText(UIControl::HALN_LEFT, "Quit");
+-		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 320, 191);
++		titleLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_TOP, 160, 95); // CLM 320, 191);
+ 		AddControl(LBL_TITLE, titleLabel);
+ 
+ 		// Dialog text:
+@@ -95,7 +95,7 @@ void QuitWindow::InitControls()
+ 		textLabel->SetText(	UIControl::HALN_LEFT,
+ 								"Are you sure you want to\n"
+ 								"quit Jooleem?");
+-		textLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 320, 252);
++		textLabel->Align(UIControl::HALN_CENTER, UIControl::VALN_BOTTOM, 160, 126); // CLM 320, 252);
+ 		AddControl(LBL_TEXT, textLabel);
+ 		
+ 	}
+diff -rupN Jooleem/src/UI/uiprogress.cpp jooleem.opentom/src/UI/uiprogress.cpp
+--- Jooleem/src/UI/uiprogress.cpp	2005-09-06 21:25:16.000000000 +0200
++++ jooleem.opentom/src/UI/uiprogress.cpp	2014-01-01 13:26:12.000000000 +0100
+@@ -138,4 +138,4 @@ void UIProgressBar::Draw(SDL_Surface *sc
+ 		SDL_BlitSurface(m_flashingSurface, &m_clipRect, screen, &rect);
+ 	else
+ 		SDL_BlitSurface(m_normalSurface, &m_clipRect, screen, &rect);
+-}
+\ Pas de fin de ligne à la fin du fichier.
++}

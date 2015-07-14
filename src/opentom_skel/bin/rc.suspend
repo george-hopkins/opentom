@@ -1,0 +1,46 @@
+#!/bin/sh
+suspend_gl() {
+  echo "* Stop gltt"
+  rc.gltt stop
+  mv /var/log/gl/* /mnt/sdcard/gl/log
+  sync
+}
+
+suspend_clm() {
+  echo "* Sending SIGUSR1 to clmapp"
+  killall -SIGUSR1 clmapp
+
+  echo "* Waiting for clmapp to respond"
+  for i in 1 2 3 4 5; do
+    if test -f /tmp/clmquit; then
+      echo "* Got response from clmapp"
+      rm -f /tmp/clmquit
+      return
+    fi
+    sleep 1
+  done
+  echo "* No response from clmapp, giving up"
+}
+
+suspend_gps() {
+  if test "${hw_gldetected}" = "1"; then
+    suspend_gl
+  else
+    if test "${hw_gpsephemeris}" = "1"; then
+      # check the clmdata file
+      if test -f /var/run/clmdata; then
+        cp /var/run/clmdata /mnt/sdcard/
+        sync
+      fi
+      suspend_clm
+    fi
+  fi
+}
+
+echo "* Running suspend tasks"
+suspend_gps
+rc.bluetooth suspend
+
+echo "* Suspend tasks done"
+
+# EOF

@@ -1,0 +1,4 @@
+#! /bin/sh
+
+echo removing all modules
+for i in `lsmod | cut -f1 -d" "`; do rmmod $i; done

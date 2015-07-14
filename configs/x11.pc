@@ -1,0 +1,15 @@
+prefix=ARM_APPROOT
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+xthreadlib=-lpthread
+
+Name: X11
+Description: X Library
+Version: 1.3.2
+Requires: 
+Requires.private: 
+Cflags: -I${includedir} 
+Libs: -lX11
+Libs.private: -lpthread

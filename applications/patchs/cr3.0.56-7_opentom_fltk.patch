@@ -1,0 +1,2325 @@
+diff -rupN cr3.0.56-7/crengine/src/lvfntman.cpp cr3.0.56-7.opentom/crengine/src/lvfntman.cpp
+--- cr3.0.56-7/crengine/src/lvfntman.cpp	2012-03-21 06:39:19.000000000 +0100
++++ cr3.0.56-7.opentom/crengine/src/lvfntman.cpp	2014-03-04 18:45:03.000000000 +0100
+@@ -495,6 +495,8 @@ public:
+     }
+ };
+ 
++#include <freetype2/freetype/freetype.h>
++
+ class LVFreeTypeFace;
+ static LVFontGlyphCacheItem * newItem( LVFontLocalGlyphCache * local_cache, lChar16 ch, FT_GlyphSlot slot ) // , bool drawMonochrome
+ {
+diff -rupN cr3.0.56-7.original/CMakeLists.txt cr3.0.56-7_opentom/CMakeLists.txt
+--- cr3.0.56-7.original/CMakeLists.txt	2012-03-21 06:39:19.000000000 +0100
++++ cr3.0.56-7_opentom/CMakeLists.txt	2014-01-19 07:24:27.000000000 +0100
+@@ -21,7 +21,7 @@ ELSE()
+ ENDIF(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+ 
+ if (NOT DEFINED GUI)
+-  SET(GUI QT)
++  SET(GUI CRGUI_NANOX)
+   message("GUI type is not specified!")
+   message("Using ${GUI} as default")
+   message("Add cmake parameter -D GUI={QT|WX|CRGUI_XCB|CRGUI_NANOX|CRGUI_PB|CRGUI_QT|CRGUI_JINKE_PLUGIN|CRGUI_WIN32|FB2PROPS} to use another GUI frontend")
+diff -rupN cr3.0.56-7.original/cr3gui/CMakeLists.txt cr3.0.56-7_opentom/cr3gui/CMakeLists.txt
+--- cr3.0.56-7.original/cr3gui/CMakeLists.txt	2012-03-21 06:39:19.000000000 +0100
++++ cr3.0.56-7_opentom/cr3gui/CMakeLists.txt	2014-01-18 00:53:31.000000000 +0100
+@@ -115,7 +115,7 @@ elseif ( ${GUI} STREQUAL CRGUI_QT )
+ elseif ( ${GUI} STREQUAL CRGUI_NANOX )
+ 
+     SET(CR3_SOURCES ${CR3_SOURCES} src/cr3nanox.cpp)
+-    SET (EXTRA_LIBS nano-X pthread ${DBUS_LIBRARIES} )
++    SET (EXTRA_LIBS nano-X fltk pthread ${DBUS_LIBRARIES} )
+     if (ENABLE_DBUS_VIEWER_EVENTS)
+         SET (EXTRA_LIBS ${EXTRA_LIBS} ${DBUS_LIBRARIES} )
+     endif(ENABLE_DBUS_VIEWER_EVENTS)
+diff -rupN cr3.0.56-7.original/cr3gui/src/cr3nanox.cpp cr3.0.56-7_opentom/cr3gui/src/cr3nanox.cpp
+--- cr3.0.56-7.original/cr3gui/src/cr3nanox.cpp	2012-03-21 06:39:19.000000000 +0100
++++ cr3.0.56-7_opentom/cr3gui/src/cr3nanox.cpp	2014-01-20 18:42:21.000000000 +0100
+@@ -1,24 +1,13 @@
+ //
+-// C++ Implementation: jinke/lbook V3 viewer plugin
+-//
+-// Description:
++// C++ Implementation: FLTK|Nano-X viewer plugin for TomTom
++// Based on version from Vadim Lopatin <vadim.lopatin@coolreader.org>, (C) 2008
+ //
++// Author: Clement GERARDIN <opentom@free.fr>
+ //
+-// Author: Vadim Lopatin <vadim.lopatin@coolreader.org>, (C) 2008
++// Description:
+ //
+ // Copyright: See COPYING file that comes with this distribution
+ //
+-//
+-
+-// support DBUS interface signals
+-#ifndef ENABLE_DBUS_VIEWER_EVENTS
+-#define ENABLE_DBUS_VIEWER_EVENTS 0
+-#endif
+-
+-// flash leds while long operation
+-#ifndef LEDTHREAD
+-#define LEDTHREAD 0
+-#endif
+ 
+ // uncomment following line to allow running executables named .exe.txt
+ #define ALLOW_RUN_EXE 1
+@@ -31,13 +20,22 @@
+ #include <crengine.h>
+ #include <crgui.h>
+ 
+-#if ENABLE_DBUS_VIEWER_EVENTS==1
+-#define DBUS_API_SUBJECT_TO_CHANGE
+-#include <dbus/dbus.h>
+-#endif
+-
++#define FLTK_GUI
++#ifdef FLTK_GUI
++#include <string.h>
++#include <FL/Fl.H>
++#include <FL/fl_ask.H>
++#include <FL/Fl_Window.H>
++#include <FL/Fl_Browser.H>
++#include <FL/fl_draw.H>
++#include <FL/Fl_Native_File_Chooser.H>
++#include "fl/Fl_CRMenu.h"
++#include "fl/Fl_CRMenu.cxx"
++#else // NANOX
+ #include <microwin/nano-X.h>
+ #include <microwin/nxcolors.h>
++#endif
++
+ #include "cr3main.h"
+ #include "mainwnd.h"
+ 
+@@ -49,568 +47,578 @@
+ 
+ //#include <math.h>
+ 
+-#define min(a,b) ((a)<(b)?(a):(b))
+-#define max(a,b) ((a)>(b)?(a):(b))
+-
+-
++//#define min(a,b) ((a)<(b)?(a):(b))
++//#define max(a,b) ((a)>(b)?(a):(b))
+ 
+ static bool firstDocUpdate = true;
+ 
+-
+-status_info_t lastState = {0,0,0};
+-
+ static char last_bookmark[2048]= {0};
+ static int last_bookmark_page = 0;
+ 
+ //static bool shuttingDown = false;
+ 
+ #define USE_JINKE_USER_DATA 0
+-#define USE_OWN_BATTERY_TEST 0
+ 
+-static int batteryState = -1;
+-
+-int checkPowerState()
++int checkPowerState() // return 0 to 100 (%cent)
+ {
+-    FILE * fp = fopen("/tmp/batteryinfo", "rb");
+-    char buf[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+-    int batteryvalue=0; 
+-    if (fp) {
+-        fread(buf, 1, 20, fp);
+-        batteryvalue=atoi(buf);
+-        CRLog::trace("/tmp/batteryinfo = %d", batteryvalue);
+-        if (batteryvalue>4 || batteryvalue<0)
+-            batteryvalue=4;//6
+-        batteryvalue = batteryvalue * 100 / 4;
+-        batteryState = batteryvalue;
+-        fclose(fp);
+-    } else {
+-#if USE_OWN_BATTERY_TEST==1
+-        FILE * f = fopen( "/dev/misc/s3c2410_batt", "rb" );
+-        if ( !f ) {
+-#endif
+-            batteryState = 100;
+-            CRLog::debug("cannot read battery state");
+-#if USE_OWN_BATTERY_TEST==1
+-        } else {
+-            int ch = fgetc( f );
+-            fclose(f);
+-            if ( ch == ' ' )
+-                batteryState = -1;
+-            else if ( ch>=0 && ch <= 16 )
+-                batteryState = ch * 100 / 16;
+-            else
+-                batteryState = 100;
+-        }
+-#endif
+-    }
+-    return batteryState;
++    return 50;
+ }
+ 
+ #include <cri18n.h>
+ 
+-#define VIEWER_WINDOW_X         0
+-#define VIEWER_WINDOW_Y         0
+-#define VIEWER_WINDOW_WIDTH    600
+-#define VIEWER_WINDOW_HEIGHT   800
+-
+-#ifndef USE_OLD_NANOX
+-
+-#define COLOR_LEVEL     4 //
+-#define BMPBUFGRAYLEVEL 2 //
+-#define BMP_PANEL_NUBS   (1<<COLOR_LEVEL)//
+-
+-const  unsigned long  panel256[]={
+-0X00000000,0X00010101,0X00020202,0X00030303,0X00040404,0X00050505,0X00060606,0X00070707,
+-0X00080808,0X00090909,0X000a0a0a,0X000b0b0b,0X000c0c0c,0X000d0d0d,0X000e0e0e,0X000f0f0f,
+-0X00101010,0X00111111,0X00121212,0X00131313,0X00141414,0X00151515,0X00161616,0X00171717,
+-0X00181818,0X00191919,0X001a1a1a,0X001b1b1b,0X001c1c1c,0X001d1d1d,0X001e1e1e,0X001f1f1f,
+-0X00202020,0X00212121,0X00222222,0X00232323,0X00242424,0X00252525,0X00262626,0X00272727,
+-0X00282828,0X00292929,0X002a2a2a,0X002b2b2b,0X002c2c2c,0X002d2d2d,0X002e2e2e,0X002f2f2f,
+-0X00303030,0X00313131,0X00323232,0X00333333,0X00343434,0X00353535,0X00363636,0X00373737,
+-0X00383838,0X00393939,0X003a3a3a,0X003b3b3b,0X003c3c3c,0X003d3d3d,0X003e3e3e,0X003f3f3f,
+-0X00404040,0X00414141,0X00424242,0X00434343,0X00444444,0X00454545,0X00464646,0X00474747,
+-0X00484848,0X00494949,0X004a4a4a,0X004b4b4b,0X004c4c4c,0X004d4d4d,0X004e4e4e,0X004f4f4f,
+-0X00505050,0X00515151,0X00525252,0X00535353,0X00545454,0X00555555,0X00565656,0X00575757,
+-0X00585858,0X00595959,0X005a5a5a,0X005b5b5b,0X005c5c5c,0X005d5d5d,0X005e5e5e,0X005f5f5f,
+-0X00606060,0X00616161,0X00626262,0X00636363,0X00646464,0X00656565,0X00666666,0X00676767,
+-0X00686868,0X00696969,0X006a6a6a,0X006b6b6b,0X006c6c6c,0X006d6d6d,0X006e6e6e,0X006f6f6f,
+-0X00707070,0X00717171,0X00727272,0X00737373,0X00747474,0X00757575,0X00767676,0X00777777,
+-0X00787878,0X00797979,0X007a7a7a,0X007b7b7b,0X007c7c7c,0X007d7d7d,0X007e7e7e,0X007f7f7f,
+-0X00808080,0X00818181,0X00828282,0X00838383,0X00848484,0X00858585,0X00868686,0X00878787,
+-0X00888888,0X00898989,0X008a8a8a,0X008b8b8b,0X008c8c8c,0X008d8d8d,0X008e8e8e,0X008f8f8f,
+-0X00909090,0X00919191,0X00929292,0X00939393,0X00949494,0X00959595,0X00969696,0X00979797,
+-0X00989898,0X00999999,0X009a9a9a,0X009b9b9b,0X009c9c9c,0X009d9d9d,0X009e9e9e,0X009f9f9f,
+-0X00a0a0a0,0X00a1a1a1,0X00a2a2a2,0X00a3a3a3,0X00a4a4a4,0X00a5a5a5,0X00a6a6a6,0X00a7a7a7,
+-0X00a8a8a8,0X00a9a9a9,0X00aaaaaa,0X00ababab,0X00acacac,0X00adadad,0X00aeaeae,0X00afafaf,
+-0X00b0b0b0,0X00b1b1b1,0X00b2b2b2,0X00b3b3b3,0X00b4b4b4,0X00b5b5b5,0X00b6b6b6,0X00b7b7b7,
+-0X00b8b8b8,0X00b9b9b9,0X00bababa,0X00bbbbbb,0X00bcbcbc,0X00bdbdbd,0X00bebebe,0X00bfbfbf,
+-0X00c0c0c0,0X00c1c1c1,0X00c2c2c2,0X00c3c3c3,0X00c4c4c4,0X00c5c5c5,0X00c6c6c6,0X00c7c7c7,
+-0X00c8c8c8,0X00c9c9c9,0X00cacaca,0X00cbcbcb,0X00cccccc,0X00cdcdcd,0X00cecece,0X00cfcfcf,
+-0X00d0d0d0,0X00d1d1d1,0X00d2d2d2,0X00d3d3d3,0X00d4d4d4,0X00d5d5d5,0X00d6d6d6,0X00d7d7d7,
+-0X00d8d8d8,0X00d9d9d9,0X00dadada,0X00dbdbdb,0X00dcdcdc,0X00dddddd,0X00dedede,0X00dfdfdf,
+-0X00e0e0e0,0X00e1e1e1,0X00e2e2e2,0X00e3e3e3,0X00e4e4e4,0X00e5e5e5,0X00e6e6e6,0X00e7e7e7,
+-0X00e8e8e8,0X00e9e9e9,0X00eaeaea,0X00ebebeb,0X00ececec,0X00ededed,0X00eeeeee,0X00efefef,
+-0X00f0f0f0,0X00f1f1f1,0X00f2f2f2,0X00f3f3f3,0X00f4f4f4,0X00f5f5f5,0X00f6f6f6,0X00f7f7f7,
+-0X00f8f8f8,0X00f9f9f9,0X00fafafa,0X00fbfbfb,0X00fcfcfc,0X00fdfdfd,0X00fefefe,0X00ffffff,
+-};
+-const unsigned long panel16[256]={
+-0x00000000,0x00505050,0x00808080,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,0x00ffffff,
+-};
+-                         
+-
+-typedef struct
+-{
+-    unsigned short int  bfType;
+-    unsigned long bfSize;
+-    unsigned short int  bfReserved1;
+-    unsigned short int  bfReserved2;
+-    unsigned long bfOffBits;
+-}BITMAPFILEHEADER;
+-#define BITMAPFILEHEADER_SIZE 14
+-
+-typedef struct
+-{
+-    unsigned long biSize;
+-    long biWidth;
+-    long biHeight;
+-    unsigned short int biPlanes;
+-    unsigned short int biBitCount;
+-    unsigned long biCompression;
+-    unsigned long biSizeImage;
+-    long biXPelsPerMeter;
+-    long biYPelsPerMeter;
+-    unsigned long biClrUsed;
+-    unsigned long biClrImportant;
+-}BITMAPINFOHEADER;
+-#define BITMAPINFOHEADER_SIZE sizeof(BITMAPINFOHEADER)
+-
+-typedef struct
+-{
+-    BITMAPFILEHEADER FileHeader;
+-    BITMAPINFOHEADER BmpInfo;
+-    MWPALENTRY   BmpPanel[BMP_PANEL_NUBS]; 
+-}BMPHEADER_16;
++V3DocViewWin * main_win = NULL;
+ 
+-typedef struct
+-{
+-    BITMAPFILEHEADER FileHeader;
+-    BITMAPINFOHEADER BmpInfo;
+-    MWPALENTRY   BmpPanel[256]; 
+-}BMPHEADER_256;
++#ifdef FLTK_GUI
+ 
+-int GrBitmapEx_Apollo_FOUR(GR_WINDOW_ID id,GR_GC_ID gc,int x,int y,int width,int height,int src_x,int src_y, int src_width,int src_height, GR_CHAR *imagebits)
++void updateAppWindowTitle();
+ 
++class CRFLTKScreen : public Fl_Widget, public CRGUIScreenBase
+ {
+-    // TODO: Add extra validation here
+-    //4 bit 16 level degree color
++    typedef struct __attribute__((__packed__)) _3b { char r, v, b; } sRGB;
++    typedef struct _4b { char r, v, b, a; } sRGBa;
+     
++protected:
++    unsigned char *screen_data;
++    int screen_data_w, screen_data_h;
+     
+-    BMPHEADER_256 lpHeader;
+-    GR_IMAGE_ID ImageId;
+-    int HeaderLen;
+-    int i;
+-    int Lines;
+-    int BmpBufBytsPerLine=0,BytesPerLine=0;
+-
+-    unsigned char char1,char2,char3,char4,BmpChar1;
+-    unsigned char *Screen_Buf=NULL,*BmpFileBuf=NULL,*BufPtr=NULL,*HeaderBuf=NULL;
+-    int GrayLevel=8;//256 gray level
+-    int BmpWidth=0,BmpHeight=0,PixesPerByte=0,BmpPanelNumbers=0,Bmpheadersize=0;
+-
+-    BmpWidth=min(width,src_width);
+-    BmpHeight=min(height,src_height);
+-
+-    PixesPerByte=8/GrayLevel;
+-    BmpPanelNumbers=1<<GrayLevel;
+-    BytesPerLine=(BmpWidth*GrayLevel+31)/32*4;
+-    BmpBufBytsPerLine=(src_width*2+7)/8;
+-
+-
+-    i=sizeof(BMPHEADER_256);
+-    HeaderLen=BITMAPFILEHEADER_SIZE+sizeof(BITMAPINFOHEADER)+sizeof(MWPALENTRY)*BmpPanelNumbers;
+-    memcpy((unsigned char *)&lpHeader.FileHeader.bfType,"BM",2);
+-    lpHeader.FileHeader.bfSize=(BmpHeight*BytesPerLine)/PixesPerByte+HeaderLen;
+-    lpHeader.FileHeader.bfReserved1=0;
+-    lpHeader.FileHeader.bfReserved2=0;
+-    lpHeader.FileHeader.bfOffBits=HeaderLen;
+-    lpHeader.BmpInfo.biSize=sizeof(BITMAPINFOHEADER);
+-    lpHeader.BmpInfo.biWidth=BmpWidth;
+-    lpHeader.BmpInfo.biHeight=BmpHeight;
+-    lpHeader.BmpInfo.biPlanes=1;
+-    lpHeader.BmpInfo.biBitCount=GrayLevel;
+-    lpHeader.BmpInfo.biCompression=0;
+-    lpHeader.BmpInfo.biSizeImage=lpHeader.FileHeader.bfSize-HeaderLen;
+-    lpHeader.BmpInfo.biXPelsPerMeter=0x257E;
+-    lpHeader.BmpInfo.biYPelsPerMeter=0x257E;
+-    lpHeader.BmpInfo.biClrUsed=0;
+-    lpHeader.BmpInfo.biClrImportant=0;
++public:
++    CRFLTKScreen(int x, int y, int width, int height) : 
++                Fl_Widget(x, y, width, height), CRGUIScreenBase( width, height, true )
++    {
++        _canvas = LVRef<LVDrawBuf>( createCanvas( _width, _height ) );
++        _front = LVRef<LVDrawBuf>( createCanvas( _width, _height ) );
++        screen_data = (unsigned char*)malloc( (screen_data_w=width) * (screen_data_h=height) * 3);
++    }
+     
+-    Bmpheadersize=HeaderLen;
+-    BmpFileBuf=new unsigned char[BmpHeight*BytesPerLine+Bmpheadersize];
+-
+-    if(!BmpFileBuf)
++    virtual LVDrawBuf * createCanvas( int dx, int dy )
+     {
+-        return 1;
++        CRLog::trace("CRFLTKWindow::createCanvas(%d, %d)\n", dx, dy);
++        LVDrawBuf * buf = new LVColorDrawBuf( dx, dy );
++        return buf;
+     }
+-    memset(BmpFileBuf,0x0,BmpHeight*BytesPerLine+Bmpheadersize);
+-    HeaderBuf=BmpFileBuf;   
+-    Screen_Buf=BmpFileBuf+Bmpheadersize;
+-    BufPtr=Screen_Buf;
+-
+-    memcpy(HeaderBuf,(char *)&lpHeader.FileHeader.bfType,2);
+-    memcpy(&HeaderBuf[2],(char *)&lpHeader.FileHeader.bfSize,4);
+-    memcpy(&HeaderBuf[6],(char *)&lpHeader.FileHeader.bfReserved1,2);
+-    memcpy(&HeaderBuf[8],(char *)&lpHeader.FileHeader.bfReserved2,2);
+-    memcpy(&HeaderBuf[10],(char *)&lpHeader.FileHeader.bfOffBits,4);
+-    HeaderBuf+=BITMAPFILEHEADER_SIZE;
+-    memcpy(HeaderBuf,(unsigned char *)&lpHeader.BmpInfo,BITMAPINFOHEADER_SIZE);
+-    HeaderBuf+=BITMAPINFOHEADER_SIZE;
+-    memcpy(HeaderBuf,(unsigned char *)&panel16,sizeof(MWPALENTRY)*BmpPanelNumbers);
+-    HeaderBuf=BmpFileBuf;   
+-                
+-    Lines=0;
+-    //4 color degress change to 16 color degress,mainframe_img_bits is 4 color degress
+-    for(Lines=0;Lines<BmpHeight;Lines++)
++    
++    virtual void update( const lvRect & rc, bool full )
+     {
++        int x = rc.left, y;
+         
+-        char1=0;
+-        char2=0;
+-        char3=0;
+-        char4=0;
+-        //
+-        BufPtr=(unsigned char *)&Screen_Buf[(BmpHeight-1-Lines)*BytesPerLine];
+-        for(i=0;i<(BmpWidth*2+7)/8;i++)
++        if ((screen_data_w * screen_data_h) < (rc.width()*rc.height()))
+         {
+-            BmpChar1=imagebits[i+(Lines+src_y)*BmpBufBytsPerLine+src_x/4];
+-            //
+-            char1=BmpChar1&0xc0;
+-            char1>>=6;
+-            *BufPtr=char1;
+-            BufPtr++;
+-            char2=BmpChar1&0x30;
+-            char2>>=4;
+-            *BufPtr=char2;
+-            BufPtr++;
+-            char3=BmpChar1&0x0c;
+-            char3>>=2;
+-            *BufPtr=char3;
+-            BufPtr++;
+-            char4=BmpChar1&0x03;
+-            *BufPtr=char4;
+-            BufPtr++;
+-        }
+-    }
+-    ImageId=GrLoadImageFromBuffer(BmpFileBuf,lpHeader.FileHeader.bfSize,GR_BACKGROUND_TOPLEFT);
+-    GrDrawImageToFit(id,gc,x,y,BmpWidth,BmpHeight,ImageId);
+-    GrFreeImage(ImageId);
+-    delete[] BmpFileBuf;
+-    return 0;
+-}
+-
+-int GrBitmapEx_Apollo_NEW(GR_WINDOW_ID id,GR_GC_ID gc,int x,int y,int width,int height,int src_x,int src_y, int src_width,int src_height, GR_CHAR *imagebits)
+-{
+-    
+-    BMPHEADER_256 lpHeader;
+-    GR_IMAGE_ID ImageId;
+-    int HeaderLen;
+-    int i;
+-    int Lines;
+-    int BmpBufBytsPerLine=0,BytesPerLine=0;
+-
+-
+-    unsigned char char1,char2,char3,char4,BmpChar1;
+-    unsigned char *Screen_Buf=NULL,*BmpFileBuf=NULL,*BufPtr=NULL,*HeaderBuf=NULL,*pimg = NULL;
+-    int GrayLevel=8;//256 gray level
+-    int BmpWidth=0,BmpHeight=0,PixesPerByte=0,BmpPanelNumbers=0,Bmpheadersize=0;
+-    BmpWidth=min(width,src_width);
+-    BmpHeight=min(height,src_height-src_y);
+-//  BmpHeight=min(height,src_height);
+-    if(BmpHeight<=0)
+-        BmpHeight=1;    
+-
+-    PixesPerByte=8/GrayLevel;
+-    BmpPanelNumbers=1<<GrayLevel;
+-    BytesPerLine=(BmpWidth*GrayLevel+31)/32*4;//
+-    BmpBufBytsPerLine=(((src_width*GrayLevel+7)/8+3)/4)*4;
+-
+-
+-    i=sizeof(BMPHEADER_256);
+-    HeaderLen=BITMAPFILEHEADER_SIZE+sizeof(BITMAPINFOHEADER)+sizeof(MWPALENTRY)*BmpPanelNumbers;
+-    memcpy((unsigned char *)&lpHeader.FileHeader.bfType,"BM",2);//
+-    lpHeader.FileHeader.bfSize=(BmpHeight*BytesPerLine)/PixesPerByte+HeaderLen; //
+-    lpHeader.FileHeader.bfReserved1=0;//
+-    lpHeader.FileHeader.bfReserved2=0;//
+-    lpHeader.FileHeader.bfOffBits=HeaderLen;//
+-    lpHeader.BmpInfo.biSize=sizeof(BITMAPINFOHEADER);//BMP
+-    lpHeader.BmpInfo.biWidth=BmpWidth;//
+-    lpHeader.BmpInfo.biHeight=BmpHeight;//
+-    lpHeader.BmpInfo.biPlanes=1;//
+-    lpHeader.BmpInfo.biBitCount=GrayLevel;//
+-    lpHeader.BmpInfo.biCompression=0;
+-    lpHeader.BmpInfo.biSizeImage=lpHeader.FileHeader.bfSize-HeaderLen;
+-    lpHeader.BmpInfo.biXPelsPerMeter=0x257E;
+-    lpHeader.BmpInfo.biYPelsPerMeter=0x257E;
+-    lpHeader.BmpInfo.biClrUsed=0;
+-    lpHeader.BmpInfo.biClrImportant=0;
++            free( screen_data);
++            screen_data = 0;
++        }
++        
++        if ( ! screen_data ) screen_data = (unsigned char*)malloc( (screen_data_w=rc.width()) * (screen_data_h=rc.height())*3);
++        
++        sRGBa *source = &(((sRGBa *)_front->GetScanLine(0))[rc.top*screen_data_w+rc.left]);
++        sRGB *dest = &(((sRGB *)screen_data)[rc.top*screen_data_w+rc.left]);
++        
++        for( y = screen_data_h; y; y--)
++            for ( x = 0; x < screen_data_w; x++) {
++                (*dest) = *(sRGB *)source;
++                dest++;
++                source++;
++            }
++        
++        Fl_Widget::redraw();
++    }
+     
+-    Bmpheadersize=HeaderLen;
+-    BmpFileBuf=new unsigned char[BmpHeight*BytesPerLine+Bmpheadersize];
+-
+-    if(!BmpFileBuf)
++    virtual void draw()
+     {
+-        return 1;
++        fl_draw_image(screen_data, Fl_Widget::x(), Fl_Widget::y(), screen_data_w, screen_data_h, 3);
++        updateAppWindowTitle();
+     }
+-    memset(BmpFileBuf,0xFF,BmpHeight*BytesPerLine+Bmpheadersize);
+-    HeaderBuf=BmpFileBuf;   
+-    Screen_Buf=BmpFileBuf+Bmpheadersize;
+-    BufPtr=Screen_Buf;
+-
+-    memcpy(HeaderBuf,(char *)&lpHeader.FileHeader.bfType,2);
+-    memcpy(&HeaderBuf[2],(char *)&lpHeader.FileHeader.bfSize,4);
+-    memcpy(&HeaderBuf[6],(char *)&lpHeader.FileHeader.bfReserved1,2);
+-    memcpy(&HeaderBuf[8],(char *)&lpHeader.FileHeader.bfReserved2,2);
+-    memcpy(&HeaderBuf[10],(char *)&lpHeader.FileHeader.bfOffBits,4);
+-    HeaderBuf+=BITMAPFILEHEADER_SIZE;
+-    memcpy(HeaderBuf,(unsigned char *)&lpHeader.BmpInfo,BITMAPINFOHEADER_SIZE);
+-    HeaderBuf+=BITMAPINFOHEADER_SIZE;
+-    memcpy(HeaderBuf,(unsigned char *)&panel256,sizeof(MWPALENTRY)*BmpPanelNumbers);
+-    HeaderBuf=BmpFileBuf;   
+-                
+-    Lines=0;
+-    BufPtr = (unsigned char *)(Screen_Buf+(BmpHeight-1)*BytesPerLine);
+-    pimg = (unsigned char *)(imagebits + src_y*BmpBufBytsPerLine +src_x);
+-    for(Lines=0;Lines<BmpHeight;Lines++)
++    
++    int handle(int event)
+     {
+-//printf("%s line = %d,height =%d,byte = %d,buf =%d\n",__FUNCTION__,Lines,BmpHeight,BytesPerLine,BufPtr);
+-//      BufPtr=(unsigned char *)&Screen_Buf[(BmpHeight-1-Lines)*BytesPerLine];
+-//      memcpy(BufPtr,(unsigned char *)&imagebits[(Lines+src_y)*BmpBufBytsPerLine+src_x],BytesPerLine);
+-        memcpy(BufPtr,pimg,BytesPerLine);
+-        BufPtr -= BytesPerLine;
+-        pimg += BmpBufBytsPerLine;      
++        CRGUIWindowManager*_win;
++        
++        if ( ! main_win)
++            return Fl_Widget::handle(event);
++        else
++            _win = main_win->getWindowManager();
++        
++        switch( event) {
++            case FL_MOVE:
++            case FL_PUSH: break;
++            
++            case FL_RELEASE:
++            {
++                
++                LVDocView *_docview = main_win->getDocView();
++                
++                lvPoint pt (Fl::event_x(), Fl::event_y());
++                ldomXPointer p = _docview->getNodeByPoint( pt );
++                // test imageByPoint
++                LVImageSourceRef img = _docview->getImageByPoint(pt);
++                if (!img.isNull())
++                    CRLog::debug("Image %d x %d found", img->GetWidth(), img->GetHeight());
++                CRBookmark * bmk = _docview->findBookmarkByPoint(pt);
++                if (bmk!=NULL) {
++                    CRLog::trace("Found bookmark of type %d", bmk->getType());
++                    //if (mid)
++                     //   AddBookmarkDialog::editBookmark((QWidget*)parent(), this, bmk);
++                }
++                lString16 path;
++                lString16 href;
++                if ( !p.isNull() ) {
++                    path = p.toString();
++                    CRLog::debug("mousePressEvent(%s)", LCSTR(path));
++                    /*bool ctrlPressed = (event->modifiers() & Qt::ControlModifier)!=0;
++                    if ( ctrlPressed || !_editMode )*/
++                        href = p.getHRef();
++                }
++                if ( href.empty() ) {
++                    //CRLog::trace("No href pressed" );
++                   // if ( !p.isNull() /* && left */ ) {
++                   //     if ( _editMode )
++                   //         _docview->setCursorPos( p );
++                   //     _docview->startSelection(p);
++                   // }
++                } else {
++                    CRLog::info("Link is selected: %s", UnicodeToUtf8(href).c_str() );
++                    //if ( left ) {
++                        // link is pressed
++                        if ( _docview->goLink( href ) )
++                            _win->postEvent( new CRGUIUpdateEvent(true) );//update();
++                    //}
++                }
++                break; 
++                
++            }
++            default:
++                //CRLog::debug("CRFLTKWindow::handle() : event not handled (%d)", event);
++                return Fl_Widget::handle(event);
++        }
++        return 1;
+     }
+     
++};
+ 
++void setAppWinTitle( lString8);
++static int cr_font_sizes_tomtom[] = { 
++         6,  7,  8,  9, 10, 11, 12, 13, 
++        14, 15, 16, 17, 18, 19, 20, 21, 
++        22, 23, 24, 25, 26, 27, 28, 29,
++        30, 31, 32, 33, 34, 35, 36, 37 };
+ 
++class CRFLTKDocViewWindow : public V3DocViewWin {
++    
++    class DocViewData
++    {
++        friend class CRFLTKDocViewWindow;
++        lString16 _settingsFileName;
++        lString16 _historyFileName;
++        CRPropRef _props;
++    };
++    
++    DocViewData *_data;
++    lString8 _document_filename;
++   
++public:
++    static CRFLTKDocViewWindow * instance;
++    
++    CRFLTKDocViewWindow( CRGUIWindowManager * wm, lString16 dataDir )
++    : V3DocViewWin( wm, dataDir )
++    {
++        _data = new DocViewData();
++        _data->_props = LVCreatePropsContainer();
++        
++        LVArray<int> sizes( cr_font_sizes_tomtom, sizeof(cr_font_sizes_tomtom)/sizeof(int) );
++        _docview->setFontSizes( sizes, true );
++        instance = this;
++    }
+     
+-    ImageId=GrLoadImageFromBuffer(BmpFileBuf,lpHeader.FileHeader.bfSize,GR_BACKGROUND_TOPLEFT);
++    void updateAppTitle()
++    {
++        char buf[2048];
++        snprintf(buf, 2048, "%d/%d - %s", _docview->getCurPage(), 
++                        _docview->getPageCount(), UnicodeToUtf8(_docview->getTitle()).data());
++        
++        setAppWinTitle( lString8(buf));
++    }
++    
++    void doCommand( int cmd, int param )
++    {
++        _docview->doCommand( (LVDocCmd)cmd, param );
++    }
++    
++    void refreshPropFromView( const char * propName )
++    {
++        _data->_props->setString( propName, _docview->propsGetCurrent()->getStringDef( propName, "" ) );
++    }
++    
++    virtual void closing()
++    {
++        strcpy( last_bookmark, GetCurrentPositionBookmark() );
++        last_bookmark_page = getDocView()->getCurPage();
++        V3DocViewWin::closing();
++    }
++
++    virtual void OnFormatEnd() {
++        CRLog::debug("CLM OnFormatEnd\n");
++        setAppWinTitle( _document_filename);
++    }
+     
+-    GrDrawImageToFit(id,gc,x,y,BmpWidth,BmpHeight,ImageId);
+-    printf("x=%d,y=%d,BmpWidth=%d,BmpHeight=%d\n",x,y,BmpWidth,BmpHeight);
+-    GrFreeImage(ImageId);
+ 
+-    delete[] BmpFileBuf;
+-    return 0;
+-}
++    virtual void OnFormatProgress(int percent)
++    {
++        CRLog::debug("CLM OnFormatProgress (%d)\n", percent);
++        lString8 t ("Formating(0%) - ");
++        t.append( _document_filename);
++        setAppWinTitle( t);
++    }
++    
++    virtual void OnFormatStart() {
++        CRLog::debug("CLM OnFormatStart\n");
++        lString8 t ("Formating(0%) - ");
++        t.append( _document_filename);
++        setAppWinTitle( t);
++    }  
++    virtual void OnLoadFileStart(lString16 filename) {
++        
++        CRLog::debug("CLM OnLoadFileStart(%s)\n", filename.c_str());
++        
++        lString8 t("Loading ");
++        t.append(_document_filename = UnicodeToUtf8(filename));
++        setAppWinTitle( t);
++    }
+ 
+-#endif
++    virtual void OnLoadFileEnd() {
++        CRLog::debug("CLM OnLoadFileEnd\n");
++        setAppWinTitle( _document_filename);
++        _wm->postEvent( new CRGUIUpdateEvent(true) );
++        getDocView()->setPageHeaderInfo(0);
++    } 
++    
++    virtual void OnLoadFileError( lString16 error)
++    {
++        fl_alert( "Error: %s", (char *)UnicodeToUtf8(error).data());
++        setAppWinTitle( _document_filename = lString8("none"));
++    }
+ 
+-class LedThreadApp
+-{
+-public:
+-    LedThreadApp();
+-    ~LedThreadApp();
+-    void init_led_sem();
+-    void destroy_led_sem();
+-    void post_led_sem();
+-    void cancel_led_thread();
+-    void create_led_thread();
+-private:
+-    //class MainViewer *m_app;
+-    pthread_t m_idled;
++    bool saveSettings( lString16 filename )
++    {
++        crtrace log;
++        if ( filename.empty() )
++            filename = _data->_settingsFileName;
++        if ( filename.empty() )
++            return false;
++        _data->_settingsFileName = filename;
++        log << "CRFLTKDocView::saveSettings(" << filename << ")";
++        LVStreamRef stream = LVOpenFileStream( filename.c_str(), LVOM_WRITE );
++        if ( !stream ) {
++            lString16 path16 = LVExtractPath( filename );
++            lString8 path = UnicodeToUtf8(path16);
++            if ( !LVCreateDirectory( path16 ) ) {
++                CRLog::error("Cannot create directory %s", path.c_str() );
++            } else {
++                stream = LVOpenFileStream( filename.c_str(), LVOM_WRITE );
++            }
++        }
++        if ( stream.isNull() ) {
++            lString8 fn = UnicodeToUtf8( filename );
++            CRLog::error("Cannot save settings to file %s", fn.c_str() );
++            return false;
++        }
++        return _data->_props->saveToStream( stream.get() );
++    }
+     
++    virtual ~CRFLTKDocViewWindow()
++    {
++        _docview->savePosition();
++        saveHistory( L"" );
++        saveSettings( L"" );
++        delete _docview;
++        delete _data;
++        instance = NULL;
++        exit(0);
++    }
+ };
++CRFLTKDocViewWindow * CRFLTKDocViewWindow::instance = NULL;
+ 
+-//LED STATE
+-#define LED_RED    1        
+-#define LED_GREEN  2
+-#define LED_YELLOW 3
+-#define LED_OFF    0
+-#define WAITTIP     0
+-//Tip icon coordinate info
+-#define DYNTIPX     270
+-#define DYNTIPY     500
+-#define DYNTIPW     60
+-#define DYNTIPH     60
+-
+-
+-static int g_iOpenLed;
+-static int g_iLedOpened;
+-static volatile int g_ledActive = 0;
+-//static int g_iProcessingTipValue;
+ 
+-static sem_t g_semled;
+-void vTellLed(void *vptr);
+-
+-LedThreadApp::LedThreadApp()
++class CRFLTKWindowManager : public CRGUIWindowManager, public Fl_Window
+ {
+-//    m_app=ProcApp;
++protected:
++    static CRFLTKWindowManager * instance;
++    //int fl_event_is_here;
++    //bool _editMode, _selecing;
+     
+-}
+-
+-LedThreadApp::~LedThreadApp()
+-{
++public:
+     
+-}
++    CRFLTKWindowManager( int width, int height ) : /*fl_event_is_here(-12345),*/
++                Fl_Window(width, height, "CoolReader"),
++                CRGUIWindowManager(new CRFLTKScreen(0, 20, width, height - 20))
++    {
++        instance = this;
++        Fl_Window::add(new Fl_CRMenu(0,0,width,20));
++        Fl_Window::add((CRFLTKScreen *)_screen);       
++        Fl_Window::show();
++        postEvent( new CRGUIUpdateEvent(true) );
++    }
++    
++    static CRFLTKWindowManager *getInstance() 
++    {
++        return instance;
++    }
++    
++    virtual bool getBatteryStatus( int & percent, bool & charging )
++    {
++        charging = true;
++        percent = 25;
++        return true;
++    }
++    
++    virtual void draw()
++    {
++        handleAllEvents(false);
++        Fl_Window::draw();
++    }
++    
++    // FLTK::handle()
++    virtual int handle(int event) {
++        int res = 0;
++        
++        switch( event) {
++            case FL_HIDE:
++                _stopFlag = true;
++                closeAllWindows();
++                res = 1; 
++                break;
++                
++            default:
++                res = Fl_Window::handle(event);
++        }
++        
++        handleAllEvents(false);       
++        return res;
++    }
++        
++    virtual int runEventLoop()
++    {
++        while (!_stopFlag ) {
++            Fl::wait(1e10);
++            CRGUIWindowManager::handleAllEvents( false );
++        }
++        return 0;
++    }
++    
++    /// idle actions
++    virtual void idle()
++    {
++        if ( !_stopFlag && getWindowCount()==1 && (main_win->getLastNavigationDirection()==1 || main_win->getLastNavigationDirection()==-1)) {
++            CRLog::debug("Last command is page down: preparing next page for fast navigation");
++            main_win->prepareNextPageImage( main_win->getLastNavigationDirection() );
++            main_win->unsetLastNavigationDirection();
++        }
++    }
++    
++    virtual ~CRFLTKWindowManager()
++    {
++        instance = NULL;
++    }
+ 
++};
+ 
+-void LedThreadApp::init_led_sem()
+-{
+-#if LEDTHREAD==1
+-    if(sem_init(&g_semled, 0,1) == -1)
+-        exit(0);
+-#endif
+-}
++CRFLTKWindowManager *CRFLTKWindowManager::instance = NULL;
+ 
+-void LedThreadApp::destroy_led_sem()
++void setAppWinTitle( lString8 title)
+ {
+-#if LEDTHREAD==1
+-    if(sem_destroy(&g_semled) == -1)
+-        exit(0);
+-#endif
++    lString8 t(L"Coolreader - ");
++    t.append(title);
++    CRFLTKWindowManager::getInstance()->label(t.data());
+ }
+-
+-void LedThreadApp::post_led_sem()
++void updateAppWindowTitle()
+ {
+-#if LEDTHREAD==1
+-    if(sem_post(&g_semled) == -1)
+-        exit(0);
+-#endif
++    CRFLTKDocViewWindow::instance->updateAppTitle();
+ }
+ 
+-void LedThreadApp::cancel_led_thread()
++void flcb_menu(Fl_Menu_*m, void*userdata)
+ {
+-#if LEDTHREAD==1
+-    if(m_idled > 0){
+-        pthread_cancel(m_idled);
++    printf("flcb_menu: action %d\n", (int)userdata);
++    switch( (int)userdata)
++    {
++        case 1: 
++        {
++            Fl_Native_File_Chooser fnfc;
++            fnfc.title("Open file");
++            fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
++            if ( !fnfc.show() ) main_win->loadDocument( lString16(fnfc.filename()) );
++            break;
++        }
++        case 3: 
++        {
++                int page = 0;
++                page = atoi(fl_input("Go to page", "1"));
++                CRFLTKDocViewWindow::instance->doCommand( DCMD_GO_PAGE, page);
++                CRFLTKWindowManager::getInstance()->postEvent( new CRGUIUpdateEvent(true) );
++                break;
++        }
++        case 4: /* Quit */ CRFLTKWindowManager::getInstance()->closeAllWindows(); break;
+     }
+-#endif
+ }
+ 
++void toc_browser_cb(Fl_Widget *w) {	
++	Fl_Browser *b = (Fl_Browser*)w; //cast to get access to Browser methods
++	// retrieve selected item from browser
++	int index = b->value();
++        CRFLTKDocViewWindow::instance->getDocView()->doCommand( DCMD_GO_POS, 
++                        ((LVTocItem *)b->data(index))->getXPointer().toPoint().y );
++        
++        CRFLTKWindowManager::getInstance()->postEvent( new CRGUIUpdateEvent(true) );
++        ((Fl_Window *)b->parent())->hide();
++	CRLog::trace("toc_browser(%d)", index);	
++}
+ 
+-void LedThreadApp::create_led_thread()
++class Fl_TOCWindow : public Fl_Window
+ {
+-#if LEDTHREAD==1
+-    int ret_led;
+-    ret_led = pthread_create(&m_idled, NULL, (void*(*)(void*))vTellLed, NULL);
+-    if(ret_led != 0){
+-        printf("Create pthread error!\n");
+-        exit(1);
+-    }
+-#endif
+-}
++    Fl_Browser *browser;
++    
++public:
++    Fl_TOCWindow() : Fl_Window(250,200,"Table of contents")
++    {
++        char buf[2048];
++        CRFLTKDocViewWindow *win = CRFLTKDocViewWindow::instance;
++        add( browser = new Fl_Browser(1,1,w()-1, h()-1));
++        browser->type(FL_HOLD_BROWSER);
++        browser->callback(toc_browser_cb);
++        
++        int currPage = win->getDocView()->getCurPage();
++                
++        LVTocItem * root = win->getDocView()->getToc();
++        for ( int i=0; i<root->getChildCount(); i++ ) {
++            LVTocItem *t = root->getChild(i);
++            snprintf(buf, 2048, "%s (page %d)", UnicodeToUtf8(t->getName()).data(), t->getPage());
++            browser->add(buf, t);
++        }
++        show();
++    }  
++};
+ 
+-void vTellLed(void *vptr)
++void flcb_button(Fl_Button*b, void*userdata)
+ {
+-    //int start = 0;
+-    int locked;
+-    g_iOpenLed = 1;
+-    g_iLedOpened = 0;
+-//    g_iProcessingTipValue = 0;
+-    
+-   //set cancel type
+-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
+-
+-    if(g_iOpenLed)
+-    {
+-        g_iLedOpened = open("/dev/s3c2410_led", O_RDONLY);
+-    //  g_iLedOpened = open("/dev/misc/s3c2410_led", O_RDONLY);
+-        g_iOpenLed = 0;
+-    }
+-    if(g_iLedOpened)
+-    {
+-        while(1)
+-        {   
+-            if(!sem_trywait(&g_semled))
+-            {
+-                //if(start)
+-                //    start = 0;
+-                //else
+-                //    start = 1;
+-            }
+-            else
+-            {
+-                if (g_ledActive > 0)
+-                {
+-                    ioctl(g_iLedOpened, LED_GREEN);
+-                    usleep(100000);
+-                    ioctl(g_iLedOpened, LED_OFF); 
+-                    usleep(100000);
+-                }
+-                else
++    
++    CRLog::trace("flcb_button: action %d\n", (int)userdata);
++    
++    //LVDocView *docview = CRFLTKDocViewWindow::instance->getDocView(); 
++    CRFLTKDocViewWindow *win = CRFLTKDocViewWindow::instance;
++    
++    switch( (int)userdata)
++    {
++        
++        case 100: 
++                  win->doCommand( DCMD_ZOOM_IN, 1 ); 
++                  win->refreshPropFromView( PROP_FONT_SIZE );
++                  break;
++    
++        case 101: 
++                  win->doCommand( DCMD_ZOOM_OUT, 1 );
++                  win->refreshPropFromView( PROP_FONT_SIZE );
++                  break;
++                
++        case 200: win->doCommand( DCMD_PAGEUP, 1 ); break;
++        
++        case 201: win->doCommand( DCMD_PAGEDOWN, 1 ); break;
++            
++        case 300: win->doCommand( DCMD_MOVE_BY_CHAPTER, 1); break;
++        
++        case 301: win->doCommand( DCMD_MOVE_BY_CHAPTER, -1); break;
++        
++        case 400: win->doCommand( DCMD_LINK_BACK, 1 ); break;
++        
++        case 401: win->doCommand( DCMD_LINK_FORWARD, 1 ); break;
++        
++        case 500:
++        {
++                Fl_TOCWindow *tocwin = new Fl_TOCWindow();
++                break;
++        }
++        case 501: 
++        {
++            const char *res = fl_input("Search words in text", "");
++            if ( res != NULL) {
++                lString16 pattern(res);
++                LVArray<ldomWord> words;
++                lvRect rc;
++                win->getDocView()->GetPos( rc );
++    
++                if ( win->getDocView()->getDocument()->findText( 
++                        pattern, 1, 0, rc.bottom, -1, words, 200, rc.height()) )
+                 {
+-                    //g_iProcessingTipValue = 0;
+-                    ioctl(g_iLedOpened, LED_OFF);
+-                    sem_wait(&g_semled);
+-                    sem_post(&g_semled);
++                    
++                    CRLog::debug("CRViewDialog::findText: pattern found");
++                    win->getDocView()->clearSelection();
++                    win->getDocView()->selectWords( words );
++                    ldomMarkedRangeList * ranges = win->getDocView()->getMarkedRanges();
++                    if ( ranges ) {
++                        if ( ranges->length()>0 ) {
++                            int pos = ranges->get(0)->start.y;
++                            win->getDocView()->SetPos(pos);
++                        }
++                    }
++                    break;
+                 }
+             }
++            return;
+         }
++  
++        case 502: win->doCommand( DCMD_ROTATE_BY, 1);
++                  win->refreshPropFromView( PROP_ROTATE_ANGLE);
++                  break;
++        default:
++            return;
++                
+     }
++    CRFLTKWindowManager::getInstance()->postEvent( new CRGUIUpdateEvent(true) );
+ }
+ 
+-LedThreadApp * g_ledThread = NULL;
+ 
+-void initLeds()
+-{
+-    if ( !g_ledThread ) {
+-        g_ledThread = new LedThreadApp();
+-        g_ledThread->init_led_sem();
+-        g_ledThread->create_led_thread();
+-    }
+-}
++#else // NANOX-NXLIB
+ 
+-void closeLeds()
+-{
+-    if ( g_ledThread ) {
+-        g_ledThread->cancel_led_thread();
+-        g_ledThread->destroy_led_sem();
+-        delete g_ledThread;
+-        g_ledThread = NULL;
+-    }
+-}
+ 
+-void postLeds( bool turnOn )
++MWUCHAR *screen_imagebits = 0; 
++MWIMAGEHDR image_screen_image_24b = {
++  64,           /* flags*/
++  0, 0, /* width, height*/
++  1, 24,                /* planes, bpp*/
++  0x70000,              /* data_format*/
++  0,           /* pitch */
++  NULL,  /* screen_imagebits */
++  0,            /* palsize*/
++  0,
++  16777216L             /* transcolor*/
++};
++
++#define VIEWER_WINDOW_WIDTH    image_screen_image_24b.width
++#define VIEWER_WINDOW_HEIGHT   image_screen_image_24b.height
++
++int GrBitmapEx_NanoX(GR_WINDOW_ID id,GR_GC_ID gc,int x,int y,int width,int height, GR_CHAR *imagebits)
+ {
+-    if ( g_ledThread ) {
+-        if ( turnOn )
+-            //g_ledActive++;
+-            g_ledActive = 1;
+-        else
+-            g_ledActive = 0;
+-            //g_ledActive--;
+-        g_ledThread->post_led_sem();
+-    }
++	printf("GrBitmapEx_NanoX: (%d, %d, %d, %d)\n", x, y, width, height);
++		
++	// Realloc screen_imagebits if necessary
++	if ( (width * height) > (image_screen_image_24b.width * image_screen_image_24b.height)) {
++		if (  screen_imagebits) free( screen_imagebits);
++		// RGB 24 bits
++		image_screen_image_24b.imagebits = 
++			screen_imagebits = 
++				(MWUCHAR*)malloc(3 * width * height * sizeof(MWUCHAR));			
++	}
++
++	GR_CHAR *d = screen_imagebits, *s = imagebits;
++	int len = (image_screen_image_24b.width = width) *
++				 (image_screen_image_24b.height = height);
++
++	while( len--) {
++		*d = *s;
++		d[1] = s[1];
++		d[2]= s[2];
++		d+=3;
++		s+=4;
++	}
++
++	image_screen_image_24b.pitch = image_screen_image_24b.width * 3;
++ 	GrDrawImageBits(id, gc, x, y, &image_screen_image_24b);	
+ }
+ 
+ /// WXWidget support: draw to wxImage
+@@ -618,6 +626,7 @@ class CRJinkeScreen : public CRGUIScreen
+ {
+     public:
+         static CRJinkeScreen * instance;
++        
+     protected:
+         GR_WINDOW_ID _wid;
+         GR_GC_ID _gc;
+@@ -627,10 +636,10 @@ class CRJinkeScreen : public CRGUIScreen
+         	if ( rc2.isEmpty() && !full )
+         		return;
+         	lvRect rc = rc2;
+-        	rc.left &= ~3;
+-        	rc.right = (rc.right + 3) & ~3;
+-            CRLog::debug("CRJinkeScreen::update()");
+-            if ( rc.height()>400
++//        	rc.left &= ~3;
++//        	rc.right = (rc.right + 3) & ~3;
++
++            if ( rc.height()==VIEWER_WINDOW_HEIGHT
+ #if ENABLE_UPDATE_MODE_SETTING==1
+                   && checkFullUpdateCounter()
+ #endif
+@@ -638,32 +647,29 @@ class CRJinkeScreen : public CRGUIScreen
+             	full = true;
+             else
+             	full = false;
++            	
+             CRLog::debug("CRJinkeScreen::update( %d, %d, %d, %d, %s )", rc.left, rc.top, rc.right, rc.bottom, full ? "full" : "partial");
+-            //GR_BITMAP bmp;
+-            //GrBitmap(_wid, _gc, rc.left, rc.top, rc.width(), rc.height(), &bmp );
++            
+             int h = rc.height();
+-
+-            CRLog::trace( "calling GrPrint wid=%08x, gc=%08x h=%d", (unsigned)_wid, (unsigned)_gc, h );
+-
+-            int bpp=_front->GetBitsPerPixel();
+-            if ( bpp>=3 && bpp<=8 )
+-                GrBitmapEx_Apollo_NEW(_wid,_gc, 0, rc.top, 600, h, 0, 0, 600, h, (GR_CHAR*)_front->GetScanLine(rc.top) );
+-            else
+-                GrBitmapEx_Apollo_FOUR(_wid,_gc, 0, rc.top, 600, h, 0, 0, 600, h, (GR_CHAR*)_front->GetScanLine(rc.top) );
+-            if ( full )
+-                GrPrint(_wid);
+-            else
+-                GrPartialPrint(_wid, rc.left, rc.top, rc.width(), rc.height() );
++			int bpp=_front->GetBitsPerPixel();
++            CRLog::trace( "Calling GrPrint wid=%08x, gc=%08x h=%d, bpp=%d", (unsigned)_wid, (unsigned)_gc, h, bpp );
++            
++           /* if ( !full)
++				GrBitmapEx_NanoX(_wid,_gc, 0, 0, VIEWER_WINDOW_WIDTH, VIEWER_WINDOW_HEIGHT, (GR_CHAR*)_front->GetScanLine(0));
++			else*/
++				GrBitmapEx_NanoX(_wid,_gc, (int)rc.left, (int)rc.top, 
++								rc.width(), rc.height(), (GR_CHAR*)_front->GetScanLine(rc.top));
++           
+             CRLog::trace( "GrPrint done" );
+         }
++        
+     public:
+         GR_WINDOW_ID getWID() { return _wid; }
+ 
+-
+-        virtual void drawIcon( LVGrayDrawBuf * buf, int x, int y )
++        virtual void drawIcon( LVColorDrawBuf /* LVGrayDrawBuf */ * buf, int x, int y )
+         {
+-            GrBitmapEx_Apollo_FOUR(_wid,_gc, x, y, buf->GetWidth(), buf->GetHeight(), 0, 0, buf->GetWidth(), buf->GetHeight(), (GR_CHAR*)buf->GetScanLine(0) );
+-            GrPartialPrint(_wid, x, y, buf->GetWidth(), buf->GetHeight() );
++			CRLog::trace("drawIcon( %d, %d)[%d,%d]\n", x, y, buf->GetWidth(), buf->GetHeight());
++            GrBitmapEx_NanoX(_wid,_gc, x, y, buf->GetWidth(), buf->GetHeight(), (GR_CHAR*)buf->GetScanLine(0));
+         }
+ 
+         virtual ~CRJinkeScreen()
+@@ -671,36 +677,21 @@ class CRJinkeScreen : public CRGUIScreen
+             instance = NULL;
+             GrClose();
+         }
++        
+         /// creates compatible canvas of specified size
+         virtual LVDrawBuf * createCanvas( int dx, int dy )
+         {
+-#if (COLOR_BACKBUFFER==1)
++			CRLog::trace("CRJinkeScreen::createCanvas(%d, %d)\n", dx, dy);
+             LVDrawBuf * buf = new LVColorDrawBuf( dx, dy );
+-#else
+-            static int backBufferBits = 0;
+-            LVDrawBuf * buf = NULL;
+-            if ( backBufferBits==0 ) {
+-                backBufferBits = GRAY_BACKBUFFER_BITS;
+-                FILE * f = fopen("/root/appdata/.dismode", "rb");
+-                if ( f ) {
+-                    int ch = fgetc(f);
+-                    if ( ch!='1' )
+-                        backBufferBits = 2;
+-                    fclose(f);
+-                } else if (GRAY_BACKBUFFER_BITS>2) {
+-                    backBufferBits = 2;
+-                }
+-            }
+-            buf = new LVGrayDrawBuf( dx, dy, backBufferBits );
+-#endif
+             return buf;
+         }
++        
+         CRJinkeScreen( int width, int height )
+         :  CRGUIScreenBase( width, height, true )
+         {
+             if( GrOpen() < 0 ) 
+             {
+-                fprintf(stderr, "Couldn't connect to Nano-X server\n");
++                fprintf(stderr, "CRJinkeScreen::Couldn't connect to Nano-X server\n");
+                 return;
+             }
+ 
+@@ -708,32 +699,32 @@ class CRJinkeScreen : public CRGUIScreen
+             //GR_SCREEN_INFO si;
+             //GrGetScreenInfo(&si);
+     
+-            _wid = GrNewWindow(GR_ROOT_WINDOW_ID,VIEWER_WINDOW_X,VIEWER_WINDOW_Y,
+-            VIEWER_WINDOW_WIDTH,VIEWER_WINDOW_HEIGHT, 0, GR_COLOR_WHITE, 0);
++            _wid = GrNewWindow(GR_ROOT_WINDOW_ID,0,0, width, height, 0, GR_COLOR_WHITE, 0);
+             _gc = GrNewGC();
+             GrSetGCForeground(_gc, GR_COLOR_BLACK);
+             GrSetGCBackground(_gc, GR_COLOR_WHITE);
+         
+-            GrSelectEvents(_wid, GR_EVENT_MASK_BUTTON_DOWN | \
++            GrSelectEvents(_wid, GR_EVENT_MASK_BUTTON_DOWN | GR_EVENT_MASK_UPDATE | \
+                 GR_EVENT_MASK_BUTTON_UP | GR_EVENT_MASK_MOUSE_POSITION |\
+                 GR_EVENT_MASK_EXPOSURE |GR_EVENT_MASK_KEY_UP|\
+                 GR_EVENT_MASK_KEY_DOWN | GR_EVENT_MASK_CLOSE_REQ);
+ 
++            /* CLM
+             //Set Windows style
+             props.flags = GR_WM_FLAGS_PROPS;
+             props.props = GR_WM_PROPS_NODECORATE;
+             GrSetWMProperties(_wid, &props);
+-        //#ifndef USE_OLD_NANOX
++            */
++        
+             GrMapWindow(_wid);    
+             GrSetFocus(_wid);
+-        //#endif
+ 
+-            _canvas = LVRef<LVDrawBuf>( new LVGrayDrawBuf( _width, _height, GRAY_BACKBUFFER_BITS ) );
+-            _front = LVRef<LVDrawBuf>( new LVGrayDrawBuf( _width, _height, GRAY_BACKBUFFER_BITS ) );
++  			_canvas = LVRef<LVDrawBuf>( createCanvas( _width, _height ) );
++            _front = LVRef<LVDrawBuf>( createCanvas( _width, _height ) );
++            printf("Created screen %d x %d, depth = %d\n", _width, _height, 32);
+             
+             _canvas->Clear(0xFFFFFF);
+-            //_front->Clear(0xFFFFFF);
+-            _front->Clear(0x000000);
++            _front->Clear(0xFFFFFF);
+ 
+             instance = this;
+         }
+@@ -741,29 +732,23 @@ class CRJinkeScreen : public CRGUIScreen
+ CRJinkeScreen * CRJinkeScreen::instance = NULL;
+ 
+ 
+-V3DocViewWin * main_win = NULL;
+-
+ class CRJinkeWindowManager : public CRGUIWindowManager
+ {
+ protected:
+     GR_WINDOW_ID _wid;
+-#if ENABLE_DBUS_VIEWER_EVENTS==1
+-   DBusConnection *m_bus;               //bus name
+-#endif
++
+ public:
+     virtual bool getBatteryStatus( int & percent, bool & charging )
+     {
+-        charging = false;
++        charging = true;
+         percent = checkPowerState();
+         if ( percent<0 ) {
+             percent = 0;
+             return false;
+         }
+         return true;
+-
+     }
+ 
+-    
+     /// translate string by key, return default value if not found
+     virtual lString16 translateString( const char * key, const char * defValue )
+     {
+@@ -780,89 +765,22 @@ public:
+         }
+         return res;
+     }
++    
+     static CRJinkeWindowManager * instance;
+-    CRJinkeWindowManager( int dx, int dy )
+-    : CRGUIWindowManager(NULL)
+-    {
+-        int bus_fd;
+-        
++    
++    CRJinkeWindowManager( int dx, int dy ) : CRGUIWindowManager(NULL)
++    {     
+         if ( CRJinkeScreen::instance==NULL )
+             _screen = new CRJinkeScreen( dx, dy );
+         else
+             _screen = CRJinkeScreen::instance;
++            
+         if ( _screen ) {
+             _wid = ((CRJinkeScreen*)_screen)->getWID();
+             _ownScreen = true;
+-            instance = this;
+-
+-#if ENABLE_DBUS_VIEWER_EVENTS==1
+-            //dbus, nanox
+-            m_bus = dbus_bus_get (DBUS_BUS_SESSION, NULL);
+-            if (!m_bus)
+-            {
+-                printf ("Failed to connect to the D-BUS daemon");
+-                //return 0;
+-            } else {
+-                dbus_bus_add_match (m_bus, "type='signal',interface='com.burtonini.dbus.Signal'", NULL);
+-                dbus_connection_get_unix_fd(m_bus, &bus_fd);
+-                GrRegisterInput(bus_fd);
+-            }
+-#endif
+-        
+-        }
+-    }
+-
+-#if ENABLE_DBUS_VIEWER_EVENTS==1
+-    void onDbusMessage(DBusConnection *conn)
+-    {
+-        if ( !m_bus )
+-            return;
+-        DBusMessage* msg;
+-        DBusMessageIter args;
+-        DBusError err;
+-        int ret;
+-        char* sigvalue;
+-
+-        // non blocking read of the next available message
+-        dbus_connection_read_write_dispatch(conn, 0);
+-        msg = dbus_connection_pop_message(conn);
+-
+-        // loop again if we haven't read a message
+-        if (NULL == msg)
+-        {
+-            return;
++            instance = this;      
+         }
+-        //check if the message is a signal from the correct interface and with the correct name
+-        if (dbus_message_is_signal (msg, "com.burtonini.dbus.Signal", "Ping"))
+-        {
+-                    //read the parameters
+-            if (!dbus_message_iter_init(msg, &args))
+-                    CRLog::error("dbus: Message Has No Parameters\n");
+-            else if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&args))
+-                    CRLog::error("dbus: Argument is not string!\n");
+-            else
+-            {
+-                    dbus_message_iter_get_basic(&args, &sigvalue);
+-                    CRLog::info("dbus: Got Signal with value %s\n", sigvalue);
+-            }
+-        }
+-        else if (dbus_message_is_signal (msg, "com.burtonini.dbus.Signal", "Exit"))
+-        {
+-                    //read the parameters
+-            if (!dbus_message_iter_init(msg, &args))
+-                    CRLog::error("dbus: Message Has No Parameters\n");
+-            else if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&args))
+-                    CRLog::error("dbus: Argument is not string!\n");
+-            else
+-            {
+-                dbus_message_iter_get_basic(&args, &sigvalue);
+-                CRLog::info("dbus: Got Signal with value %s\n", sigvalue);
+-            }
+-        }
+-        //free the message
+-        dbus_message_unref(msg);
+     }
+-#endif
+ 
+     /// idle actions
+     virtual void idle()
+@@ -877,8 +795,8 @@ public:
+     /// forward events from system queue to application queue
+     virtual void forwardSystemEvents( bool waitForEvent )
+     {
+-        if ( _stopFlag )
+-            waitForEvent = false;
++        if ( _stopFlag ) waitForEvent = false;
++        
+         GR_EVENT event;
+         for(;;)
+         {
+@@ -894,12 +812,25 @@ public:
+ 
+             switch(event.type)
+             {
+-                case GR_EVENT_TYPE_ERROR:
++				case GR_EVENT_TYPE_ERROR:
+                     CRLog::debug("GR_EVENT_TYPE_ERROR");
+                     break;
+-                case GR_EVENT_TYPE_CLOSE_REQ:
++                    
++				case GR_EVENT_TYPE_CLOSE_REQ:
+                     CRLog::debug("GR_EVENT_TYPE_CLOSE_REQ");
++                    postEvent( new CRGUIKeyDownEvent(XK_Escape, 0) );
++                    CRJinkeWindowManager::instance->postCommand(MCMD_QUIT, 0);
+                     break;
++                    
++                    
++                case GR_EVENT_TYPE_UPDATE:
++					if ( ((GR_EVENT_UPDATE*)&event)->utype == GR_UPDATE_SIZE ) {
++						int w = ((GR_EVENT_UPDATE*)&event)->width;
++						int h = ((GR_EVENT_UPDATE*)&event)->height;
++						CRLog::debug("resizeEnvent");
++    					CRJinkeWindowManager::instance->reconfigure(w, h, CR_ROTATE_ANGLE_0);
++    					break;
++					}
+                 case GR_EVENT_TYPE_EXPOSURE:
+                     CRLog::debug("GR_EVENT_TYPE_EXPOSURE");
+                     postEvent( new CRGUIUpdateEvent(true) );
+@@ -921,6 +852,7 @@ public:
+             case GR_EVENT_TYPE_BUTTON_DOWN:
+                 {
+                     CRLog::debug("GR_EVENT_TYPE_BUTTON_DOWN");
++                    
+ /*
+                 char buf[128]={0};
+                 GrClearArea(m_state->wid,10,770,400,28,0);
+@@ -932,8 +864,38 @@ public:
+                 }
+                 break;
+             case GR_EVENT_TYPE_BUTTON_UP:
+-                    {
+-                    CRLog::debug("GR_EVENT_TYPE_BUTTON_UP");
++            	{        
++					//if ( event.mouse.buttons == 2)
++					CRLog::debug("GR_EVENT_TYPE_BUTTON_UP %d(%d, %d)", event.mouse.buttons, event.mouse.x, event.mouse.y);
++					if ( event.mouse.y < 20) {
++						if ( event.mouse.x < VIEWER_WINDOW_WIDTH/2) {
++							CRJinkeWindowManager::instance->postCommand(DCMD_ZOOM_OUT, 0);
++							break;
++						}
++						else {
++							CRJinkeWindowManager::instance->postCommand(DCMD_ZOOM_IN, 0);
++							break;
++						}
++					}
++		
++					if ( (event.mouse.x > VIEWER_WINDOW_WIDTH/2) &&
++						 (event.mouse.y > VIEWER_WINDOW_HEIGHT/2))
++						CRJinkeWindowManager::instance->postCommand(DCMD_PAGEDOWN, 0);
++						
++					else if ( (event.mouse.x < VIEWER_WINDOW_WIDTH/2) &&
++						 (event.mouse.y < VIEWER_WINDOW_HEIGHT/2))
++						CRJinkeWindowManager::instance->postCommand(DCMD_PAGEUP, 0);
++						
++						
++					else if (event.mouse.y < VIEWER_WINDOW_HEIGHT/2)
++						CRJinkeWindowManager::instance->postCommand(MCMD_SETTINGS_FONTSIZE,0);
++						//MCMD_MAIN_MENU, 0);
++					else 
++						CRJinkeWindowManager::instance->postCommand(MCMD_SETTINGS, 0);
++						
++						/*
++                    		CRJinkeWindowManager::instance->postCommand(DCMD
++                    		main_win->showSettingsMenu(); */
+ /*
+                 char buf[128]={0};
+                 GrClearArea(m_state->wid,10,770,400,28,0);
+@@ -942,11 +904,17 @@ public:
+                 GrText(m_state->wid,m_state->gc,10,770,(char *)buf,-1,GR_TFASCII|GR_TFTOP);
+                     GrPartialPrint(m_state->wid,10,770,400,28);
+ */
+-                    }
++				}
+                 break;
+             case GR_EVENT_TYPE_MOUSE_POSITION:
+                     {
+-                    CRLog::debug("GR_EVENT_TYPE_MOUSE_POSITION");
++						if ( event.mouse.buttons ) {
++							LVDocView * _docview = main_win->getDocView();
++							_docview->setFontSize( 6 + event.mouse.x / 30 );
++							CRLog::trace("_docview->setFontSize(%d)\n", 6 + event.mouse.x / 30);
++							_docview->requestRender();
++						}
++                    // CLM CRLog::debug("GR_EVENT_TYPE_MOUSE_POSITION");
+ /*
+                 char buf[128]={0};
+                     GrClearArea(m_state->wid,10,770,400,28,0);
+@@ -962,7 +930,7 @@ public:
+             //case GR_EVENT_TYPE_KEY_UP:
+                     CRLog::debug("GR_EVENT_TYPE_KEY_DOWN %d", (int)event.keystroke.ch );
+                     {
+-                        static int convert_table[] = {
++                        static int convert_table[] = { // Use nxkbd [123] mode
+                         KEY_0, '0', 0,
+                         KEY_1, '1', 0,
+                         KEY_2, '2', 0,
+@@ -973,42 +941,40 @@ public:
+                         KEY_7, '7', 0,
+                         KEY_8, '8', 0,
+                         KEY_9, '9', 0,
+-                        LONG_KEY_0, '0', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_1, '1', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_2, '2', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_3, '3', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_4, '4', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_5, '5', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_6, '6', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_7, '7', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_8, '8', KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_9, '9', KEY_FLAG_LONG_PRESS,
+-                        KEY_CANCEL, XK_Escape, 0,
++                        '!', '0', KEY_FLAG_LONG_PRESS, /* 10eme */
++                        '@', '1', KEY_FLAG_LONG_PRESS,
++                        '#', '2', KEY_FLAG_LONG_PRESS,
++                        '$', '3', KEY_FLAG_LONG_PRESS,
++                        '%', '4', KEY_FLAG_LONG_PRESS,
++                        '^', '5', KEY_FLAG_LONG_PRESS,
++                        '&', '6', KEY_FLAG_LONG_PRESS,
++                        '*', '7', KEY_FLAG_LONG_PRESS,
++                        '(', '8', KEY_FLAG_LONG_PRESS,
++                        ')', '9', KEY_FLAG_LONG_PRESS,
++                        KEY_CANCEL, XK_Escape, 0, /* 20eme */
+                         KEY_OK, XK_Return, 0,
+                         KEY_DOWN, XK_Right, 0,
+                         KEY_UP, XK_Left, 0,
+ 
+-                        KEY_CURSOR_OK, XK_KP_Enter, 0,
+-                        KEY_CURSOR_DOWN, XK_Next, 0,
+-                        KEY_CURSOR_UP, XK_Prior, 0,
+-                        //KEY_CURSOR_OK, XK_Return, 0,
+-                        //KEY_CURSOR_DOWN, XK_Up, 0,
+-                        //KEY_CURSOR_UP, XK_Down, 0,
+-
+-                        LONG_KEY_CANCEL, XK_Escape, KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_OK, XK_Return, KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_DOWN, XK_Right, KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_UP, XK_Left, KEY_FLAG_LONG_PRESS,
+-
+-                        LONG_KEY_CURSOR_OK, XK_KP_Enter, KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_CURSOR_DOWN, XK_Next, KEY_FLAG_LONG_PRESS,
+-                        LONG_KEY_CURSOR_UP, XK_Prior, KEY_FLAG_LONG_PRESS,
++/* CLM START */
++						13, XK_Return, 0,
++						8 /* BackSpace */, XK_Escape, 0,
++						'}', XK_Right, 0,
++						'{', XK_Left, 0,
++/* CLM END */
++ 
++                        '\'', XK_Escape, KEY_FLAG_LONG_PRESS,
++                        '~', XK_Return, KEY_FLAG_LONG_PRESS,
++                        ']', XK_Right, KEY_FLAG_LONG_PRESS, /* 30eme */
++                        '[', XK_Left, KEY_FLAG_LONG_PRESS,
+ 
++                        /* TODO ???
+                         KEY_SHORTCUT_VOLUME_UP, XK_KP_Add, 0,
+                         KEY_SHORTCUT_VOLUME_DOWN, XK_KP_Subtract, 0,
+                         LONG_SHORTCUT_KEY_VOLUMN_UP, XK_KP_Add, KEY_FLAG_LONG_PRESS,
+                         LONG_SHORTCUT_KEY_VOLUMN_DOWN, XK_KP_Subtract, KEY_FLAG_LONG_PRESS,
+-                        0, 0, 0 // end marker
++                        */
++                        0, 0, 0 // end marker, 36eme pos
+                         };
+                         int code = 0;
+                         int flags = 0;
+@@ -1017,7 +983,7 @@ public:
+                             if ( keyId==convert_table[i] ) {
+                                 code = convert_table[i+1];
+                                 flags = convert_table[i+2];
+-                                CRLog::debug( "OnKeyPressed( %d (%04x) ) - converted to %04x, %d", keyId, keyId, code, flags );
++                                CRLog::debug( "OnKeyPressed(%d(%04x))-converted to %04x, %d [%i]", keyId, keyId, code, flags, i/3 );
+                             }
+                         }
+                         if ( !code ) {
+@@ -1062,10 +1028,8 @@ public:
+ #endif
+ };
+ 
+-
+ CRJinkeWindowManager * CRJinkeWindowManager::instance = NULL;
+ 
+-
+ class CRJinkeDocView : public V3DocViewWin {
+ public:
+     static CRJinkeDocView * instance;
+@@ -1080,15 +1044,39 @@ public:
+         last_bookmark_page = CRJinkeDocView::instance->getDocView()->getCurPage();
+         V3DocViewWin::closing();
+     }
++    
++
++    virtual void OnFormatEnd() {
++        CRLog::debug("CLM OnFormatEnd\n");
++    }
++    
++
++    virtual void OnFormatProgress(int percent)
++    {
++        CRLog::debug("CLM OnFormatProgress (%d)\n", percent);
++    }
++    
++
++    virtual void OnFormatStart() { CRLog::debug("CLM OnFormatStart\n"); }
++    
++
++    virtual void OnLoadFileStart(lString16 filename) {
++        CRLog::debug("CLM OnLoadFileStart(%s)\n", filename.c_str());
++    }
++
++
++    virtual void OnLoadFileEnd() { CRLog::debug("CLM OnLoadFileEnd\n"); } 
++
+     virtual ~CRJinkeDocView()
+     {
+         instance = NULL;
+     }
+ };
+ 
+-
+ CRJinkeDocView * CRJinkeDocView::instance = NULL;
+ 
++#endif
++
+ // some prototypes
+ //int InitDoc(char *fileName);
+ 
+@@ -1112,17 +1100,18 @@ void DoQuitSignal(int sig)
+ 
+ void ExceptionExit(int sig)
+ {
+-    closeLeds();
+     printf("ExceptionExit(%d)", sig);
++#ifdef FLTK_GUI
++    CRFLTKWindowManager::getInstance()->hide();
++#else
+     GrClose();
++#endif
+     exit(0);
+ }
+ 
+ 
+ int main( int argc, const char * argv[] )
+ {
+-    //g_ledThread = new 
+-
+     if ( argc<2 ) {
+         printf("usage: cr3 <filename>\n");
+         return 1;
+@@ -1131,35 +1120,25 @@ int main( int argc, const char * argv[] 
+     signal(SIGINT,QuitSignalCount);
+     signal(SIGTERM,QuitSignalCount);
+ 
+-#ifdef ENABLE_LEDS
+-    initLeds();
+-#endif
+     //signal(SIGCHLD,WaitSignalChildExit);
+ 
+-    {
+-#ifdef ENABLE_LEDS
+-        postLeds( true );
+-#endif
+-        int res = InitDoc( (char *)argv[1] );
++	int res = InitDoc( (char *)argv[1] );
+ 
+-        if ( !res ) {
+-            printf("Failed to show file %s\n", argv[1]);
+-            closeLeds();
+-            return 2;
+-        }
+-#ifdef ENABLE_LEDS
+-        postLeds( false );
+-#endif
+-    }
++	if ( !res ) {
++		printf("Failed to show file %s\n", argv[1]);
++		return 2;
++	}
+ 
+    if(g_QuitSignalCounter)
+    {
+       g_QuitSignalCounter=0;
++#ifdef FLTK_GUI
++      CRFLTKWindowManager::getInstance()->hide();
++#else
+       GrClose();
+-      printf("INT signal \n");
+-#ifdef ENABLE_LEDS
+-      closeLeds();
+ #endif
++      printf("INT signal \n");
++
+       return 0;
+    }
+ 
+@@ -1167,12 +1146,12 @@ int main( int argc, const char * argv[] 
+    signal(SIGTERM,ExceptionExit);
+ 
+     CRLog::info("Entering event loop");
++#ifdef FLTK_GUI
++    CRFLTKWindowManager::getInstance()->runEventLoop();
++#else
+     CRJinkeWindowManager::instance->runEventLoop();
+-    CRLog::info("Exiting event loop");
+-
+-#ifdef ENABLE_LEDS
+-    closeLeds();
+ #endif
++    CRLog::info("Exiting event loop");
+ 
+     HyphMan::uninit();
+     ldomDocCache::close();
+@@ -1182,111 +1161,79 @@ int main( int argc, const char * argv[] 
+ }
+ 
+ 
+-static char history_file_name[1024] = "/root/abook/.cr3hist";
+-
++static char history_file_name[1024] = "/root/crengine/.cr3hist";
+ static const char * getLang( )
+ {
+-    int langId = -1;
++ /*   int langId = -1;
+     if ( getenv("WOLLANG") )
+         langId = atoi( getenv("WOLLANG") );
+     static char * langs[] = {
+-        "zh_CN",
+-        "en_US",
+-        "zh_TW",
+-        "ru",
+-        "uk",
+-        "ka",
+-        "es",
+-        "tr",
+-        "fr",
+-        "de",
+-        "bg",
+-        "ar",
+-        "be",
+-        "ca",
+-        "cs",
+-        "da",
+-        "el",
+-        "et",
+-        "fi",
+-        "hr",
+-        "hu",
+-        "is",
+-        "it",
+-        "iw",
+-        "ja",
+-        "ko",
+-        "lt",
+-        "lv",
+-        "mk",
+-        "nl",
+-        "no",
+-        "pl",
+-        "pt",
+-        "ro",
+-        "sh",
+-        "sk",
+-        "sl",
+-        "sq",
+-        "sr",
+-        "sv",
+-        "th",
++        "zh_CN",        "en_US",        "zh_TW",        "ru",
++        "uk",        "ka",        "es",        "tr",        "fr",
++        "de",        "bg",        "ar",        "be",        "ca",
++        "cs",        "da",        "el",        "et",        "fi",
++        "hr",        "hu",        "is",        "it",        "iw",
++        "ja",        "ko",        "lt",        "lv",        "mk",
++        "nl",        "no",        "pl",        "pt",        "ro",
++        "sh",        "sk",        "sl",        "sq",        "sr",
++        "sv",        "th",
+     };
+     int numlangs = sizeof(langs)/sizeof(langs[0]);
+     if ( langId>=0 && langId< numlangs )
+-        return langs[langId];
++        return langs[langId]; */
+     return "en";
+ }
+ 
+ int InitDoc(char *fileName)
+ {
+-
+-
+     static const lChar16 * css_file_name = L"fb2.css"; // fb2
+ 
+     CRLog::trace("InitDoc()");
+-#ifdef __i386__
+-    //CRLog::setFileLogger("/root/abook/crengine.log");
+     CRLog::setStdoutLogger();
+     CRLog::setLogLevel(CRLog::LL_TRACE);
+-#else
++/* CLM #else
+     //InitCREngineLog(NULL);
+ #if 0
+     CRLog::setFileLogger("/root/abook/.cr3/cr3.log", true);
+     CRLog::setLogLevel(CRLog::LL_TRACE);
+ #else
+     InitCREngineLog("/root/abook/crengine/crlog.ini");
+-#endif
+-#endif
++#endif 
++#endif */
+ 
+     CRLog::trace("creating window manager...");
+-    CRJinkeWindowManager * wm = new CRJinkeWindowManager(600,800);
++#ifdef FLTK_GUI
++    CRFLTKWindowManager *wm = new CRFLTKWindowManager(320, 240);
++#else
++    CRJinkeWindowManager * wm = new CRJinkeWindowManager(320, 240);
++#endif
++    
+     CRLog::trace("loading skin...");
+-    if ( !wm->loadSkin(  lString16( L"/root/abook/crengine/skin" ) ) )
+-        if ( !wm->loadSkin(  lString16( L"/home/crengine/skin" ) ) )
+-            wm->loadSkin( lString16( L"/root/crengine/skin" ) );
++    if ( !wm->loadSkin(  lString16( L"/root/crengine/skin" ) ) )
++ 		CRLog::error("Failed to open Skins\n");
++ 		
+     CRLog::trace("drawing progressbar 0%%...");
+     //wm->getScreen()->getCanvas()->Clear(0xFFFFFF);
+     //wm->getScreen()->invalidateRect( lvRect(0, 0, 600, 800) );
+     //wm->showProgress(lString16("cr3_wait_icon.png"), 10);
+-        {
+-            const lChar16 * imgname =
+-                ( wm->getScreenOrientation()&1 ) ? L"cr3_logo_screen_landscape.png" : L"cr3_logo_screen.png";
+-            LVImageSourceRef img = wm->getSkin()->getImage(imgname);
+-            if ( !img.isNull() ) {
+-                wm->getScreen()->getCanvas()->Draw(img, 0, 0, wm->getScreen()->getWidth(), wm->getScreen()->getHeight(),  false );
+-            }
+-        }
++	{
++		const lChar16 * imgname =
++			( wm->getScreenOrientation()&1 ) ? L"cr3_logo_screen_landscape.png" : L"cr3_logo_screen.png";
++		LVImageSourceRef img = wm->getSkin()->getImage(imgname);
++		if ( !img.isNull() ) {
++			wm->getScreen()->getCanvas()->Draw(img, 0, 0, wm->getScreen()->getWidth(), wm->getScreen()->getHeight(),  false );
++		}
++	}
+ 
+-    lString16 bookmarkDir("/root/abook/bookmarks/");
+-    {
++    lString16 bookmarkDir("/root/crengine/bookmarks/");
++ /*   {
+         lString8 fn(fileName);
+         if ( fn.startsWith(lString8("/home")) ) {
+             strcpy( history_file_name, "/home/.cr3hist" );
+             bookmarkDir = lString16("/home/bookmarks/");
+-        }
++        } */
+         CRLog::info( "History file name: %s", history_file_name );
+-    }
++   // }
+ 
+     char manual_file[512] = "";
+     {
+@@ -1295,18 +1242,19 @@ int InitDoc(char *fileName)
+             // set translator
+             CRLog::info("Current language is %s, looking for translation file", lang);
+             lString16 mofilename = L"/root/crengine/i18n/" + lString16(lang) + L".mo";
+-            lString16 mofilename2 = L"/root/abook/crengine/i18n/" + lString16(lang) + L".mo";
++
+             CRMoFileTranslator * t = new CRMoFileTranslator();
+-            if ( t->openMoFile( mofilename2 ) || t->openMoFile( mofilename ) ) {
++            if ( t->openMoFile( mofilename ) ) {
+                 CRLog::info("translation file %s.mo found", lang);
+                 CRI18NTranslator::setTranslator( t );
+             } else {
+                 CRLog::info("translation file %s.mo not found", lang);
+                 delete t;
+             }
+-            sprintf( manual_file, "/root/abook/crengine/manual/cr3-manual-%s.fb2", lang );
++            
++            sprintf( manual_file, "/root/crengine/manual/cr3-manual-%s.fb2", lang );
+             if ( !LVFileExists( lString16(manual_file).c_str() ) )
+-                sprintf( manual_file, "/root/crengine/manual/cr3-manual-%s.fb2", lang );
++                CRLog::info("Failed to open %s\n", manual_file);
+         }
+     }
+ 
+@@ -1340,15 +1288,11 @@ int InitDoc(char *fileName)
+ #endif
+ 
+     lString16Collection fontDirs;
+-    fontDirs.add( lString16(L"/root/abook/fonts/") );
+-    fontDirs.add( lString16(L"/home/fonts/") );
+-    //fontDirs.add( lString16(L"/root/crengine/fonts") ); // will be added
++    fontDirs.add( lString16(L"/mnt/sdcard/opentom/fonts/") );
+     CRLog::info("INIT...");
+     if ( !InitCREngine( "/root/crengine/", fontDirs ) )
+         return 0;
+ 
+-
+-
+ #ifdef ALLOW_RUN_EXE
+     {
+         __pid_t pid;
+@@ -1360,52 +1304,52 @@ int InitDoc(char *fileName)
+             } else {
+                 waitpid(pid, NULL, 0);
+                 exit(0);
+-                //return 0;
+             }
+         }
+     }
+ #endif
+-    {
++    
+         //main_win = new V3DocViewWin( wm, lString16(CRSKIN) );
+ 
+         const char * keymap_locations [] = {
+             "/root/crengine/",
+-            "/home/crengine/",
+-            "/root/abook/crengine/",
+             NULL,
+         };
+         loadKeymaps( *wm, keymap_locations );
+-        if ( LVDirectoryExists( L"/root/abook/crengine/hyph" ) )
+-            HyphMan::initDictionaries( lString16("/root/abook/crengine/hyph/") );
++        if ( LVDirectoryExists( L"/root/crengine/hyph" ) )
++            HyphMan::initDictionaries( lString16("/root/crengine/hyph/") );
+         else
++        	CRLog::warn("Cannot initialize Dictionaries from '/root/crengine/hyph'\n");
+             HyphMan::initDictionaries( lString16("/root/crengine/hyph/") );
+ 
+-        if ( !ldomDocCache::init( lString16(L"/root/abook/crengine/.cache"), 0x100000 * 64 ) ) {
+-            if ( !ldomDocCache::init( lString16(L"/home/crengine/.cache"), 0x100000 * 64 ) ) {
+-                CRLog::error("Cannot initialize swap directory");
+-            }
+-        }
+-
+-        CRLog::trace("creating main window...");
++		if ( !ldomDocCache::init( lString16(L"/root/crengine/.cache"), 0x100000 * 64 ) ) {
++			CRLog::error("Cannot initialize swap directory");
++		}
++
++        CRLog::trace("Creating main window...");
++#ifdef FLTK_GUI
++        main_win = new CRFLTKDocViewWindow( wm, lString16(L"/root/crengine") );
++#else
+         main_win = new CRJinkeDocView( wm, lString16(L"/root/crengine") );
+-        CRLog::trace("setting colors...");
++#endif
++        CRLog::trace("Setting colors...");
+         main_win->getDocView()->setBackgroundColor(0xFFFFFF);
+         main_win->getDocView()->setTextColor(0x000000);
+-        main_win->getDocView()->setFontSize( 20 );
++        main_win->getDocView()->setFontSize( 14 );
+         if ( manual_file[0] )
+             main_win->setHelpFile( lString16( manual_file ) );
+-        if ( !main_win->loadDefaultCover( lString16( L"/root/abook/crengine/cr3_def_cover.png" ) ) )
+-            if ( !main_win->loadDefaultCover( lString16( L"/home/crengine/cr3_def_cover.png" ) ) )
+-                main_win->loadDefaultCover( lString16( L"/root/crengine/cr3_def_cover.png" ) );
+-        if ( !main_win->loadCSS(  lString16( L"/root/abook/crengine/" ) + lString16(css_file_name) ) )
+-            if ( !main_win->loadCSS(  lString16( L"/home/crengine/" ) + lString16(css_file_name) ) )
+-                main_win->loadCSS( lString16( L"/root/crengine/" ) + lString16(css_file_name) );
++ 
++       	main_win->loadDefaultCover( lString16( L"/root/crengine/cr3_def_cover.png" ) );
++    
++		if ( !main_win->loadCSS( lString16( L"/root/crengine/" ) + lString16(css_file_name) ))
++      			CRLog::warn("Cannot load CSS from '/root/crengine/'\n");
++ 
++        
+         main_win->setBookmarkDir( bookmarkDir );
+-        CRLog::trace("choosing init file...");
++        
++        CRLog::trace("Choosing init file...");
+         static const lChar16 * dirs[] = {
+-            L"/root/abook/crengine/",
+-            L"/home/crengine/",
+-            L"/root/appdata/",
++			L"/root/crengine/",
+             NULL
+         };
+         int i;
+@@ -1417,32 +1361,27 @@ int InitDoc(char *fileName)
+                 break;
+             }
+         }
+-        CRLog::debug("settings at %s", UnicodeToUtf8(ini).c_str() );
++        CRLog::debug("Settings at %s", UnicodeToUtf8(ini).c_str() );
++        
+ #if USE_JINKE_USER_DATA!=1
+-    if ( !main_win->loadHistory( lString16(history_file_name) ) ) {
+-        CRLog::error("Cannot read history file %s", history_file_name);
+-    }
++		if ( !main_win->loadHistory( lString16(history_file_name) ) ) {
++        	CRLog::error("Cannot read history file %s", history_file_name);
++    	}
+ #endif
+ 
+         LVDocView * _docview = main_win->getDocView();
+         _docview->setBatteryState( checkPowerState() );
+         //_docview->setBatteryState( ::getBatteryState() );
++        
+         wm->activateWindow( main_win );
+         if ( !main_win->loadDocument( lString16(fileName) ) ) {
+-            printf("Cannot open book file %s\n", fileName);
++            CRLog::error("Cannot open book file %s\n", fileName);
+             delete wm;
+             return 0;
+-        } else {
+-#ifdef ENABLE_LEDS
+-            postLeds( true );
+-#endif
+         }
+-    }
++    
+ 
+     //_docview->setVisiblePageCount( 1 );
+-
+-
+-
+     //tocDebugDump( _docview->getToc() );
+ 
+     return 1;
+@@ -1450,8 +1389,14 @@ int InitDoc(char *fileName)
+ 
+ const char * GetCurrentPositionBookmark()
+ {
+-    if ( !CRJinkeDocView::instance )
+-        return last_bookmark;
++	CRLog::trace("GetCurrentPositionBookmark()\n");
++
++#ifdef FLTK_GUI
++        if ( !CRFLTKDocViewWindow::instance ) return last_bookmark;
++#else
++        if ( !CRJinkeDocView::instance ) return last_bookmark;
++#endif
++        
+     CRLog::trace("GetCurrentPositionBookmark() - returning empty string");
+     //ldomXPointer ptr = main_win->getDocView()->getBookmark();
+     //lString16 bmtext( !ptr ? L"" : ptr.toString() );
+diff -rupN cr3.0.56-7.original/cr3gui/src/fl/Fl_CRMenu.cxx cr3.0.56-7_opentom/cr3gui/src/fl/Fl_CRMenu.cxx
+--- cr3.0.56-7.original/cr3gui/src/fl/Fl_CRMenu.cxx	1970-01-01 01:00:00.000000000 +0100
++++ cr3.0.56-7_opentom/cr3gui/src/fl/Fl_CRMenu.cxx	2014-01-19 23:41:30.000000000 +0100
+@@ -0,0 +1,50 @@
++// generated by Fast Light User Interface Designer (fluid) version 1.0302
++
++#include "Fl_CRMenu.h"
++
++Fl_Menu_Item Fl_CRMenu::menu_Menu[] = {
++ {"Open", 0,  (Fl_Callback*)flcb_menu, (void*)(1), 0, FL_NORMAL_LABEL, 0, 14, 0},
++ {"Goto page...", 0,  (Fl_Callback*)flcb_menu, (void*)(3), 0, FL_NORMAL_LABEL, 0, 14, 0},
++ {"Quit", 0,  (Fl_Callback*)flcb_menu, (void*)(4), 0, FL_NORMAL_LABEL, 0, 14, 0},
++ {0,0,0,0,0,0,0,0,0}
++};
++Fl_CRMenu::Fl_CRMenu(int X, int Y, int W, int H, const char *L)
++  : Fl_Group(X, Y, W, H, L) {
++{ Fl_Menu_Button* o = new Fl_Menu_Button(0, 0, 49, 20, "Menu");
++  o->menu(menu_Menu);
++} // Fl_Menu_Button* o
++{ Fl_Button* o = new Fl_Button(54, 0, 20, 20, "f+");
++  o->callback((Fl_Callback*)flcb_button, (void*)(100));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(77, 0, 20, 20, "f-");
++  o->callback((Fl_Callback*)flcb_button, (void*)(101));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(106, 0, 20, 20, "@<");
++  o->callback((Fl_Callback*)flcb_button, (void*)(200));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(254, 0, 25, 20, "TOC");
++  o->callback((Fl_Callback*)flcb_button, (void*)(500));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(128, 0, 20, 20, "@>");
++  o->callback((Fl_Callback*)flcb_button, (void*)(201));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(205, 0, 20, 20, "B-");
++  o->callback((Fl_Callback*)flcb_button, (void*)(400));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(280, 0, 20, 20, "F");
++  o->callback((Fl_Callback*)flcb_button, (void*)(501));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(227, 0, 20, 20, "B+");
++  o->callback((Fl_Callback*)flcb_button, (void*)(401));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(301, 0, 20, 20, "R");
++  o->callback((Fl_Callback*)flcb_button, (void*)(502));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(154, 0, 20, 20, "C-");
++  o->callback((Fl_Callback*)flcb_button, (void*)(300));
++} // Fl_Button* o
++{ Fl_Button* o = new Fl_Button(175, 0, 20, 20, "C+");
++  o->callback((Fl_Callback*)flcb_button, (void*)(301));
++} // Fl_Button* o
++end();
++}
+diff -rupN cr3.0.56-7.original/cr3gui/src/fl/Fl_CRMenu.fl cr3.0.56-7_opentom/cr3gui/src/fl/Fl_CRMenu.fl
+--- cr3.0.56-7.original/cr3gui/src/fl/Fl_CRMenu.fl	1970-01-01 01:00:00.000000000 +0100
++++ cr3.0.56-7_opentom/cr3gui/src/fl/Fl_CRMenu.fl	2014-01-19 23:41:28.000000000 +0100
+@@ -0,0 +1,97 @@
++# data file for the Fltk User Interface Designer (fluid)
++version 1.0302 
++header_name {.h} 
++code_name {.cxx}
++widget_class Fl_CRMenu {open
++  xywh {280 107 320 21} type Double visible
++} {
++  Fl_Menu_Button {} {
++    label Menu open
++    xywh {0 0 49 20}
++  } {
++    MenuItem {} {
++      label Open
++      user_data 1
++      callback flcb_menu
++      xywh {5 5 100 20}
++    }
++    MenuItem {} {
++      label {Goto page...}
++      user_data 3
++      callback flcb_menu
++      xywh {5 5 100 20}
++    }
++    MenuItem {} {
++      label Quit
++      user_data 4
++      callback flcb_menu
++      xywh {5 5 100 20}
++    }
++  }
++  Fl_Button {} {
++    label {f+}
++    user_data 100
++    callback flcb_button
++    xywh {54 0 20 20}
++  }
++  Fl_Button {} {
++    label {f-}
++    user_data 101
++    callback flcb_button
++    xywh {77 0 20 20}
++  }
++  Fl_Button {} {
++    label {@<}
++    user_data 200
++    callback flcb_button
++    xywh {106 0 20 20}
++  }
++  Fl_Button {} {
++    label TOC
++    user_data 500
++    callback flcb_button
++    xywh {254 0 25 20}
++  }
++  Fl_Button {} {
++    label {@>}
++    user_data 201
++    callback flcb_button
++    xywh {128 0 20 20}
++  }
++  Fl_Button {} {
++    label {B-}
++    user_data 400
++    callback flcb_button
++    xywh {205 0 20 20}
++  }
++  Fl_Button {} {
++    label F
++    user_data 501
++    callback flcb_button
++    xywh {280 0 20 20}
++  }
++  Fl_Button {} {
++    label {B+}
++    user_data 401
++    callback flcb_button
++    xywh {227 0 20 20}
++  }
++  Fl_Button {} {
++    label R
++    user_data 502
++    callback flcb_button selected
++    xywh {301 0 20 20}
++  }
++  Fl_Button {} {
++    label {C-}
++    user_data 300
++    callback flcb_button
++    xywh {154 0 20 20}
++  }
++  Fl_Button {} {
++    label {C+}
++    user_data 301
++    callback flcb_button
++    xywh {175 0 20 20}
++  }
++} 
+diff -rupN cr3.0.56-7.original/cr3gui/src/fl/Fl_CRMenu.h cr3.0.56-7_opentom/cr3gui/src/fl/Fl_CRMenu.h
+--- cr3.0.56-7.original/cr3gui/src/fl/Fl_CRMenu.h	1970-01-01 01:00:00.000000000 +0100
++++ cr3.0.56-7_opentom/cr3gui/src/fl/Fl_CRMenu.h	2014-01-19 23:41:30.000000000 +0100
+@@ -0,0 +1,17 @@
++// generated by Fast Light User Interface Designer (fluid) version 1.0302
++
++#ifndef Fl_CRMenu_h
++#define Fl_CRMenu_h
++#include <FL/Fl.H>
++#include <FL/Fl_Group.H>
++#include <FL/Fl_Menu_Button.H>
++extern void flcb_menu(Fl_Menu_*, void*);
++#include <FL/Fl_Button.H>
++extern void flcb_button(Fl_Button*, void*);
++
++class Fl_CRMenu : public Fl_Group {
++public:
++  Fl_CRMenu(int X, int Y, int W, int H, const char *L = 0);
++  static Fl_Menu_Item menu_Menu[];
++};
++#endif
+diff -rupN cr3.0.56-7.original/cr3gui/src/mainwnd.h cr3.0.56-7_opentom/cr3gui/src/mainwnd.h
+--- cr3.0.56-7.original/cr3gui/src/mainwnd.h	2012-03-21 06:39:19.000000000 +0100
++++ cr3.0.56-7_opentom/cr3gui/src/mainwnd.h	2014-01-18 00:52:29.000000000 +0100
+@@ -26,7 +26,7 @@
+ 
+ #include "viewdlg.h"
+ 
+-#if defined(_WIN32) || !defined(CR_USE_XCB)
++#if defined(_WIN32) || !(defined(CR_USE_XCB)||defined(FLTK_GUI))
+ 
+ //define key codes here
+ #define XK_Return   0xFF0D
+diff -rupN cr3.0.56-7.original/thirdparty/antiword/antiword.h cr3.0.56-7_opentom/thirdparty/antiword/antiword.h
+--- cr3.0.56-7.original/thirdparty/antiword/antiword.h	2012-03-21 06:39:19.000000000 +0100
++++ cr3.0.56-7_opentom/thirdparty/antiword/antiword.h	2014-01-20 18:38:57.000000000 +0100
+@@ -9,6 +9,8 @@
+ #if !defined(__antiword_h)
+ #define __antiword_h 1
+ 
++#define NDEBUG
++#undef DEBUG
+ #if defined(DEBUG) == defined(NDEBUG)
+ #error Exactly one of the DEBUG and NDEBUG flags MUST be set
+ #endif /* DEBUG == NDEBUG */
+diff -rupN cr3.0.56-7.original/tools/toolchain-arm-tomtom.cmake cr3.0.56-7_opentom/tools/toolchain-arm-tomtom.cmake
+--- cr3.0.56-7.original/tools/toolchain-arm-tomtom.cmake	1970-01-01 01:00:00.000000000 +0100
++++ cr3.0.56-7_opentom/tools/toolchain-arm-tomtom.cmake	2014-01-19 23:56:49.000000000 +0100
+@@ -0,0 +1,20 @@
++# CMake toolchain file for building Jinke V3 software using gcc 3.3.4
++
++# this one is important
++SET(CMAKE_SYSTEM_NAME Linux)
++#this one not so much
++SET(CMAKE_SYSTEM_VERSION 1)
++
++# specify the cross compiler
++SET(CMAKE_C_COMPILER   arm-linux-gcc)
++SET(CMAKE_CXX_COMPILER arm-linux-g++)
++SET(CMAKE_STRIP arm-linux-strip)
++
++# where is the target environment 
++SET(CMAKE_FIND_ROOT_PATH  /home/clm/TomTom/TTSystem/arm-sysroot)
++
++# search for programs in the build host directories
++SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
++# for libraries and headers in the target directories
++SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
++SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)

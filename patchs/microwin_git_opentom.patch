@@ -1,0 +1,200 @@
+diff -rupN microwin/src/config microwin_opentom/src/config
+--- microwin/src/config	2014-02-14 16:40:21.000000000 +0100
++++ microwin_opentom/src/config	2014-02-14 16:52:33.000000000 +0100
+@@ -33,7 +33,7 @@
+ # ECOS
+ # CYGWIN
+ ####################################################################
+-ARCH                     = LINUX-NATIVE
++ARCH                     = LINUX-ARM
+ BIGENDIAN                = N
+ NATIVETOOLSPREFIX        = 
+ ARMTOOLSPREFIX           = arm-linux-
+@@ -80,7 +80,7 @@ NANOXDEMO                = Y
+ #
+ ####################################################################
+ NANOWM                   = Y
+-FBEMULATOR               = Y
++FBEMULATOR               = N
+ 
+ ####################################################################
+ #
+@@ -105,7 +105,7 @@ FBEMULATOR               = Y
+ # define MWPF_TRUECOLOR233  /* pixel is packed 8 bits BGR 332*/
+ #
+ ####################################################################
+-SCREEN_PIXTYPE           = MWPF_TRUECOLOR8888
++SCREEN_PIXTYPE           = MWPF_TRUECOLOR565
+ 
+ ####################################################################
+ # NanoX: Put Y to the following line to link the nano-X application
+@@ -117,7 +117,7 @@ LINK_APP_INTO_SERVER     = N
+ ####################################################################
+ # Shared memory support for Nano-X client/server protocol speedup
+ ####################################################################
+-HAVE_SHAREDMEM_SUPPORT   = N
++HAVE_SHAREDMEM_SUPPORT   = Y
+ 
+ ####################################################################
+ # File I/O support
+@@ -138,16 +138,16 @@ HAVE_XPM_SUPPORT         = Y
+ ####################################################################
+ HAVE_JPEG_SUPPORT        = Y
+ INCJPEG                  = .
+-LIBJPEG                  = /usr/lib/libjpeg.so
++LIBJPEG                  = $(ARM_APPROOT)/lib/libjpeg.so
+ 
+ ####################################################################
+ # PNG support via libpng and libz
+ ####################################################################
+ HAVE_PNG_SUPPORT         = Y
+ INCPNG                   = .
+-LIBPNG                   = /usr/lib/libpng.so
++LIBPNG                   = $(ARM_APPROOT)/lib/libpng.so
+ INCZ                     = .
+-LIBZ                     = /usr/lib/libz.so
++LIBZ                     = $(ARM_APPROOT)/lib/libz.so
+ 
+ ####################################################################
+ # TIFF support through libtiff
+@@ -167,8 +167,8 @@ PCF_FONT_DIR             = "fonts/pcf"
+ # Truetype fonts - .ttf loadable fonts thru Freetype 2.x
+ ####################################################################
+ HAVE_FREETYPE_2_SUPPORT  = Y
+-INCFT2LIB                = /usr/include
+-LIBFT2LIB                = /usr/local/lib/libfreetype.a
++INCFT2LIB                = $(ARM_APPROOT)/include/freetype2
++LIBFT2LIB                = $(ARM_APPROOT)/lib/libfreetype.so
+ FREETYPE_FONT_DIR        = "fonts/truetype"
+ 
+ ####################################################################
+@@ -177,8 +177,8 @@ FREETYPE_FONT_DIR        = "fonts/truety
+ ####################################################################
+ HAVE_T1LIB_SUPPORT       = N
+ T1LIB_FONT_DIR           = "fonts/type1"
+-INCT1LIB                 = /usr/include
+-LIBT1LIB                 = /usr/lib/libt1.so
++INCT1LIB                 = .
++LIBT1LIB                 = $(ARM_APPROOT)/lib/libt1.so
+ 
+ ####################################################################
+ # FNT font support - .fnt/.fnt.gz loadable fonts (native bdf-converted)
+@@ -240,7 +240,7 @@ NOCLIPPING               = N
+ # Otherwise an XOR redraw is used for window moves only after button up
+ # UPDATEREGIONS (win32 api only)paints in update clipping region only
+ ####################################################################
+-ERASEMOVE                = Y
++ERASEMOVE                = N
+ UPDATEREGIONS            = Y
+ 
+ ####################################################################
+@@ -254,11 +254,11 @@ SCREEN_DEPTH             = 8
+ 
+ # X Window screen driver
+ # USE_EXPOSURE for XFree86 4.x or if backing store not working
+-X11                      = Y
++X11                      = N
+ USE_EXPOSURE             = Y
+ 
+ # Framebuffer screen driver
+-FRAMEBUFFER              = N
++FRAMEBUFFER              = Y
+ 
+ # memory screen driver
+ SCRMEM                   = N
+@@ -323,7 +323,7 @@ YOPYMOUSE                = N
+ HARRIERMOUSE             = N
+ LIRCMOUSE                = N
+ TSLIBMOUSE               = N
+-TTMOUSE                  = N
++TTMOUSE                  = Y
+ PSPMOUSE                 = N
+ NDSMOUSE                 = N
+ EVENTMOUSE               = N
+@@ -336,7 +336,7 @@ IPAQKBD                  = N
+ LIRCKBD                  = N
+ PSPKBD                   = N
+ EVENTKBD                 = N
+-NOKBD                    = N
++NOKBD                    = Y
+ # Secondary keyboard drivers for IR input
+ LIRCKBD2                 = N
+ 
+diff -rupN microwin/src/include/mwtypes.h microwin.opentom/src/include/mwtypes.h
+--- microwin/src/include/mwtypes.h	2014-03-04 09:45:16.000000000 +0100
++++ microwin_opentom/src/include/mwtypes.h	2014-03-05 14:24:45.000000000 +0100
+@@ -232,7 +232,7 @@
+  *       calling the GrArea function(s).
+  */
+ #ifndef MWPIXEL_FORMAT
+-#define MWPIXEL_FORMAT	MWPF_TRUECOLOR8888
++#define MWPIXEL_FORMAT	MWPF_TRUECOLOR565
+ #endif
+ 
+ #if defined(__AS386_16__)
+diff -rupN microwin/src/drivers/mou_touchscreen.c microwin_opentom/src/drivers/mou_touchscreen.c
+--- microwin/src/drivers/mou_touchscreen.c	2014-02-14 16:40:22.000000000 +0100
++++ microwin_opentom/src/drivers/mou_touchscreen.c	2014-02-14 16:38:04.000000000 +0100
+@@ -50,6 +50,7 @@
+ #ifdef TOUCHSCREEN_TOMTOM
+ #include "touchscreen_tomtom.h"
+ #include "ttmouse_init.h"
++int ts_tomtom_yres = 239;
+ #endif
+ 
+ #ifndef TS_DEVICE
+@@ -69,6 +70,8 @@ static int PD_Open(MOUSEDEVICE *pmd)
+ 
+ 	#ifdef TOUCHSCREEN_TOMTOM
+   		if (ttmouse_init() < 0) EPRINTF("TomTom touchscreen calibration failed\n");
++		char *env;
++		if((env = getenv("NANOX_YRES")) != NULL) ts_tomtom_yres = atoi(env) - 1;
+ 	#endif
+ 
+ 	GdHideCursor(&scrdev);  
+@@ -120,7 +122,8 @@ static int PD_Read(MWCOORD *px, MWCOORD 
+ 	*px = event.x;
+ 	#ifdef TOUCHSCREEN_TOMTOM
+ 		// TomTom crazyness
+-		*py = 239 - event.y;	
++		// CLM *py = 239 - event.y;	
++		*py = ts_tomtom_yres - event.y;	
+ 	#else
+ 		*py = event.y;
+ 	#endif
+diff -rupN microwin/src/engine/font_fnt.c microwin_opentom/src/engine/font_fnt.c
+--- microwin/src/engine/font_fnt.c	2013-11-26 08:48:45.000000000 +0100
++++ microwin.opentom/src/engine/font_fnt.c	2014-01-10 14:42:10.000000000 +0100
+@@ -107,6 +107,7 @@ fnt_createfont(const char *name, MWCOORD
+ 	PMWCFONT	cfont;
+ 	int		uc16;
+ 
++DPRINTF("fnt_createfont('%s', %d, %d, %x)\n", name, height, width, attr);
+ 	/* try to open file and read in font data*/
+ 	cfont = fnt_load_font(name);
+ 	if (!cfont)
+@@ -281,7 +282,7 @@ fnt_load_font(const char *path)
+ 	/* read magic and version #*/
+ 	if (READSTR(ifp, version, 4) != 4)
+ 		goto errout;
+-	if (strcmp(version, VERSION) != 0)
++	if (strncmp(version, VERSION, strlen(VERSION)) != 0)
+ 		goto errout;
+ 
+ 	pf = (PMWCFONT)calloc(1, sizeof(MWCFONT));
+diff -rupN microwin/src/Makefile.rules microwin_opentom/src/Makefile.rules
+--- microwin/src/Makefile.rules	2014-02-14 16:40:21.000000000 +0100
++++ microwin_opentom/src/Makefile.rules	2014-01-09 19:03:26.000000000 +0100
+@@ -23,9 +23,9 @@ ifeq ($(ARCH), RTEMS)
+   LIBINSTALLDIR = $(RTEMS_MAKEFILE_PATH)/lib
+   BININSTALLDIR = $(RTEMS_MAKEFILE_PATH)/bin
+ else
+-  INSTALL_PREFIX  = /usr
+-  INSTALL_OWNER1  = -o root -g root
+-  INSTALL_OWNER2  = -o root -g bin
++  INSTALL_PREFIX  = $(ARM_APPROOT)
++  INSTALL_OWNER1  =
++  INSTALL_OWNER2  =
+   HDRINSTALLDIR = $(INSTALL_PREFIX)/include/microwin
+   LIBINSTALLDIR = $(INSTALL_PREFIX)/lib
+   BININSTALLDIR = $(INSTALL_PREFIX)/bin

@@ -1,0 +1,8 @@
+#! /bin/sh -x
+
+ifconfig usb0 down
+rmmod g_ether
+rmmod s3c24xx_udc
+killall udhcpd
+
+flmessage "USB Gadget connection is down"

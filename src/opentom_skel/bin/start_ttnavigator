@@ -1,0 +1,24 @@
+#! /bin/sh
+
+# Setup variables to be inherited by called shell scripts
+for i in /proc/barcelona/*; do
+      export hw_${i##*/}="$(cat $i)"
+done
+
+ln -sf "${hw_gpsdev}" /dev/gpsdata
+ln -s $DIST/etc/meminfo.boot_for_ttn /var/log/meminfo.boot
+
+mkdir -p /var/log/gl
+
+killall -TERM nano-X
+fb_reset
+ttcalib
+rc.restartgps
+if ! pidof ttpnpd; then ttpnpd &; fi
+
+cd /mnt/sdcard/
+#ttn >$DIST/logs/ttn.log 2>&1
+ttn >/dev/null 2>&1
+
+fb_reset
+

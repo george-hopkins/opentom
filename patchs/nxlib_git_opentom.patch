@@ -1,0 +1,149 @@
+diff -rupN nxlib/fontlist.c nxlib.opentom/fontlist.c
+--- nxlib/fontlist.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/fontlist.c	2014-03-05 14:18:15.000000000 +0100
+@@ -24,13 +24,14 @@
+  */
+ char *FONT_DIR_LIST[] = {
+ 	"fonts",									/* local font dir w/fonts.alias*/
+-	"/usr/share/fonts/X11/misc",				/* pcf fonts w/fonts.dir*/
+-	"/usr/share/fonts/X11/100dpi",
+-	"/usr/share/fonts/truetype/freefont",		/* truetype fonts, no fonts.dir*/
+-	"/usr/share/fonts/truetype/ttf-dejavu",
+-	"/usr/share/fonts/truetype/openoffice",
+-	"/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType",	/* truetype fonts, w/fonts.dir & fonts.scale*/
+-	"/usr/share/fonts/X11/Type1",				/* t1lib type1 .pfb fonts, w/fonts.dir*/
++	"/usr/fonts",
++//	"/usr/share/fonts/X11/misc",				/* pcf fonts w/fonts.dir*/
++//	"/usr/share/fonts/X11/100dpi",
++//	"/usr/share/fonts/truetype/freefont",		/* truetype fonts, no fonts.dir*/
++//	"/usr/share/fonts/truetype/ttf-dejavu",
++//	"/usr/share/fonts/truetype/openoffice",
++//	"/var/lib/defoma/x-ttcidfont-conf.d/dirs/TrueType",	/* truetype fonts, w/fonts.dir & fonts.scale*/
++//	"/usr/share/fonts/X11/Type1",				/* t1lib type1 .pfb fonts, w/fonts.dir*/
+ 	0
+ };
+ 
+diff -rupN nxlib/Makefile nxlib.opentom/Makefile
+--- nxlib/Makefile	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/Makefile	2014-03-05 15:10:06.000000000 +0100
+@@ -11,7 +11,8 @@
+ BIGENDIAN=N
+ 
+ # comment out to stop debug printfs
+-CFLAGS += -DDEBUG=1 -g
++CFLAGS += -DDEBUG=1 -g -DNANOX_SHARE_MEMORY=1
++
+ 
+ # Compile-time nano-X include and lib directories. (relative paths ok)
+ #
+@@ -50,12 +51,13 @@ X11_RGBTXT=/usr/share/X11/rgb.txt
+ # cross-compiling on a system with X11, no installation
+ # is possible (as libX11.so would be replaced), and
+ # the link command is changed from '-lX11' to '-lNX11 -lnano-X'
+-LIBNAME=NX11
++#LIBNAME=NX11
++LIBNAME=X11
+ xINSTALL_DIR=.
+-INSTALL_DIR=/usr/local/lib
++INSTALL_DIR=$(ARM_SYSROOT)/usr/lib
+ 
+ # set to Y to make shared libNX11.so library, shared lib dependencies
+-SHAREDLIB=N
++SHAREDLIB=Y
+ SOLIBREV=0.47
+ SOEXTRALIBS = -L$(MWIN_LIB) -lnano-X
+ 
+@@ -63,7 +65,7 @@ SOEXTRALIBS = -L$(MWIN_LIB) -lnano-X
+ INCLUDE_XRM=Y
+ 
+ # compiler flags
+-CC = gcc
++CC = arm-linux-gcc
+ LN = ln -s
+ MV = mv
+ CP = cp -p
+diff -rupN nxlib/NextEvent.c nxlib.opentom/NextEvent.c
+--- nxlib/NextEvent.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/NextEvent.c	2014-03-05 14:18:15.000000000 +0100
+@@ -210,7 +210,8 @@ translateNXEvent(Display *dpy, GR_EVENT 
+ 			event->xkey.y = pev->y;;
+ 			event->xkey.x_root = pev->rootx;
+ 			event->xkey.y_root = pev->rooty;
+-			event->xkey.keycode = pev->scancode; /* note: not mwkey value*/
++			// CLM event->xkey.keycode = pev->scancode; /* note: not mwkey value*/
++			event->xkey.keycode = pev->ch; /* work with SDL but need rewrite sth. in fltk */
+ 			event->xkey.same_screen = True;
+ 
+ 			if (pev->modifiers & MWKMOD_CTRL)
+diff -rupN nxlib/OpenDis.c nxlib.opentom/OpenDis.c
+--- nxlib/OpenDis.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/OpenDis.c	2014-03-05 15:09:17.000000000 +0100
+@@ -32,6 +32,10 @@ XOpenDisplay(_Xconst char *display)
+ 		return NULL;
+ 	}
+ 
++#ifdef NANOX_SHARE_MEMORY
++	GrReqShmCmds (0xFFFF);
++#endif
++
+ 	GrGetScreenInfo(&sinfo);
+ 	if (sinfo.bpp < 8) {
+ 		fprintf(stderr, "nxlib: Unsupported bpp: %d\n", sinfo.bpp);
+diff -rupN nxlib/QueryFont.c nxlib.opentom/QueryFont.c
+--- nxlib/QueryFont.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/QueryFont.c	2014-03-05 14:18:15.000000000 +0100
+@@ -12,12 +12,13 @@ XFontStruct *
+ XQueryFont(Display * dpy, XID font_ID)
+ {
+ 	int i, size;
+-	XFontStruct *fs = (XFontStruct *) Xcalloc(1, sizeof(XFontStruct));
+ 	XCharStruct *cs;
+ 	GR_FONT_INFO finfo;
++	XFontStruct *fs;
+ 
+ 	GrGetFontInfo(font_ID, &finfo);
+ 
++	fs = (XFontStruct *) Xcalloc(1, sizeof(XFontStruct));
+ 	fs->fid = font_ID;
+ 
+ 	/*
+diff -rupN nxlib/StrKeysym.c nxlib.opentom/StrKeysym.c
+--- nxlib/StrKeysym.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/StrKeysym.c	2014-03-05 14:18:15.000000000 +0100
+@@ -276,7 +276,13 @@ XRefreshKeyboardMapping(XMappingEvent* e
+ 
+ /* translate keycode to KeySym, no control/shift processing*/
+ KeySym
+-XKeycodeToKeysym(Display *dpy, unsigned int kc, int index)
++XKeycodeToKeysym(Display *dpy,
++#if NeedWidePrototypes
++    unsigned int kc       /* keycode */,
++#else
++    KeyCode kc            /* keycode */,
++#endif
++	int index)
+ {
+ 	int	i;
+ 	MWKEY	mwkey;
+diff -rupN nxlib/stub.c nxlib.opentom/stub.c
+--- nxlib/stub.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/stub.c	2014-03-05 14:18:15.000000000 +0100
+@@ -160,3 +160,6 @@ int XRegisterIMInstantiateCallback() { D
+ int XUnregisterIMInstantiateCallback() { DPRINTF("XUnregisterIMInstantiateCallback called\n"); return 0; } 
+ int XIMOfIC() { DPRINTF("XIMOfIC called\n"); return 0; }
+ int XLocaleOfIM() { DPRINTF("XLocaleOfIM called\n"); return 0; }
++
++int XChangeKeyboardControl(){ DPRINTF("XChangeKeyboardControl called\n");return 0;}
++int XOpenDevice() { DPRINTF("XOpenDevice called\n"); return 0; }
+diff -rupN nxlib/Text16.c nxlib.opentom/Text16.c
+--- nxlib/Text16.c	2014-03-04 09:46:36.000000000 +0100
++++ nxlib.opentom/Text16.c	2014-03-05 14:18:15.000000000 +0100
+@@ -4,7 +4,7 @@ int
+ XDrawString16(Display *dpy, Drawable d, GC gc, int x, int y,
+ 	_Xconst XChar2b *string, int length)
+ {   
+-printf("XDrawString16 %d %x %x\n", length, string->byte1, string->byte2);
++	DPRINTF("XDrawString16 %d %x %x\n", length, string->byte1, string->byte2);
+ 	if (length > 0)
+ 		GrText(d, gc->gid, x, y, (void *)string, length, 
+ 		       GR_TFXCHAR2B|GR_TFBASELINE);

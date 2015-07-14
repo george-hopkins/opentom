@@ -1,0 +1,56 @@
+#! /bin/sh
+
+if ls -l /dev/bt 2>/dev/null; then
+	echo Bluetooth system allready initialised
+	exit 1
+fi
+
+# Defaults
+csrinit="y"
+btdev="/dev/bt"
+btif="hci0"
+btmulaw="0"
+
+mkdir -p /etc/bluetooth/
+
+# Setup variables to be inherited by called shell scripts
+for i in /proc/barcelona/*; do
+      export hw_${i##*/}="$(cat $i)"
+done
+if test -n "${hw_gpsdev}"; then
+    ln -sf "${hw_gpsdev}" /dev/gpsdata
+fi
+if test -n "${hw_btdev}"; then
+    ln -sf "${hw_btdev}" /dev/bt
+fi
+if test -n "${hw_gprsmodemdev}"; then
+    ln -sf "${hw_gprsmodemdev}" /dev/gprsmodem
+fi
+
+
+if ! sed "s/@DEVNAME@/${hw_btname}/;s/@DEVCLASS@/${hw_btclass}/" \
+	$HOME/etc/hcid.conf.template > /etc/bluetooth/hcid.conf; then
+    die "unable to setup hcid config file"
+fi
+
+if test "${csrinit}" = "y"; then
+  if test "${hw_btusb}" = "0"; then
+    if ! csrinit bcsp ${btdev} ${hw_btspeed} ${hw_btclock}; then
+      die "csrinit failed"
+    fi
+  elif ! csrinit usb ${btdev} ${hw_btspeed} ${hw_btclock}; then
+    echo "csrinit usb failed, trying bcsp"
+    if ! csrinit bcsp ${btdev} ${hw_btspeed} ${hw_btclock}; then
+      die "csrinit bcsp failed too"
+    fi
+  fi
+fi
+
+
+if test "${hw_btusb}" = "0" && ! hciattach /dev/bt bcsp ${hw_btspeed}; then
+  die "hciattach failed"
+fi
+
+if ! hciconfig ${btif} up; then
+  die "hciconfig failed"
+fi

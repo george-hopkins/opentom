@@ -1,0 +1,21 @@
+diff -rupN build/pixil_keyboard.original/nxkeyboard.c build/pixil_keyboard/nxkeyboard.c
+--- build/pixil_keyboard.original/nxkeyboard.c	2014-02-16 14:22:40.000000000 +0100
++++ build/pixil_keyboard/nxkeyboard.c	2014-02-20 19:32:33.000000000 +0100
+@@ -136,6 +136,8 @@ invertArea(int ulx, int uly, int lrx, in
+ 
+     // invert the pixels
+     size = width * height;
++    do pixels[size--] ^= 0xffffff; while ( size >= 0);
++    /*
+     count = 0;
+     do {
+ 	if (pixels[count] == 0)
+@@ -143,7 +145,7 @@ invertArea(int ulx, int uly, int lrx, in
+ 	else
+ 	    pixels[count] = 0x000000;
+     } while (++count < size);
+-
++	*/
+     // write out the affected area
+     GrArea(w, gc, ulx, uly, width, height, pixels, 0);
+ 

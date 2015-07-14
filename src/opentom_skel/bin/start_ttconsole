@@ -1,0 +1,6 @@
+#! /bin/sh
+
+killall nano-X
+ttcalib
+$HOME/TTconsole/bin/TTconsole
+fb_reset

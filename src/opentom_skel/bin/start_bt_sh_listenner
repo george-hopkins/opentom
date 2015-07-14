@@ -1,0 +1,26 @@
+#! /bin/sh
+# Thank's to Roberto Piola (http://www.ilpiola.it/roberto/tomtom)
+
+start_bt
+
+stty -hup < `tty`
+while [ true ] ; do
+    if ! ps w | grep rfcomm | grep listen | grep -v grep | grep -c rfcomm2
+    then
+      rfcomm listen /dev/rfcomm2 2 &
+	if ! echo "use on your computer:\nsudo rfcomm connect /dev/rfcomm2 <ID> 2\npicocom /dev/rfcomm2\n" | flmessage -y -s
+	then
+		exit
+	fi
+    fi
+    if rfcomm show | grep rfcomm2 | grep connected
+    then
+        # set the speed and turn off echo on the device
+        stty speed 115200 < /dev/rfcomm2
+#        stty -echo < /dev/rfcomm2
+#        stty -echok < /dev/rfcomm2
+        login  < /dev/rfcomm2 > /dev/rfcomm2 2>&1
+    fi
+    sleep 2
+done
+

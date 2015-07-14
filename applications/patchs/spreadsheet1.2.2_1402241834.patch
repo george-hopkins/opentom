@@ -1,0 +1,38 @@
+diff -rupN spreadsheet1.2.2.original/Makefile.LINUX spreadsheet1.2.2/Makefile.LINUX
+--- spreadsheet1.2.2.original/Makefile.LINUX	2009-02-04 03:18:01.000000000 +0100
++++ spreadsheet1.2.2/Makefile.LINUX	2014-03-04 11:03:19.000000000 +0100
+@@ -7,10 +7,10 @@
+ # UNCOMMENT FOR UTF8 BUILDS
+ #USEUTF8=-DUSEUTF8=1
+ 
+-CC=g++ -g -Wall -I. -DLINUX=1 $(USEUTF8)
++CC=$(CXX) -g -Wall -I. -DLINUX=1 $(USEUTF8)
+ 
+ # DEBUGGING
+-CC=g++ -g -Wall -I. -DLINUX=1 $(USEUTF8)
++CC=$(CXX) -g -Wall -I. -DLINUX=1 $(USEUTF8)
+ 
+ ifdef USEUTF8
+     UTF8LIB=-lXutf8
+@@ -25,8 +25,7 @@ endif
+ # ANTIALIASED FONTS AND UTF8 (Redhat 9.0 and up)
+ # FLTKLIBS=-L/usr/X11R6/lib -L$(FLTKDIR)/lib -lfltk -lXtst -lXft -lX11 \
+ #	-lXext $(UTF8LIB) -lm    
+-FLTKLIBS=-L$(FLTKDIR)/lib -lfltk \
+- -L/usr/X11R6/lib -lXtst -lXft -lX11 -lXext $(UTF8LIB) -lm
++FLTKLIBS=-L$(FLTKDIR)/lib -lfltk -lX11 $(UTF8LIB) -lm
+ 
+ REZCOMMAND=@echo
+ 
+diff -rupN spreadsheet1.2.2.original/sprsht-4b-pipenetwork.cxx spreadsheet1.2.2/sprsht-4b-pipenetwork.cxx
+--- spreadsheet1.2.2.original/sprsht-4b-pipenetwork.cxx	2009-02-04 03:17:56.000000000 +0100
++++ spreadsheet1.2.2/sprsht-4b-pipenetwork.cxx	2014-03-04 11:05:59.000000000 +0100
+@@ -1123,7 +1123,7 @@ int checkrun() {
+ 		pdiffmax = 0.;
+ 		ss->cell(ray0+s,Spracc,"");
+ 		r = sstart = ss->icell(ray0+s,Sstart);
+-		stype = fabs(ss->icell(ray0+s,Stype));
++		stype = fabs((double)ss->icell(ray0+s,Stype));
+ 		sfrom = ss->icell(ray0+s,Sfrom);
+ 		if (stype < 21) {
+ 			if (stype != 4) pd = ss->fcell(ss->icell(ray0+s,Sfrom),pupc);

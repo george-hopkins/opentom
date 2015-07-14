@@ -1,0 +1,230 @@
+Les fichiers binaires linapple-src_2a.original/linapple-src_2a et linapple-src_2a/linapple-src_2a sont différents.
+diff -rupN linapple-src_2a.original/Makefile linapple-src_2a/Makefile
+--- linapple-src_2a.original/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ linapple-src_2a/Makefile	2014-02-24 18:25:11.000000000 +0100
+@@ -0,0 +1,8 @@
++linapple-src_2a:
++	make -C src
++
++install: linapple-src_2a
++	make -C src install
++
++clean:
++	make -C src clean
+diff -rupN linapple-src_2a.original/src/Debugger_Types.h linapple-src_2a/src/Debugger_Types.h
+--- linapple-src_2a.original/src/Debugger_Types.h	2007-11-19 21:13:06.000000000 +0100
++++ linapple-src_2a/src/Debugger_Types.h	2014-02-24 18:25:11.000000000 +0100
+@@ -249,7 +249,8 @@
+ 		// NOTE: Levels of black are redundant.
+ 		//                              // BGR
+ 		K0,                             // ---  K
+-		R8, R7, R6, R5, R4, R3, R2, R1, // --1  R  Red
++// CLM		R8, R7, R6, R5, R4, R3, R2, R1, // --1  R  Red
++		_R8, _R7, _R6, _R5, _R4, _R3, _R2, _R1, // --1  R  Red
+ 		G8, G7, G6, G5, G4, G3, G2, G1, // -1-  G  Green
+ 		Y8, Y7, Y6, Y5, Y4, Y3, Y2, Y1, // -11  Y  Yellow
+ 		B8, B7, B6, B5, B4, B3, B2, B1, // 1--  B  Blue
+diff -rupN linapple-src_2a.original/src/Disk.cpp linapple-src_2a/src/Disk.cpp
+--- linapple-src_2a.original/src/Disk.cpp	2012-03-23 20:36:55.000000000 +0100
++++ linapple-src_2a/src/Disk.cpp	2014-02-24 18:25:11.000000000 +0100
+@@ -42,7 +42,7 @@ Foundation, Inc., 59 Temple Place, Suite
+ // for DiskUnGzip
+ #include <zlib.h>
+ // for DiskUnZip
+-#include <zip.h>
++// CLM #include <zip.h>
+ 
+ //#pragma  hdrstop
+ //#include "resource.h"
+@@ -470,6 +470,7 @@ bool DiskUnGzip(char * gzname, char * fn
+ }
+ //===========================================================================
+ ////////////////////////// Unzip .zip file to drive0.dsk or drive1.dsk (set in fname) into current directory
++#ifdef WITH_ZIP
+ bool DiskUnZip(char * gzname, char * fname)
+ {
+ #define ZIPBUF	4096
+@@ -492,6 +493,14 @@ bool DiskUnZip(char * gzname, char * fna
+ 	zip_close(arch);
+ 	return true;
+ }
++
++#else
++bool DiskUnZip(char * gzname, char * fname) {
++	fprintf(stderr, "CLM: DiskUnZip disabled at compilation ...\n");
++	return false;
++}
++
++#endif
+ //===========================================================================
+ int DiskInsert (int drive, LPCTSTR imagefilename, BOOL writeprotected, BOOL createifnecessary) {
+   Disk_t * fptr = &g_aFloppyDisk[drive];
+diff -rupN linapple-src_2a.original/src/Frame.cpp linapple-src_2a/src/Frame.cpp
+--- linapple-src_2a.original/src/Frame.cpp	2012-03-25 12:51:51.000000000 +0200
++++ linapple-src_2a/src/Frame.cpp	2014-02-24 18:25:11.000000000 +0100
+@@ -1184,13 +1184,14 @@ int FrameCreateWindow ()
+ 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+ //
+ //	SDL_WM_SetCaption(g_pAppTitle, g_pAppTitle); // set caption for our window screen
++	SDL_WM_SetCaption("LinApple ][", NULL);
+ 	return 0;
+ }
+ 
+ int InitSDL()
+ {
+ 		// initialize SDL subsystems, return 0 if all OK, else return 1
+-	if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
++	if(SDL_Init(SDL_INIT_EVERYTHING ^ (SDL_INIT_JOYSTICK|SDL_INIT_CDROM)) != 0){
+ 		fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
+ 		return 1;
+ 	}//if
+diff -rupN linapple-src_2a.original/src/Joystick.cpp linapple-src_2a/src/Joystick.cpp
+--- linapple-src_2a.original/src/Joystick.cpp	2012-03-11 13:06:19.000000000 +0100
++++ linapple-src_2a/src/Joystick.cpp	2014-02-24 18:25:11.000000000 +0100
+@@ -119,6 +119,7 @@ SDL_Joystick *joy2 = NULL;
+ //===========================================================================
+ void CheckJoystick0 ()
+ {
++#ifdef WITH_JOY
+   if(!joy1) return; // if no joystick#1 then everything will be useless
+   static DWORD lastcheck = 0;
+   DWORD currtime = GetTickCount();
+@@ -147,10 +148,12 @@ void CheckJoystick0 ()
+ 	  if(ypos[0] == 127 || ypos[0] == 128) ypos[0] += g_nPdlTrimY;
+ //    }
+   }
++#endif
+ }
+ 
+ void CheckJoystick1 ()
+ {
++#ifdef WITH_JOY
+   if(!joy2) return;	// we should have second joystick to do anything
+   static DWORD lastcheck = 0;
+   DWORD currtime = GetTickCount();
+@@ -180,6 +183,7 @@ void CheckJoystick1 ()
+ 	  if(ypos[1] == 127 || ypos[1] == 128) ypos[1] += g_nPdlTrimY;
+ //    }
+   }
++#endif
+ }
+ 
+ //
+@@ -187,13 +191,16 @@ void CheckJoystick1 ()
+ //
+ void JoyShutDown()
+ {
++#ifdef WITH_JOY
+ // First of all, let's close all existing SDL joysticks
+   if(joy1) SDL_JoystickClose(joy1);
+   if(joy2) SDL_JoystickClose(joy2);
++#endif
+ }
+ //===========================================================================
+ void JoyInitialize ()
+ {
++#ifdef WITH_JOY
+   // Emulated joystick #0 can only use JOYSTICKID1 (if no joystick, then use mouse)
+   // Emulated joystick #1 can only use JOYSTICKID2 (if no joystick, then disable)
+ 
+@@ -269,12 +276,14 @@ void JoyInitialize ()
+       joytype[1] = DEVICE_NONE; // do not use
+     }
+   }
++#endif
+ }
+ 
+ //===========================================================================
+ 
+ BOOL JoyProcessKey (int virtkey, BOOL extended, BOOL down, BOOL autorep)
+ {
++#ifdef WITH_JOY
+   BOOL isALT = ((virtkey == SDLK_LALT) | (virtkey == SDLK_RALT)); //if either ALT key pressed
+   if( (joyinfo[joytype[0]].device != DEVICE_KEYBOARD) &&
+ 	  (joyinfo[joytype[1]].device != DEVICE_KEYBOARD) &&
+@@ -385,12 +394,16 @@ BOOL JoyProcessKey (int virtkey, BOOL ex
+   }
+ 
+   return keychange;
++#else
++	return 0;
++#endif
+ }
+ 
+ //===========================================================================
+ 
+ BYTE /*__stdcall */ JoyReadButton (WORD, WORD address, BYTE, BYTE, ULONG nCyclesLeft)
+ {
++#ifdef WITH_JOY
+   address &= 0xFF;
+ 
+   if(joyinfo[joytype[0]].device == DEVICE_JOYSTICK)
+@@ -423,6 +436,9 @@ BYTE /*__stdcall */ JoyReadButton (WORD,
+ 
+   }
+   return MemReadFloatingBus(pressed, nCyclesLeft);
++#else
++	return 0;
++#endif
+ }
+ 
+ //===========================================================================
+@@ -511,6 +527,7 @@ void JoySetButton (eBUTTON number, eBUTT
+ // Set new joystick type
+ BOOL JoySetEmulationType (/*HWND window,*/ DWORD newtype, int nJoystickNumber)
+ {
++#ifdef WITH_JOY
+   if(joytype[nJoystickNumber] == newtype)
+ 	  return 1;	// Already set to this type. Return OK.
+ 
+@@ -560,6 +577,7 @@ BOOL JoySetEmulationType (/*HWND window,
+   joytype[nJoystickNumber] = newtype;
+   JoyInitialize();
+   JoyReset();
++#endif
+   return 1;
+ }
+ 
+diff -rupN linapple-src_2a.original/src/Makefile linapple-src_2a/src/Makefile
+--- linapple-src_2a.original/src/Makefile	2012-03-25 12:57:29.000000000 +0200
++++ linapple-src_2a/src/Makefile	2014-02-24 18:25:11.000000000 +0100
+@@ -15,12 +15,13 @@ CURL_LIBS = $(shell $(CURL_CONFIG) --lib
+ 
+ CXXFLAGS += $(SDL_CFLAGS)
+ CXXFLAGS += $(CURL_CFLAGS)
+-LDLIBS += $(SDL_LIBS) $(CURL_LIBS) -lz -lzip
++# CLM LDLIBS += $(SDL_LIBS) $(CURL_LIBS) -lz -lzip
++LDLIBS += $(SDL_LIBS) $(CURL_LIBS) -lz 
+ 
+ # Define executable and installing directory
+-EXE = linapple
+-INSTDIR = /usr/local/$(EXE)
+-STARTUP = /usr/local/bin/$(EXE)
++EXE = linapple-src_2a
++INSTDIR = $(TOMDIST)/$(EXE)
++STARTUP = $(TOMDIST)/bin/$(EXE)
+ DATA = ../charset40.bmp ../font.bmp ../icon.bmp ../splash.bmp ../Master.dsk ../linapple.installed.conf
+ 
+ #all: ../linapple
+@@ -31,7 +32,7 @@ Applewin: $(OBJS)
+ $(EXE): Applewin
+ #	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+ 	mv $^ $@
+-	strip $@
++	$(STRIP) $@
+ 	@echo " o If there are no errors, $(EXE) compiled succesfully"
+ 	cp $@ ../
+ 
+@@ -50,10 +51,10 @@ clean:
+ 
+ install: all
+ 	@echo " o Creating install directory '$(INSTDIR)'"
+-	mkdir "$(INSTDIR)"
++	mkdir -p "$(INSTDIR)"
+ 	chmod 777 "$(INSTDIR)"
+ 	@echo " o Creating additional directories 'images' and 'ftp' in '$(INSTDIR)'"
+-	mkdir "$(INSTDIR)/images"
++	mkdir -p "$(INSTDIR)/images"
+ 	mkdir -p "$(INSTDIR)/ftp/cache"
+ 
+ 	@echo " o Installing game and data to '$(INSTDIR)'"

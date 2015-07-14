@@ -1,0 +1,100 @@
+#!/bin/sh
+#_rc.bluetooth: Loads Bluetooth modules and starts associated programs.
+
+die() {
+  echo "ERROR: $1"
+  exit 1
+}
+
+# Defaults
+csrinit="y"
+btdev="/dev/bt"
+btif="hci0"
+btmulaw="0"
+
+if test "${hw_bluetooth}" = "0"; then
+  echo "* NOT starting Bluetooth "
+  exit 0
+fi
+
+if test "$1" = "resume"; then
+  echo "* Resuming Bluetooth";
+elif test "$1" = "suspend"; then
+  echo "* Suspending Bluetooth"
+  if test "${hw_btusb}" = "0"; then
+    hciconfig ${btif} down
+    if pid=$(pidof hciattach); then
+      kill ${pid}
+      wait ${pid}
+    fi
+  fi
+  exit 0;
+else
+  echo "* Starting Bluetooth"
+
+  if ! sed "s/@DEVNAME@/${hw_btname}/;s/@DEVCLASS@/${hw_btclass}/" /etc/bluetooth/hcid.conf.template > /etc/bluetooth/hcid.conf; then
+    die "unable to setup hcid config file"
+  fi
+
+  if ! hcid; then
+    die "hcid failed"
+  fi
+
+  if ! sdpd; then
+    die "sdpd failed"
+  fi
+fi
+
+if test "${hw_btusb}" != "0"; then
+  if ! insmod ohci-hcd.ko; then
+    die "insmod ohci-hcd failed" 
+  fi
+  # let usb stabilise ?
+  sleep 1
+fi
+
+if test "${csrinit}" = "y"; then
+  if test "${hw_btusb}" = "0"; then
+    if ! csrinit bcsp ${btdev} ${hw_btspeed} ${hw_btclock}; then
+      die "csrinit failed"
+    fi
+  elif ! csrinit usb ${btdev} ${hw_btspeed} ${hw_btclock}; then
+    echo "csrinit usb failed, trying bcsp"
+    if ! csrinit bcsp ${btdev} ${hw_btspeed} ${hw_btclock}; then
+      die "csrinit bcsp failed too"
+    fi
+  fi
+fi
+
+if test "${hw_btusb}" = "0" && ! hciattach /dev/bt bcsp ${hw_btspeed}; then
+  die "hciattach failed"
+fi
+
+if ! hciconfig ${btif} up; then
+  die "hciconfig failed"
+fi
+
+# todo: check voice over USB
+if test "${btmulaw}" != "0" && ! hciconfig ${btif} voice 0x014c; then
+  die "hciconfig voice failed"
+fi
+
+if test "$1" != "resume"; then
+  if test "${hw_handsfree}" != "0" && ! sdptool add hf; then
+    echo "warning: failed to call sdptool add hf"
+  fi
+
+  if test "${hw_headsetgw}" != "0" && ! sdptool add hsagw; then
+    echo "warning: failed to call sdptool add hsagw"
+  fi
+
+  if test "${hw_a2dp}" != "0" && ! sdptool add a2src; then
+    echo "warning: failed to call sdptool add a2src"
+  fi
+
+  blueserver.a /var/run/bluesock &
+
+  btserver &
+fi
+
+# EOF

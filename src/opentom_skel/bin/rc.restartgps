@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# Setup variables to be inherited by called shell scripts
+for i in /proc/barcelona/*; do
+      export hw_${i##*/}="$(cat $i)"
+done
+
+ln -sf "${hw_gpsdev}" /dev/gpsdata
+ln -s $DIST/share/meminfo.boot /var/log/meminfo.boot
+
+resume_clm() {
+  echo "* Sending SIGUSR2 to clmapp"
+  if ! killall -SIGUSR2 clmapp; then
+    echo "* restarting clmapp"
+    clmapp &
+  fi
+}
+
+suspend_clm() {
+  echo "* Sending SIGUSR1 to clmapp"
+  killall -SIGUSR1 clmapp
+
+  echo "* Waiting for clmapp to respond"
+  for i in 1 2 3 4 5; do
+    if test -f /tmp/clmquit; then
+      echo "* Got response from clmapp"
+      rm -f /tmp/clmquit
+      return
+    fi
+    sleep 1
+  done
+  echo "* No response from clmapp, giving up"
+}
+
+echo "* Restarting GPS"
+
+if test "${hw_gldetected}" = "1"; then
+  echo "GPS not working. Stop gltt " | gllog.sh
+  ps |  gllog.sh
+  rc.gltt stop
+  echo "Copy GL log files " | gllog.sh
+  mv /var/log/gl/* /mnt/sdcard/gl/log
+  sync
+  ls -l /var/log/gl | gllog.sh
+
+  echo "GPS not working. Start gltt" | gllog.sh
+  rc.gltt start 115200
+  ps | gllog.sh
+  ls -l /var/log/gl | gllog.sh
+else
+ if test "${hw_gpsephemeris}" = "1"; then
+  echo "* suspend clmapp"
+  suspend_clm
+  echo "* restart SiRF receiver"
+  /bin/sirfreset snap noack outsirf verbose
+  sleep 1
+  echo "* resume clmapp"
+  resume_clm
+ else
+  echo "* not supporting ephemeris. Just sleep 1 second"
+  sleep 1
+ fi
+fi
+
+echo "* Restarting GPS done"
+
+# EOF

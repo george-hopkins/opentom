@@ -1,0 +1,10 @@
+#! /bin/sh
+
+ls /mnt/* | while read mount; do
+	umount $mount
+	rmdir $mount
+done
+
+echo removing all modules
+for i in `lsmod | cut -f1 -d" "`; do rmmod $i; done
+

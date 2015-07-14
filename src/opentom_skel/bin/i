@@ -1,0 +1,6 @@
+#! /bin/sh
+
+insmod /lib/modules/2.6.13/kernel/drivers/*/*$1* $2 || \
+insmod /lib/modules/2.6.13/kernel/drivers/*/*/*$1* $2 || \
+insmod /lib/modules/2.6.13/kernel/drivers/*/*/*/*$1* $2
+

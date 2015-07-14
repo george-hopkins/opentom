@@ -1,0 +1,38 @@
+#! /bin/sh
+
+. $DIST/etc/network.conf
+
+echo removing all modules
+for i in `lsmod | cut -f1 -d" "`; do rmmod $i; done
+
+killall dhclient
+
+sleep 1
+i ohci
+i usbnet
+sleep 3
+flmessage -y "Plug you TomTom on you Box please."
+
+while ! ifconfig -a | grep eth0; do
+	test=X$test
+	if [ $test == "XXXXXXXXXXXXX" ]; then
+		if flmessage -y "Plug you TomTom on you Box please."
+		then
+			unset test
+		else
+			exit 1
+		fi
+	fi
+	sleep 1
+done
+
+if [ "TYPE" == "static" ]; then
+	ifconfig eth0 $IP $MASK up
+	route add default gw $GW eth0
+	echo "nameserver $DNS" >/etc/resolv.conf
+else
+	dhclient -sf $DIST/etc/dhclient-script eth0
+fi
+
+ifconfig eth0 | flmessage -s -t "Interface eth0"
+

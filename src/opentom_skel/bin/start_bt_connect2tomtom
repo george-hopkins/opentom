@@ -1,0 +1,30 @@
+#! /bin/sh
+
+if [ -z $1 ]; then
+	echo "Usage: $0 <serial|gps|ppp>"
+	exit
+fi
+
+other=`hcitool scan | grep TomTom | sed 's/[ \t]//' | cut -f1`
+
+if [ -z $other ]; then
+	echo Can\'t find other TomTom
+else
+	case $1 in
+	gps)
+		rfcomm connect /dev/rfcomm1 $other 1 &
+		;;
+	serial)
+		rfcomm connect /dev/rfcomm2 $other 2 &
+		;;
+	ppp)
+		rfcomm connect /dev/rfcomm3 $other 3 &
+		sleep 4
+		pppd nodetach 115200 /dev/rfcomm3 &
+		;;
+	*)
+		echo Error: Unknow option $1
+		;;
+	esac
+fi
+
