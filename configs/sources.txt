@@ -13,6 +13,7 @@ wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz
 wget http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
 wget http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
 wget http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.11.tar.gz
+[ -f $1 ] || { cd ../build && hg clone -r stable-1.0 http://hg.icculus.org/icculus/SDL_sound tar czf ../Downloads/SDL_sound_hg.tgz SDL_sound; }
 wget http://fltk.org/pub/fltk/1.3.2/fltk-1.3.2-source.tar.gz
 wget ftp://microwindows.org/pub/microwindows/microwindows-fonts-snapshot.tar.gz
 wget http://prdownloads.sourceforge.net/mad/libmad-0.15.1b.tar.gz
@@ -26,6 +27,7 @@ wget http://curl.haxx.se/download/curl-7.35.0.tar.gz
 wget http://freefr.dl.sourceforge.net/project/mad/libid3tag/0.15.1b/libid3tag-0.15.1b.tar.gz
 wget http://kent.dl.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
 wget http://freefr.dl.sourceforge.net/project/espeak/espeak/espeak-1.48/espeak-1.48.02-source.zip
+wget http://freefr.dl.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
 # Apps
 wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
 wget http://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz
@@ -51,3 +53,4 @@ wget http://www.tomtomheaven.com/data/zip/TomTom_FreeCell.zip
 wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-bin.zip
 wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-src.zip
 wget http://sylar-stuff.googlecode.com/files/gnuboy-1.0.3.tar.gz
+wget http://heanet.dl.sourceforge.net/project/devezx/eggchess/eggchess-1.1-A780-0/eggchess-1.1-A780-0.tar.gz

@@ -1,0 +1,110 @@
+diff -rupN eggchess/eggchess.cpp eggchess_oppentom/eggchess.cpp
+--- eggchess/eggchess.cpp	2007-04-21 20:52:20.000000000 +0200
++++ eggchess_oppentom/eggchess.cpp	2014-03-07 04:46:52.000000000 +0100
+@@ -34,7 +34,7 @@
+ #include <stdlib.h>
+ #include <signal.h>
+ 
+-const Sint32 side=70;
++const Sint32 side=50;
+ const Sint32 xcoords[]={0,side,2*side,3*side+5};
+ const Sint32 ycoords[]={0,side,2*side};
+ 
+@@ -63,6 +63,7 @@ void byebye(int exit_status);
+ void change_player(void);
+ void show_info(void);
+ 
++#if 0
+ FILE* fe;
+ 
+ void catch_int(int sig_num)
+@@ -74,6 +75,7 @@ void catch_int(int sig_num)
+     fflush(stdout);
+ fclose(fe);
+ }
++#endif
+ 
+ 
+ //==================================================================================
+@@ -84,18 +86,19 @@ int main(int argc, char *argv[])
+ 
+   /* Init SDL */
+ 	
+-	if ( SDL_Init(SDL_INIT_VIDEO)) {
++	if ( SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO)) {
+ 		fprintf(stderr, "Couldn't load SDL: %s\n", SDL_GetError());
+ 		fflush(stderr);
+ 		return 1;
+ 	}
+ 	/* Clean up on exit */
+ 	atexit(SDL_Quit);
+-	/* Set window title */
+-	SDL_WM_SetCaption("Egg Chess", "EggChess");
+ 
+ 	/* Initialize the display */
+-	screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE | SDL_FULLSCREEN);
++	screen = SDL_SetVideoMode(210, 180, 16, SDL_SWSURFACE ); // | SDL_FULLSCREEN);
++
++	/* Set window title */
++	SDL_WM_SetCaption("Egg Chess", NULL);
+ 
+ 	if ( screen == NULL ) {
+ 		fprintf(stderr, "Couldn't set video mode: %s\n", SDL_GetError());
+@@ -120,17 +123,17 @@ int main(int argc, char *argv[])
+ 
+ 	SDL_UpdateRect(screen, 0,0,0,0);
+ 
+-	msg("Start the game, Player 1! Press [Camera] for info.");
++	msg("Start the game, Player 1!"); // Press [Camera] for info.");
+ 
+ 	//Wait for an event
+ 	SDL_Event event;
+ 	do{
+ 		SDL_WaitEvent(&event);
+-		if(event.type==SDL_KEYDOWN && event.key.keysym.sym==SDLK_F4) break;
++		if(event.type==SDL_KEYDOWN && event.key.keysym.sym==SDLK_ESCAPE) break;
+ 		if(event.type==SDL_QUIT) break;
+ 		if(event.type==SDL_MOUSEBUTTONDOWN) 
+ 			check_click(event.button.x,event.button.y);
+-		if(event.type==SDL_KEYDOWN && event.key.keysym.sym==SDLK_F2) 
++		if(event.type==SDL_KEYDOWN && event.key.keysym.sym==SDLK_SPACE) 
+ 			show_info();
+ 	}while(true);
+ 	
+@@ -245,7 +248,7 @@ void draw_lines(void)
+ 		sge_VLine(screen, xcoords[i], ycoords[0]+5, ycoords[2]+side-5, 60,60,80);
+ 	}	
+ 	sge_VLine(screen, xcoords[3], ycoords[0]+5, ycoords[2]+side-5, 220,220,240);
+-	sge_VLine(screen, xcoords[3] + xcoords[1], ycoords[0]+5, ycoords[2]+side-5, 220,220,240);
++//	sge_VLine(screen, xcoords[3] + xcoords[1], ycoords[0]+5, ycoords[2]+side-5, 220,220,240);
+ 	sge_HLine(screen, xcoords[0]+5, xcoords[3]+side-5,ycoords[2]+side, 220,220,240);	
+ 	
+ }
+@@ -366,11 +369,11 @@ void check_click(Sint32 x,Sint32 y)
+ 				msg("Player 2 Wins!");
+ 			else
+ 				msg("Player 1 Wins!");	
+-			SDL_Delay(2000);
++			SDL_Delay(10000);
+ 			sge_Update_OFF();
+ 			draw_board();
+ 			selected=-1;
+-			msg("Start the game, Player 1! Press [Camera] for info.");
++			msg("Start the game, Player 1!"); // Press [Camera] for info.");
+ 			player=player1;
+ 			sge_Update_ON();
+ 			SDL_UpdateRect(screen, 0,0,0,0);
+diff -rupN eggchess/sge/Makefile.conf eggchess_oppentom/sge/Makefile.conf
+--- eggchess/sge/Makefile.conf	2001-09-10 10:46:49.000000000 +0200
++++ eggchess_oppentom/sge/Makefile.conf	2014-03-07 04:28:56.000000000 +0100
+@@ -9,8 +9,8 @@ NO_CLASSES = y
+ 
+ 
+ # Compilers (C and C++)
+-CC=gcc
+-CXX=g++
++#CC=gcc
++#CXX=g++
+ 
+ 
+ # Where should SGE be installed?

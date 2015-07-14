@@ -91,7 +91,7 @@
 #define C_TARGETCPU ARMV4LE
 
 /* Define to 1 to use a unaligned memory access */
-#define C_UNALIGNED_MEMORY 1
+/* #undef C_UNALIGNED_MEMORY */
 
 /* define to 1 if you have XKBlib.h and X11 lib */
 /* #undef C_X11_XKB */

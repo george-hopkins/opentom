@@ -11,7 +11,7 @@ diff -rupN caanoo-12swap-v1.0.original/Makefile caanoo-12swap-v1.0/Makefile
 +
 +
 +src/12swap:
-+	cd src && $(CXX) -o 12swap -DCAANOO *.cpp -lSDL -lSDL_ttf
++	cd src && $(CXX) $(CPPFLAGS) -o 12swap -DCAANOO *.cpp -lSDL -lSDL_ttf
 +
 +clean:
 +	rm -f src/*.o src/12swap

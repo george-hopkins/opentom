@@ -1,3 +1,20 @@
+/*
+ * OpenTom nxterminal.cxx, by Clément GERARDIN
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Library General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
+ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -63,6 +80,14 @@ public:
 		int x, int y, unsigned char c) {
             cursor_x = x;
             cursor_y = y;
+            // Scroll to allways see cursor
+            if ( cursor_x < scrn_sx)  scrn_sx = cursor_x;
+            else if ( cursor_x > scrn_sx + scrn_w) 
+                scrn_sx = 1 + cursor_x - scrn_w;
+            if ( cursor_y < scrn_sy)  scrn_sy = cursor_y;
+            else if ( cursor_y > scrn_sy + scrn_h) 
+                scrn_sy = 1 + cursor_y - scrn_h;
+            
             GrFlushWindow(wid);
         }
 
@@ -167,17 +192,17 @@ public:
             shell_fork();
             GR_EVENT ev;
             char buff[1024];
-            int len;
+            int len, _w, _h;
             
             do {
 		GrGetNextEventTimeout(&ev, 100);
 		switch ( ev.type) {
-                    //case GR_EVENT_TYPE_UPDATE:
                     case GR_EVENT_TYPE_EXPOSURE:
                         GrSetGCBackground(gc, BLACK);
                      
-                        
-                        for(int i =  0; i < scrn_h; i ++) {
+                        _h = (scrn_h >= GT_MAXWIDTH) ? scrn_h : scrn_h+1;
+                        _w = (scrn_w >= GT_MAXWIDTH) ? scrn_w : scrn_w+1;
+                        for(int i =  0; i < _h; i ++) {
 #ifdef TEXTONLY
                             char *s;
                             int len = strlen(s=&screen[i+scrn_sy][scrn_sx]);
@@ -186,7 +211,7 @@ public:
                             GrSetGCForeground(gc, BLACK);
                             GrFillRect(wid, gc, len*char_w, i*char_h, (scrn_w-len)*char_w, char_h);
 #else
-                            GrText(wid, gc, 0, i*char_h+char_b, &screen[i+scrn_sy][scrn_sx], scrn_w,0);
+                            GrText(wid, gc, 0, i*char_h+char_b, &screen[i+scrn_sy][scrn_sx], _w,0);
 #endif                            
                         }
                         

@@ -18,3 +18,7 @@ $(CROSS)/bin/get_source.sh:
 	mkdir -p $(CROSS)/bin
 	cp get_source.sh install_shared_libs.sh is_use_lib.sh $(CROSS)/bin
 	make -C ttimage_tools
+
+clean:
+	make -C ttimage_tools clean
+

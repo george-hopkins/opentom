@@ -1,0 +1,77 @@
+diff -rupN gnuboy-1.0.3/Makefile gnuboy-1.0.3_opentom/Makefile
+--- gnuboy-1.0.3/Makefile	2008-09-09 13:53:00.000000000 +0200
++++ gnuboy-1.0.3_opentom/Makefile	2014-03-06 12:29:37.000000000 +0100
+@@ -1,18 +1,19 @@
+ 
+-prefix = /usr/local
++prefix = $(ARM_APPROOT)
+ exec_prefix = ${prefix}
+ bindir = ${exec_prefix}/bin
+ 
+-CC = gcc
++CC = arm-linux-gcc
+ LD = $(CC)
+ AS = $(CC)
+-INSTALL = ./install-sh -c
++INSTALL = /usr/bin/install -c
+ 
+-CFLAGS =  -ansi -pedantic -Wall -Wno-implicit -Wno-long-long -O3 -fstrength-reduce -fthread-jumps  -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop  -fexpensive-optimizations -fforce-mem -fforce-addr -fomit-frame-pointer
++#CFLAGS = -march=armv5te -mtune=arm9tdmi -ansi -pedantic -Wall -Wno-implicit -Wno-long-long -O3 -DALLOW_UNALIGNED_IO -fstrength-reduce -fthread-jumps  -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop  -fexpensive-optimizations -fforce-mem -fforce-addr -fomit-frame-pointer
++CFLAGS = -ansi -pedantic -Wall -Wno-implicit -Wno-long-long -O3 -DALLOW_UNALIGNED_IO -fstrength-reduce -fthread-jumps  -fcse-follow-jumps -fcse-skip-blocks -frerun-cse-after-loop  -fexpensive-optimizations -fforce-mem -fforce-addr -fomit-frame-pointer
+ LDFLAGS = $(CFLAGS)  -s
+ ASFLAGS = $(CFLAGS)
+ 
+-TARGETS =  fbgnuboy sdlgnuboy
++TARGETS =  sdlgnuboy
+ 
+ ASM_OBJS = 
+ 
+@@ -20,15 +21,15 @@ SYS_DEFS = -DHAVE_CONFIG_H -DIS_LITTLE_E
+ SYS_OBJS = sys/nix/nix.o $(ASM_OBJS)
+ SYS_INCS = -I/usr/local/include  -I./sys/nix
+ 
+-FB_OBJS = sys/linux/fbdev.o sys/linux/kb.o sys/pc/keymap.o sys/linux/joy.o sys/oss/oss.o
++FB_OBJS =  sys/linux/joy.o sys/oss/oss.o
+ FB_LIBS = 
+ 
+ SVGA_OBJS = sys/svga/svgalib.o sys/pc/keymap.o sys/linux/joy.o sys/oss/oss.o
+ SVGA_LIBS = -L/usr/local/lib -lvga
+ 
+ SDL_OBJS = sys/sdl/sdl.o sys/sdl/keymap.o
+-SDL_LIBS = -L/usr/lib -Wl,-rpath,/usr/lib -lSDL -lpthread
+-SDL_CFLAGS = -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
++SDL_LIBS = -L$(ARM_APPROOT)/lib -Wl,-rpath,$(ARM_APPROOT)/lib -lSDL -lpthread
++SDL_CFLAGS = -I$(ARM_APPROOT)/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
+ 
+ X11_OBJS = sys/x11/xlib.o sys/x11/keymap.o sys/linux/joy.o sys/oss/oss.o
+ X11_LIBS =  -lX11 -lXext
+diff -rupN gnuboy-1.0.3/sys/sdl/sdl.c gnuboy-1.0.3_opentom/sys/sdl/sdl.c
+--- gnuboy-1.0.3/sys/sdl/sdl.c	2008-09-09 13:53:00.000000000 +0200
++++ gnuboy-1.0.3_opentom/sys/sdl/sdl.c	2014-03-06 12:19:31.000000000 +0100
+@@ -81,7 +81,7 @@ static void joy_init()
+ 	if (SDL_InitSubSystem(SDL_INIT_JOYSTICK))
+ 		return;
+ 	
+-	joy_count = SDL_NumJoysticks();
++	joy_count = 0; /* SDL_NumJoysticks(); */
+ 	
+ 	if (!joy_count)
+ 		return;
+@@ -89,7 +89,7 @@ static void joy_init()
+ 	/* now try and open one. If, for some reason it fails, move on to the next one */
+ 	for (i = 0; i < joy_count; i++)
+ 	{
+-		sdl_joy = SDL_JoystickOpen(i);
++		sdl_joy = 0; /* SDL_JoystickOpen(i); */
+ 		if (sdl_joy)
+ 		{
+ 			sdl_joy_num = i;
+@@ -98,7 +98,7 @@ static void joy_init()
+ 	}
+ 	
+ 	/* make sure that Joystick event polling is a go */
+-	SDL_JoystickEventState(SDL_ENABLE);
++	/* SDL_JoystickEventState(SDL_ENABLE); */
+ }
+ 
+ static void overlay_init()

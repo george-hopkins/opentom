@@ -22,9 +22,10 @@ CLEAN_APPS= $(APPS:%=clean-%)
 EXTRA= 	12swap ntetris pipepanic \
 	madplay spreadsheet flchekers \
 	yareversi opendune linapple \
-	dosbox dillo xgnuboy scummvm \
+	dosbox dillo gnuboy scummvm \
 	martian jooleem.sh tuxchess cr3 \
-	sudoku checkers freecell
+	sudoku checkers freecell nxpad_gnuboy \
+	eggchess.sh
 
 BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
 
@@ -69,6 +70,21 @@ patch-%:
 		mv $(TMP)/$(NAME) $(APPS_ROOT)/build/$(ONAME); \
 	fi
 	cd build && diff -rupN $(ONAME) $(NAME) >../patchs/$(NAME)_$(shell date +%y%m%d%k%M).patch
+
+
+$(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
+	mkdir -p $(TOMDIST)/share/eggchess
+	cd build && tar xf ../Downloads/eggchess-1.1-A780-0.tar.gz && cd eggchess && { \
+		patch -p1 <../../patchs/eggchess_oppentom.patch && \
+		make && cp eggchess $(TOMDIST)/share/eggchess && \
+		echo '#! /bin/sh\n\ncd $$DIST/share/eggchess\nexec ./eggchess\n' >$(TOMDIST)/bin/eggchess.sh; \
+		cd gfx && mogrify -resize 71.4285714% big.bmp empty.bmp full.bmp half.bmp shell.bmp; \
+	}
+	cp -R build/eggchess/gfx $(TOMDIST)/share/eggchess
+	
+	
+$(TOMDIST)/bin/nxpad_gnuboy:
+	make -C src/nxpad_gnuboy install
 
 $(TOMDIST)/bin/freecell: Downloads/TomTom_FreeCell.zip
 	mkdir -p build/freecell
@@ -115,7 +131,7 @@ $(TOMDIST)/bin/12swap: Downloads/caanoo-12swap-v1.0-bin.zip Downloads/caanoo-12s
 		cd caanoo-12swap-v1.0 && { \
 			patch -p1 <../../patchs/caanoo-12swap-v1.0_1402241302.patch; \
 			make; \
-			echo '#! /bin/sh\n\ncd $$DIST/bin/12swap\nexec ./12swap\n' >$(TOMDIST)/bin/12swap/12swap.sh; \
+			echo '#! /bin/sh\n\ncd $$DIST/bin/12swap\nexec ./12swap\n' >$(TOMDIST)/bin/12swap.sh; \
 		}
 
 $(TOMDIST)/bin/ntetris:
@@ -189,7 +205,6 @@ $(TOMDIST)/bin/dosbox: Downloads/dosbox-0.74.tar.gz
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) --disable-sdltest --disable-alsa-midi --disable-alsatest --disable-dynamic-core --disable-dynamic-x86 --disable-fpu-x86 --disable-opengl >$(LOGS)/dosbox.log; \
 		cp ../../patchs/dosbox-0.74_config.h config.h; \
 		make $(JOBS) >$(LOGS)/dosbox.log && cp src/dosbox $(TOMDIST)/bin; \
-		mkdir -p $(TOMDIST)/share/dosbox_games; \
 	}
 		
 
@@ -211,19 +226,18 @@ $(TOMDIST)/bin/mupdf: Downloads/mupdf-1.3-source.tar.gz
 		CROSSCOMPILE=yes verbose=yes make prefix=$(ARM_APPROOT) install && cp build/debug/mupdf-x11 $(TOMDIST)/bin/mupdf; \
 	}
 		
-$(TOMDIST)/bin/xgnuboy: Downloads/gnuboy-1.0.3.tar.gz
+$(TOMDIST)/bin/gnuboy: Downloads/gnuboy-1.0.3.tar.gz
 	cd build && tar xf ../Downloads/gnuboy-1.0.3.tar.gz && cd gnuboy-1.0.3 && { \
-		./configure --prefix=$(ARM_SYSROOT)/usr --with-x --host=arm --without-sdl --without-fb --x-includes=$(ARM_SYSROOT)/usr/include --disable-asm --enable-optimize=full --x-libraries=$(ARM_SYSROOT)/usr/lib >$(LOGS)/gnuboy.log; \
-		cat Makefile | sed 's/-lXext//' >/tmp/toto$$; mv /tmp/toto$$ Makefile; \
-		make $(JOBS) >$(LOGS)/gnuboy.log && cp xgnuboy $(TOMDIST)/bin; \
-		mkdir -p $(TOMDIST)/share/gnuboy/gnuboy_games; \
-		cp etc/classic.rc $(TOMDIST)/share/gnuboy; \
+		./configure --prefix=$(ARM_APPROOT) --with-sdl --host=$(T_ARCH) --without-x --without-fb --disable-asm --enable-optimize=full >$(LOGS)/gnuboy.log; \
+		patch -p1 <../../patchs/gnuboy-1.0.3_opentom_sdl.patch; \
+		make clean; \
+		make $(JOBS) >>$(LOGS)/gnuboy.log && cp sdlgnuboy $(TOMDIST)/bin/gnuboy; \
 	}
 		
 $(TOMDIST)/bin/martian: Downloads/martian_source.tgz
 	cd build && tar xf ../Downloads/martian_source.tgz && cd Martian-Memory && { \
 		patch -p1 <../../patchs/Martian-Memory_opentom.patch; \
-		./configure --prefix=$(ARM_SYSROOT)/usr --build=i686-pc-linux-gnu --host=arm-linux --datadir=/mnt/sdcard/opentom/share; \
+		./configure --prefix=$(ARM_SYSROOT)/usr --build=i686-pc-linux-gnu --host=$(T_ARCH) --datadir=/mnt/sdcard/opentom/share; \
 		make $(JOBS) >$(LOGS)/martian.log && { \
 			cp src/martian $(TOMDIST)/bin/martian; \
 			mkdir -p $(TOMDIST)/share/Martian; \
@@ -264,7 +278,7 @@ clean_duplicate_patchs:
 	#
 
 clean_all:
-	rm -Rf build
+	rm -Rf build/*
 	make clean
 
 Downloads/%:

@@ -26,8 +26,8 @@ export DOWNLOADS=Downloads
 #	export CFLAGS="-mlittle-endian -march=armv4 -mtune=arm9tdmi -mshort-load-bytes -fno-omit-frame-pointer -fno-optimize-sibling-calls -mno-thumb-interwork -O2 -I$PREFIX/include -I$PREFIX/usr/include"
 #	export CPPFLAGS="-I$PREFIX/include -I$PREFIX/usr/include"
 #	export LDFLAGS="-L$PREFIX/lib -L$PREFIX/usr/lib"
-	unset CFLAGS 
-	unset CPPFLAGS
+	export CFLAGS="-march=armv5te -mtune=arm9tdmi"
+	export CPPFLAGS="-march=armv5te -mtune=arm9tdmi"
 	unset LDFLAGS
 	unset CONFIG_SYSROOT
 #else

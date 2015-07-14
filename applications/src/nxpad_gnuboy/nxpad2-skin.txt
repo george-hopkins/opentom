@@ -1,0 +1,44 @@
+#
+# Set windows properties (such as caption...)
+#   set {caption|...} {0|1}
+#
+set caption 0
+
+#
+# Set skin background color (change to black for iTomTools :-)
+#   bg <red> <green> <blue>
+#
+
+bg 255 255 255 # white
+
+#
+# Set skin bitmap
+#   bitmap {0|1} <file>
+#
+
+bitmap 0 nxpad2.gif
+bitmap 1 nxpad2-pressed.gif
+
+#
+# Key mappings
+#   map <char> <x> <y> <width> <height>
+#
+
+map 32  165 214 40 41  # select
+map 13  221 214 40 41  # start
+
+map 'a' 278 181 73 75  # A
+map 'b' 362 183 73 75  # B
+
+map 't' 110  28 76 76  # up
+map 'f'  20  74 76 76  # left
+map 'h' 155 118 76 76  # right
+map 'v'  67 163 76 76  # down
+
+#
+# Command mappings
+#   command {lock|quit|...} <x> <y> <width> <height>
+#
+
+cmd lock 201 62 41 44
+cmd quit   0  0 32 32

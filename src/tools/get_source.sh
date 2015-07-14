@@ -2,7 +2,7 @@
 
 exist=`ls ${DOWNLOADS}/*$1* 2>/dev/null`
 if [ ! -z "$exist" ]; then
-	ln -s "$exist" $1 2>/dev/null
+#	ln -s "$exist" ${DOWNLOADS}/$1 2>/dev/null
 	exit 0;
 fi
 

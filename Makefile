@@ -34,8 +34,8 @@ export ARMGCC=gcc-3.3.4_glibc-2.3.2
 export CROSS=$(ROOT)/$(ARMGCC)
 export T_ARCH=arm-linux
 PREFIX=/usr/local/cross/arm-linux/sys-root
-export CFLAGS=-mlittle-endian -march=armv4 -mtune=arm9tdmi -mshort-load-bytes -fno-omit-frame-pointer -fno-optimize-sibling-calls -mno-thumb-interwork -O2 -I$(ARM_SYSROOT)/usr/include -L$(ARM_SYSROOT)/usr/lib
-export CPPFLAGS=-I$(PREFIX)/include -I$(PREFIX)/usr/include
+export CFLAGS=-mlittle-endian -march=armv5te -mtune=arm9tdmi -mshort-load-bytes -fno-omit-frame-pointer -fno-optimize-sibling-calls -mno-thumb-interwork -O2 -I$(ARM_SYSROOT)/usr/include -L$(ARM_SYSROOT)/usr/lib
+export CPPFLAGS=-march=armv5te -mtune=arm9tdmi -I$(PREFIX)/include -I$(PREFIX)/usr/include
 LDFLAGS=-L$(PREFIX)/lib -L$(ARM_SYSROOT)/usr/lib -L$(ARM_SYSROOT)/usr/lib
 COMPILO=$(CROSS)/bin/$(T_ARCH)
 
@@ -115,7 +115,7 @@ kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
 $(ARM_ROOT): $(ARMGCC)/lib
 	mkdir -p $(ARM_ROOT)/bin
 	cd $(CROSS)/$(T_ARCH)/libc/ && cp -R etc sbin lib usr $(ARM_SYSROOT)/
-	cd $(ARM_ROOT) && find . ! -type d -exec chmod a-w {} \;
+	#cd $(ARM_ROOT) && find . ! -type d -exec chmod a-w {} \;
 	mkdir -p $(ARM_ROOT)/usr/include
 	mkdir -p $(ARM_ROOT)/usr/man/man1
 	chmod u+w $(ARM_ROOT)/usr/include/asm/*
@@ -357,7 +357,7 @@ $(ARM_ROOT)/usr/include/glib-2.0: $(DOWNLOADS)/glib-2.14.6.tar.gz
 	cd build && { \
 		tar xf ../Downloads/glib-2.14.6.tar.gz && cd glib-2.14.6 && { \
 			cp $(CONFIGS)/glib2_config.cache_arm-linux config.cache; \
-			CFLAGS="" LDFLAGS="" CPPFLAGS="" ./configure --prefix=$(ARM_APPROOT) --host=arm-linux --cache-file=config.cache >$(LOGS)/glib2.log && \
+			CFLAGS="" LDFLAGS="" CXXFLAGS="" CPPFLAGS="" ./configure --prefix=$(ARM_APPROOT) --host=arm-linux --cache-file=config.cache >$(LOGS)/glib2.log && \
 			make $(JOBS) install >>$(LOGS)/glib2.log; \
 		}; \
 	}
@@ -436,12 +436,40 @@ $(ARM_ROOT)/usr/bin/rfcomm: $(DOWNLOADS)/bluez-utils-2.15.tar.gz $(ARM_ROOT)/usr
 	cp $(ARM_APPROOT)/bin/rfcomm $(TOMDIST)/bin
 	cp $(ARM_APPROOT)/sbin/hciconfig $(TOMDIST)/bin
 
-quick-%: Downloads/$(%:quick-%=%)*
-        cd build && { tar xf ../$(DOWNLOADS)/$(@:quick-%=%)* || unzip ../$(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
-                ./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) && \
-                make && \
-                make install; \
-        }
+####
+# Macro
+####
+
+quick-%:
+	make Downloads/$(@:quick-%=%)
+	cd build && { tar xf ../$(DOWNLOADS)/$(@:quick-%=%)* || unzip ../$(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) >$(LOGS)/$@.log && \
+		make >>$(LOGS)/$@.log && \
+		make install >>$(LOGS)/$@.log && { \
+			echo "#####"; \
+			echo "# Package \"$(@:quick-%=%)\" have been successfully installed in $(ARM_APPROOT)"; \
+			echo "#####"; \
+		} \
+	}
+
+quickb-%:
+	make Downloads/$(@:quickb-%=%)
+	cd build && { tar xf ../$(DOWNLOADS)/$(@:quickb-%=%)* || unzip ../$(DOWNLOADS)/$(@:quickb-%=%)*; } && cd $(@:quickb-%=%)* && { \
+		./bootstrap && \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) && \
+		make && \
+		make install; \
+	}
+	
+quicka-%:
+	make Downloads/$(@:quicka-%=%)
+	cd build && { tar xf ../$(DOWNLOADS)/$(@:quicka-%=%)* || unzip ../$(DOWNLOADS)/$(@:quicka-%=%)*; } && cd $(@:quicka-%=%)* && { \
+		./autogen.sh && \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) && \
+		make && \
+		make install; \
+	}
+
 
 verif_dist:
 	rm -f $(TOMDIST)/lib/* || echo ok
@@ -455,7 +483,7 @@ extract_initramfs:
 	cd /tmp/initramfs && { sudo rm -Rf /tmp/initramfs/*; gunzip -c $(ROOT)/build/initramfs.cpio.gz | sudo cpio -i; }
 
 clean_all:
-	make -C applications clean
+	make -C applications clean_all
 	cd kernel && make mrproper
 	rm -Rf build initramfs arm-sysroot $(TOMDIST)
 	rm -f $(LOGS)/*
