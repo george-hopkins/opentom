@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 1.22.1
-# Tue Mar 11 19:56:44 2014
+# Mon Mar 24 17:45:30 2014
 #
 CONFIG_HAVE_DOT_CONFIG=y
 
@@ -280,7 +280,7 @@ CONFIG_STTY=y
 # CONFIG_SUM is not set
 CONFIG_SYNC=y
 # CONFIG_TAC is not set
-# CONFIG_TAIL is not set
+CONFIG_TAIL=y
 # CONFIG_FEATURE_FANCY_TAIL is not set
 # CONFIG_TEE is not set
 # CONFIG_FEATURE_TEE_USE_BLOCK_IO is not set
@@ -553,10 +553,10 @@ CONFIG_FDFLUSH=y
 # CONFIG_FINDFS is not set
 # CONFIG_FLOCK is not set
 # CONFIG_FREERAMDISK is not set
-# CONFIG_FSCK_MINIX is not set
+CONFIG_FSCK_MINIX=y
 # CONFIG_MKFS_EXT2 is not set
 # CONFIG_MKFS_MINIX is not set
-# CONFIG_FEATURE_MINIX2 is not set
+CONFIG_FEATURE_MINIX2=y
 # CONFIG_MKFS_REISER is not set
 # CONFIG_MKFS_VFAT is not set
 # CONFIG_GETOPT is not set
@@ -592,7 +592,7 @@ CONFIG_PIVOT_ROOT=y
 # CONFIG_SCRIPT is not set
 # CONFIG_SCRIPTREPLAY is not set
 # CONFIG_SETARCH is not set
-# CONFIG_SWAPONOFF is not set
+CONFIG_SWAPONOFF=y
 # CONFIG_FEATURE_SWAPON_PRI is not set
 # CONFIG_SWITCH_ROOT is not set
 CONFIG_UMOUNT=y

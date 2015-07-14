@@ -20,7 +20,7 @@ APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
 CLEAN_APPS= $(APPS:%=clean-%)
 
 EXTRA= 	12swap ntetris pipepanic \
-	madplay spreadsheet flchekers \
+	madplay sprsht flchekers \
 	yareversi opendune linapple \
 	dosbox dillo gnuboy scummvm \
 	martian jooleem.sh tuxchess cr3 \
@@ -71,23 +71,26 @@ patch-%:
 
 $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 	cd build && tar xf ../Downloads/net-bubble-0.9.1-ezx80-0* && cd net-bubble-0.9.1-ezx80-0 && { \
-		patch -p1 <../../patchs/net-bubble-0.9.1-ezx80-0_opentom.patch; \
-		make >$(LOGS)/netbubble.log && cp net-bubble $(TOMDIST)/bin; \
+		patch -p1 <../../patchs/net-bubble-0.9.1-ezx80-0_opentom.patch && \
+		make clean && make >$(LOGS)/netbubble.log 2>&1 && cp net-bubble $(TOMDIST)/bin; \
 		mkdir -p $(TOMDIST)/share/net-bubble && cp -R levels gfx $(TOMDIST)/share/net-bubble; \
 	}
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
 
-$(TOMDIST)/bin/navit: Downloads/navit_git.tgz
-	cd build && tar xf ../Downloads/navit_git.tgz && cd navit && { \
+$(TOMDIST)/bin/navit: Downloads/navit_svn.tgz
+	cd build && tar xf ../Downloads/navit_svn.tgz && cd navit && { \
+		patch -p1 <../../patchs/navit_opentom.patch && \
 		./autogen.sh >$(LOGS)/navit.log && \
-		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo >>$(LOGS)/navit.log && \
+		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo --enable-svg2png-scaling=16,48 --enable-svg2png-scaling-flag=16 --enable-svg2png-scaling-nav=48 >>$(LOGS)/navit.log && \
 		echo '#define SDL_IMAGE 1§' | tr '§' '\n' >>config.h && \
 		make -j6 >>$(LOGS)/navit.log 2>&1 && make install >>$(LOGS)/navit.log && \
-		cd $(TOMDIST)/share && rm -Rf icons applications man; \
+		echo Navit build OK; \
+		mogrify -resize 33.33% $(TOMDIST)/share/navit/xpm/gui_strength_*; \
+		cd $(TOMDIST)/share && rm -Rf icons applications man navit/xpm/*.svg*; \
 		rm $(TOMDIST)/lib/navit/*/*.*a*; \
 		cp $(ARM_APPROOT)/bin/espeak $(TOMDIST)/bin; \
-		echo Navit build OK; \
+		cp -R $(ROOT)/build/espeak-*/espeak-data $(TOMDIST)/share; \
 	}
 		
 
@@ -95,7 +98,7 @@ $(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
 	mkdir -p $(TOMDIST)/share/eggchess
 	cd build && tar xf ../Downloads/eggchess-1.1-A780-0.tar.gz && cd eggchess && { \
 		patch -p1 <../../patchs/eggchess_oppentom.patch && \
-		make && cp eggchess $(TOMDIST)/share/eggchess && \
+		make >$(LOGS)/eggchess.log && cp eggchess $(TOMDIST)/share/eggchess && \
 		echo '#! /bin/sh§§cd $$DIST/share/eggchess§exec ./eggchess§' | tr '§' '\n' >$(TOMDIST)/bin/eggchess.sh; \
 		cd gfx && mogrify -resize 71.4285714% big.bmp empty.bmp full.bmp half.bmp shell.bmp; \
 	}
@@ -149,7 +152,7 @@ $(TOMDIST)/bin/12swap: Downloads/caanoo-12swap-v1.0-bin.zip Downloads/caanoo-12s
 		unzip -o ../Downloads/caanoo-12swap-v1.0-src.zip && \
 		cd caanoo-12swap-v1.0 && { \
 			patch -p1 <../../patchs/caanoo-12swap-v1.0_1402241302.patch; \
-			make; \
+			make >$(LOGS)/12swap.log ; \
 			echo '#! /bin/sh§§cd $$DIST/bin/12swap§exec ./12swap§' | tr '§' '\n' >$(TOMDIST)/bin/12swap.sh; \
 		}
 
@@ -159,8 +162,8 @@ $(TOMDIST)/bin/ntetris:
 $(TOMDIST)/bin/pipepanic: Downloads/pipepanic-0.1.3-source.tar.gz
 	cd build && tar xf ../Downloads/pipepanic-0.1.3-source.tar.gz && cd pipepanic-0.1.3-source && { \
 		patch -p1 <../../patchs/pipepanic-0.1.3-source_opentom.patch; \
-		make; \
-		mkdir -p $(TOMDIST)/bin/pipepanic; \
+		make >$(LOGS)/pipe.log && \
+		mkdir -p $(TOMDIST)/bin/pipepanic && \
 		cp *.bmp pipepanic $(TOMDIST)/bin/pipepanic; \
 		echo '#! /bin/sh§§cd $$DIST/bin/pipepanic§exec ./pipepanic -320x240§' | tr '§' '\n' >$(TOMDIST)/bin/pipepanic/pipe.sh; \
 	}
@@ -171,30 +174,30 @@ $(TOMDIST)/bin/madplay: Downloads/madplay-0.15.2b.tar.gz
 		make $(JOBS) >$(LOGS)/madplay.log && cp madplay $(TOMDIST)/bin/madplay; \
 	}
 
-$(TOMDIST)/bin/spreadsheet: Downloads/spreadsheet1.2.2.tar.gz
+$(TOMDIST)/bin/sprsht: Downloads/spreadsheet1.2.2.tar.gz
 	cd build && tar xf ../Downloads/spreadsheet1.2.2.tar.gz && cd spreadsheet1.2.2 && { \
 		patch -p1 <../../patchs/spreadsheet1.2.2_1402241834.patch; \
-		make && cp sprsht $(TOMDIST)/bin/spreadsheet; \
+		make >$(LOGS)/sprsht.log && cp sprsht $(TOMDIST)/bin/; \
 	}
 
 $(TOMDIST)/bin/flchekers: Downloads/yacheckers-1.4.0.tar.bz2
 	cd build && tar xf ../Downloads/yacheckers-1.4.0.tar.bz2 && cd yacheckers-1.4.0 && { \
 		patch -p1 <../../patchs/yacheckers-1.4.0_1402241834.patch; \
-		make -f Makefile.fl; \
+		make -f Makefile.fl >$(LOGS)/flchekers.log && \
 		cp flchekers $(TOMDIST)/bin; \
 	}
 
 $(TOMDIST)/bin/yareversi: Downloads/yareversi-1.0.2.tar.bz2
 	cd build && tar xf ../Downloads/yareversi-1.0.2.tar.bz2 && cd yareversi-1.0.2 && { \
 		patch -p1 <../../patchs/yareversi-1.0.2_1402241834.patch; \
-		make -f Makefile.opentom; \
+		make -f Makefile.opentom >$(LOGS)/yareversi.log && \
 		cp yareversi $(TOMDIST)/bin; \
 	}
 
 $(TOMDIST)/bin/opendune: Downloads/OpenDUNE_git.tgz
 	cd build && tar xf ../Downloads/OpenDUNE_git.tgz && cd OpenDUNE && { \
 		./configure --prefix=$(ARM_APPROOT) --enable-debug=0 --disable-assert --host=$(T_ARCH) --without-alsa && \
-		patch -p1 <../../patchs/OpenDUNE_opentom.patch; \
+		patch -p1 <../../patchs/OpenDUNE_opentom.patch && \
 		make $(JOBS) >/$(LOGS)/opendune.log 2>&1 && \
 		cp bin/opendune $(TOMDIST)/bin; \
 		mkdir -p $(TOMDIST)/share/dune2/data; \
@@ -205,14 +208,14 @@ $(TOMDIST)/bin/linapple: Downloads/linapple-src_2a.tar.bz2
 	cd build && tar xf ../Downloads/linapple-src_2a.tar.bz2 && cd linapple-src_2a && { \
 		patch -p1 <../../patchs/linapple-src_2a_1402241834.patch; \
 		CFLAGS="" CPPFLAGS="" make >$(LOGS)/linapple.log 2>&1 && cp linapple-src_2a $(TOMDIST)/bin/linapple && \
-		mkdir -p $(TOMDIST)/share/linapple-src_2a && \
-		cp charset40.bmp font.bmp splash.bmp Master.dsk $(TOMDIST)/share/linapple-src_2a; \
+		mkdir -p $(TOMDIST)/share/linapple && \
+		cp charset40.bmp font.bmp splash.bmp Master.dsk $(TOMDIST)/share/linapple; \
 	}
 
 $(TOMDIST)/bin/scummvm: Downloads/scummvm-1.6.0.tar.bz2
 	cd build && tar xf ../Downloads/scummvm-1.6.0.tar.bz2 && cd scummvm-1.6.0 && { \
 		patch -p1 <../../patchs/scummvm-1.6.0_opentom.patch; \
-		./configure --prefix=$(ARM_SYSROOT)/usr --host=$(T_ARCH) --disable-debug --default-dynamic --disable-scalers --disable-hq-scalers --disable-translation --disable-bink --with-sdl-prefix=$(ARM_SYSROOT)/usr/bin --disable-nasm --disable-readline --disable-libunity --disable-sndio --disable-engine=kyra --backend=sdl --enable-optimizations --enable-vkeybd >$(LOGS)/scummvm.log >$(LOGS)/scummvm.log; \
+		./configure --prefix=$(ARM_SYSROOT)/usr --host=$(T_ARCH) --disable-debug --default-dynamic --disable-scalers --disable-hq-scalers --disable-translation --disable-bink --with-sdl-prefix=$(ARM_SYSROOT)/usr/bin --disable-nasm --disable-readline --disable-libunity --disable-sndio --backend=sdl --enable-optimizations --disable-engine=kyra >$(LOGS)/scummvm.log >$(LOGS)/scummvm.log; \
 		VERBOSE_BUILD=1 AS=arm-linux-as make $(JOBS) >$(LOGS)/scummvm.log 2>&1; \
 		make $(JOBS) >../../logs/scummvm.log && cp scummvm $(TOMDIST)/bin; \
 		mkdir -p $(TOMDIST)/share/scumm_games; \
@@ -229,11 +232,14 @@ $(TOMDIST)/bin/dosbox: Downloads/dosbox-0.74.tar.gz
 
 $(TOMDIST)/bin/dillo: Downloads/dillo-3.0.3.tar.bz2
 	cd build && tar xf ../Downloads/dillo-3.0.3.tar.bz2 && cd dillo-3.0.3 && { \
-		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH); \
-		make $(JOBS) install >$(LOGS)/dillo.log; \
-		cp -R $(ARM_APPROOT)/lib/dillo $(TOMDIST)/lib; \
-		cp -R $(ARM_APPROOT)/etc/dillo $(TOMDIST)/etc; \
+		patch -p1 <../../patchs/dillo-3.0.3_opentom.patch && \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >$(LOGS)/dillo.log && \
+		make $(JOBS) install >$(LOGS)/dillo.log && \
 		cd $(ARM_APPROOT)/bin && cp dpid dillo dpidc dillo-install-hyphenation $(TOMDIST)/bin; \
+		cd - && mkdir -p $(TOMDIST)/.dillo; \
+		cp -Rf $(ARM_APPROOT)/lib/dillo $(TOMDIST)/lib; \
+ 		cp $(ARM_APPROOT)/etc/dillo/* $(TOMDIST)/.dillo && \
+		sed "s#$(ARM_APPROOT)#/mnt/sdcard/opentom/#" <$(ARM_APPROOT)/etc/dillo/dpidrc >$(TOMDIST)/.dillo/dpidrc; \
 	}
 
 $(TOMDIST)/bin/mupdf: Downloads/mupdf-1.3-source.tar.gz
@@ -242,21 +248,21 @@ $(TOMDIST)/bin/mupdf: Downloads/mupdf-1.3-source.tar.gz
 		gcc  -Iinclude -Iscripts -Igenerated -Wall -pipe -g -DDEBUG -Ithirdparty/freetype/include -Ithirdparty/jbig2dec -Ithirdparty/jpeg -Ithirdparty/openjpeg/src/lib/openjp2  -Ithirdparty/zlib -o build/debug/cmapdump scripts/cmapdump.c; \
 		gcc  -Iinclude -Iscripts -Igenerated -Wall -pipe -g -DDEBUG -Ithirdparty/freetype/include -Ithirdparty/jbig2dec -Ithirdparty/jpeg -Ithirdparty/openjpeg/src/lib/openjp2  -Ithirdparty/zlib -o build/debug/fontdump scripts/fontdump.c; \
 		gcc  -Iinclude -Iscripts -Igenerated -Wall -pipe -g -DDEBUG -Ithirdparty/freetype/include -Ithirdparty/jbig2dec -Ithirdparty/jpeg -Ithirdparty/openjpeg/src/lib/openjp2  -Ithirdparty/zlib -o build/debug/bin2hex scripts/bin2hex.c; \
-		CROSSCOMPILE=yes verbose=yes make prefix=$(ARM_APPROOT) install && cp build/debug/mupdf-x11 $(TOMDIST)/bin/mupdf; \
+		CROSSCOMPILE=yes verbose=yes make prefix=$(ARM_APPROOT) install >$(LOGS)/mupdf.log && cp build/debug/mupdf-x11 $(TOMDIST)/bin/mupdf; \
 	}
 		
 $(TOMDIST)/bin/gnuboy: Downloads/gnuboy-1.0.3.tar.gz
 	cd build && tar xf ../Downloads/gnuboy-1.0.3.tar.gz && cd gnuboy-1.0.3 && { \
 		./configure --prefix=$(ARM_APPROOT) --with-sdl --host=$(T_ARCH) --without-x --without-fb --disable-asm --enable-optimize=full >$(LOGS)/gnuboy.log; \
 		patch -p1 <../../patchs/gnuboy-1.0.3_opentom_sdl.patch; \
-		make clean; \
+		make clean >>$(LOGS)/gnuboy.log; \
 		make $(JOBS) >>$(LOGS)/gnuboy.log && cp sdlgnuboy $(TOMDIST)/bin/gnuboy; \
 	}
 		
 $(TOMDIST)/bin/martian: Downloads/martian_source.tgz
 	cd build && tar xf ../Downloads/martian_source.tgz && cd Martian-Memory && { \
 		patch -p1 <../../patchs/Martian-Memory_opentom.patch; \
-		./configure --prefix=$(ARM_SYSROOT)/usr --build=i686-pc-linux-gnu --host=$(T_ARCH) --datadir=/mnt/sdcard/opentom/share; \
+		./configure --prefix=$(ARM_SYSROOT)/usr --build=i686-pc-linux-gnu --host=$(T_ARCH) --datadir=/mnt/sdcard/opentom/share >$(LOGS)/martian.log; \
 		make $(JOBS) >$(LOGS)/martian.log && { \
 			cp src/martian $(TOMDIST)/bin/martian; \
 			mkdir -p $(TOMDIST)/share/Martian; \
@@ -267,11 +273,11 @@ $(TOMDIST)/bin/martian: Downloads/martian_source.tgz
 
 $(TOMDIST)/bin/jooleem.sh: Downloads/jooleem_0.1.4_win32_bin.zip Downloads/jooleem_0.1.4_src.zip
 	cd build && unzip ../Downloads/jooleem_0.1.4_win32_bin.zip && cd Jooleem && { \
+		mkdir -p $(TOMDIST)/share/jooleem; \
+		mogrify -resize 50% data/interface/*  data/marbles/*; \
 		unzip -o ../../Downloads/jooleem_0.1.4_src.zip; \
 		patch -p1 <../../patchs/Jooleem_opentom.patch; \
-		make; \
-		mogrify -resize 50% data/interface/*  data/marbles/*; \
-		mkdir -p $(TOMDIST)/share/jooleem; \
+		make >$(LOGS)/jooleem.log && \
 		cp -R data jooleem $(TOMDIST)/share/jooleem; \
 		echo '#! /bin/sh§§cd $$DIST/share/jooleem§exec ./jooleem§' | tr '§' '\n' >$(TOMDIST)/bin/jooleem.sh; \
 	}

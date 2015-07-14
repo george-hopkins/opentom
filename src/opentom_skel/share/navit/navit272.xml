@@ -31,7 +31,7 @@
 		[D][D]DMM.ss[S][S]... N/S [D][D]DMM.ss[S][S]... E/W 
 		[-][D]D.d[d]... [-][D][D]D.d[d]... 
 		[-]0xX [-]0xX -->
-	<navit center="4337 N 526 E" zoom="64" tracking="1" orientation="-1" recent_dest="250">
+	<navit center="4337 N 526 E" zoom="16" pitch="30" tracking="1" orientation="-1" recent_dest="250">
 		<!-- Use one of gtk_drawing_area, qt_qpainter or sdl. 
 		     On windows systems, use win32 -->
 		<graphics type="sdl" w="480" h="272"/>
@@ -46,7 +46,7 @@
 		<!-- The action that appears on map click is configurable with the attribute "on_map_click".
 		     To get the prvious behaviour of showing the map point menu use on_map_click='menu("#Map Point")'
 	        -->
-		<gui type="internal" enabled="yes" icon_s="48" icon_l="48"><![CDATA[
+		<gui type="internal" fullscreen="1" enabled="yes" icon_s="48" icon_l="48"><![CDATA[
 			<html>
 				<a name='Main Menu'><text>Main menu</text>
 					<a href='#Actions'><img src='gui_actions'>Actions</img></a>
@@ -183,7 +183,7 @@ Waypoint</text></img>
 		<osd enabled="no" type="button" x="0" y="-96" command="zoom_out()" src="zoom_out.png"/> 
 
 		<!-- Vehicle with GPS enabled for gpsd on unix -->
-		<vehicle name="Local GPS" profilename="car" enabled="yes" active="1" source="file://var/run/gpspipe">
+		<vehicle name="Local GPS" profilename="car" enabled="yes" active="1" source="file://var/run/gpspipe" follow="1">
 		<!-- Vehicle with GPS enabled for direct communication on windows. Remove the line above if you use this. -->
 		<!-- <vehicle name="Local GPS" profilename="car" follow="1" enabled="yes" active="1" 
 				source="serial:COM4 baud=4800 parity=N data=8 stop=1" > -->

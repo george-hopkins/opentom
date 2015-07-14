@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.13
-# Tue Mar 11 14:49:52 2014
+# Mon Mar 24 17:33:41 2014
 #
 CONFIG_ARM=y
 CONFIG_MMU=y
@@ -21,7 +21,7 @@ CONFIG_INIT_ENV_ARG_LIMIT=32
 # General setup
 #
 CONFIG_LOCALVERSION=""
-# CONFIG_SWAP is not set
+CONFIG_SWAP=y
 CONFIG_SYSVIPC=y
 # CONFIG_POSIX_MQUEUE is not set
 # CONFIG_BSD_PROCESS_ACCT is not set
@@ -778,18 +778,7 @@ CONFIG_FB_TTGFB=y
 #
 # CONFIG_VGA_CONSOLE is not set
 CONFIG_DUMMY_CONSOLE=y
-CONFIG_FRAMEBUFFER_CONSOLE=y
-CONFIG_FONTS=y
-# CONFIG_FONT_8x8 is not set
-# CONFIG_FONT_8x16 is not set
-# CONFIG_FONT_6x11 is not set
-# CONFIG_FONT_7x14 is not set
-# CONFIG_FONT_PEARL_8x8 is not set
-# CONFIG_FONT_ACORN_8x8 is not set
-CONFIG_FONT_MINI_4x6=y
-# CONFIG_FONT_SUN8x16 is not set
-# CONFIG_FONT_SUN12x22 is not set
-# CONFIG_FONT_10x18 is not set
+# CONFIG_FRAMEBUFFER_CONSOLE is not set
 
 #
 # Logo configuration
@@ -1033,14 +1022,9 @@ CONFIG_HSMMC_S3C=y
 #
 # File systems
 #
-CONFIG_EXT2_FS=y
-CONFIG_EXT2_FS_XATTR=y
-# CONFIG_EXT2_FS_POSIX_ACL is not set
-# CONFIG_EXT2_FS_SECURITY is not set
-# CONFIG_EXT2_FS_XIP is not set
+# CONFIG_EXT2_FS is not set
 # CONFIG_EXT3_FS is not set
 # CONFIG_JBD is not set
-CONFIG_FS_MBCACHE=y
 # CONFIG_REISERFS_FS is not set
 # CONFIG_JFS_FS is not set
 # CONFIG_FS_POSIX_ACL is not set
@@ -1049,7 +1033,7 @@ CONFIG_FS_MBCACHE=y
 # XFS support
 #
 # CONFIG_XFS_FS is not set
-# CONFIG_MINIX_FS is not set
+CONFIG_MINIX_FS=y
 # CONFIG_ROMFS_FS is not set
 # CONFIG_INOTIFY is not set
 # CONFIG_QUOTA is not set

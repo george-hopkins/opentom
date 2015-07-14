@@ -1,5 +1,5 @@
 #!/bin/sh
-# used as /etc/rc on EXT2 partition on TomTom SDCARD run after a pivot_root/chroot in initramfs
+# used as /etc/rc on MINIX partition on TomTom SDCARD run after a pivot_root/chroot in initramfs
 
 echo Runnning \(OpenTom\) etc/rc ...
 
@@ -10,7 +10,7 @@ devbase="/dev"
 initial_mount() {
 	mount -n -t proc none /proc
 	mount -n -t sysfs none /sys
-	# Remount root fs as R/W => no, not need and seems to have problem with this kernel
+	# mount it temporary in shell scripts when needed
 #	mount -o remount,rw /
 	
 	# Mount Ramfs in dir likely to be written
@@ -124,25 +124,30 @@ mount_storage() {
 initial_mount 
 
 # Note : This sleep is Absolutly necessary in order to let mmc driver enough time to probe all cards !
-sleep 3
+# sleep 3
 
 # Generic mount storage device (sdcards and hard disk) 
 hw_bootdevice=`cat /proc/barcelona/bootdevice`
 mount_storage
 
+# mount swap partition
+swapon `mount | grep minix | cut -f1 -d" " | sed 's/.$//'`2
+
 DIST=/mnt/sdcard/opentom
 KVER=`uname -r`
 
 # Starting USB Ether Gadget ...
-insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/s3c24xx_udc.ko
-insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/g_ether.ko
+insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/s3c24xx_udc.ko; \
+sleep 1
+insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/g_ether.ko; \
 sleep 1
 ifconfig usb0 192.168.1.10
+sleep 1
 # DHCPD Server
 udhcpd -f /etc/udhcpd.conf &
 
 # Starting telnet daemon ...
-( cd $DIST ; /usr/sbin/telnetd -F & )
+/usr/sbin/telnetd -F &
 
 # Running /mnt/sdcard/opentom/start.sh script ...
 sh $DIST/start.sh >$DIST/logs/start.log 2>&1

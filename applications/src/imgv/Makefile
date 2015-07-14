@@ -1,8 +1,8 @@
 NAME=imgv
 
-install: $(TOMDIST)/bin
+install: $(TOMDIST)/bin/$(NAME)
 
-$(TOMDIST)/bin: $(NAME)
+$(TOMDIST)/bin/$(NAME): $(NAME)
 	cp $(NAME) $(TOMDIST)/bin
 
 $(NAME): sdl-imageviewer.c  SDL_rotozoom.c

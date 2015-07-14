@@ -1,4 +1,4 @@
 #! /bin/sh
 
 cd $DIST/share/dosbox
-exec dosbox -conf $1_dosbox.conf
+exec nice -n 19 $DIST/bin/dosbox -conf $1_dosbox.conf

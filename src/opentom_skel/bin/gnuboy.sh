@@ -1,4 +1,4 @@
 #! /bin/sh
 
-cd $DIST/share/gnuboy
-DISPLAY=:0 exec gnuboy classic.rc gnuboy_games/zelda.gbc
+RC_FILE=$DIST/share/gnuboy/classic.rc
+DISPLAY=:0 exec gnuboy --source $RC_FILE $*

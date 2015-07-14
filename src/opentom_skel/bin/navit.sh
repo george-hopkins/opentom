@@ -1,5 +1,10 @@
 #! /bin/sh
 
+ls $DIST/bin/gltt || {
+	echo "You need TomTom(tm) gltt\nPlease read documentation." | flmessage -s -t "Can't start Navit"
+	exit
+}
+
 export LANG=fr_FR.utf8
 
 export NAVIT_PREFIX=$DIST

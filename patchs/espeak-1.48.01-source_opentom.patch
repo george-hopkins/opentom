@@ -5,7 +5,7 @@ diff -rupN espeak-1.48.01-source/src/Makefile espeak-1.48.01-source_opentom/src/
  # remove -fno-exceptions  if it causes problems with stdio library on some platforms (ARM)
  
 -DATADIR=/usr/share/espeak-data
-+DATADIR==$(ARM_APPROOT)/share/espeak-data
++DATADIR=/mnt/sdcard/opentom/share/espeak-data
  
 -PREFIX=/usr
 +PREFIX=$(ARM_APPROOT)

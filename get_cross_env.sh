@@ -1,4 +1,4 @@
-# Source this file to use OpenTomIDE
+# Source this file to use OpenTomSDK
 
 export ROOT=
 export SOURCE="$ROOT/src"

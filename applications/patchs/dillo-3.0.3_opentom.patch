@@ -1,0 +1,145 @@
+diff -rupN dillo-3.0.3/dillorc dillo-3.0.3_opentom/dillorc
+--- dillo-3.0.3/dillorc	2013-04-04 19:20:10.000000000 +0200
++++ dillo-3.0.3_opentom/dillorc	2014-03-20 11:16:15.000000000 +0100
+@@ -12,7 +12,7 @@
+ 
+ # Set the desired initial browser size
+ # geometry=650x545+0+20
+-#geometry=780x580
++geometry=320x240
+ 
+ # Change this if you want to have text-only browsing from the start.
+ # (While browsing, this can be changed from the tools/settings menu.)
+@@ -33,7 +33,7 @@
+ #buffered_drawing=1
+ 
+ # Set your default directory for download/save operations
+-#save_dir=/tmp
++save_dir=/mnt/sdcard/opentom
+ 
+ #-------------------------------------------------------------------------
+ #                           RENDERING SECTION
+@@ -69,7 +69,7 @@
+ #font_min_size=6
+ 
+ # Show tooltip popups for UI and for HTML title attributes
+-#show_tooltip=YES
++show_tooltip=NO
+ 
+ # Set this to YES if you want to limit the word wrap width to the viewport
+ # width (may be useful for iPAQ)
+@@ -299,26 +299,26 @@ ui_tab_bg_color=#b7beb7
+ # tiny   : buttons, location, and progress boxes in one row
+ # small  : location in one row, buttons + progress boxes in another
+ # medium : adds text labels to buttons and boxes
+-# panel_size=tiny
++panel_size=tiny
+ # panel_size=small
+ #panel_size=medium
+ 
+-#small_icons=NO
++small_icons=YES
+ 
+ # Here you can choose to hide some widgets of the dillo panel...
+ #show_back=YES
+ #show_forw=YES
+-#show_home=YES
+-#show_reload=YES
+-#show_save=YES
+-#show_stop=YES
+-#show_bookmarks=YES
++show_home=NO
++show_reload=NO
++show_save=NO
++show_stop=NO
++show_bookmarks=NO
+ #show_tools=YES
+ #show_filemenu=YES
+ #show_clear_url=YES
+-#show_search=YES
+-#show_help=YES
+-#show_progress_box=YES
++show_search=NO
++show_help=NO
++show_progress_box=NO
+ 
+ # Start dillo with the panels hidden?
+ #fullwindow_start=NO
+@@ -357,7 +357,7 @@ ui_tab_bg_color=#b7beb7
+ 
+ # Generic messages (mainly for debugging specific parts)
+ # Change this to disable them.
+-#show_msg=YES
++show_msg=NO
+ 
+ 
+ #-------------------------------------------------------------------------
+diff -rupN dillo-3.0.3/src/menu.cc dillo-3.0.3_opentom/src/menu.cc
+--- dillo-3.0.3/src/menu.cc	2013-01-27 18:26:38.000000000 +0100
++++ dillo-3.0.3_opentom/src/menu.cc	2014-03-20 11:10:05.000000000 +0100
+@@ -74,6 +74,19 @@ static void filemenu_cb(Fl_Widget*, void
+       a_Timeout_add(0.0, a_UIcmd_close_bw, popup_bw);
+    } else if (strcmp((char*)data, "ed") == 0) {
+       a_Timeout_add(0.0, a_UIcmd_close_all_bw, NULL);
++   } else if (strcmp((char*)data, "rl") == 0) { // reload
++      a_UIcmd_reload(popup_bw);
++   } else if (strcmp((char*)data, "bm") == 0) { // bookmark
++      const DilloUrl *url = a_History_get_url(NAV_TOP_UIDX(popup_bw));
++      a_UIcmd_add_bookmark( popup_bw, url);
++   } else if (strcmp((char*)data, "sp") == 0) { // save page
++       a_UIcmd_save(popup_bw);
++   } else if (strcmp((char*)data, "hp") == 0) { // home page
++       a_UIcmd_home( popup_bw);
++   } else if (strcmp((char*)data, "sa") == 0) { // search
++       a_UIcmd_search_dialog(popup_bw);   
++   } else if (strcmp((char*)data, "st") == 0) { // stop
++       a_UIcmd_stop(popup_bw);
+    }
+ }
+ 
+@@ -545,14 +558,24 @@ void a_Menu_file_popup(BrowserWindow *bw
+        (void*)"nt",0,0,0,0,0},
+       {"New window", Keys::getShortcut(KEYS_NEW_WINDOW), filemenu_cb,
+        (void*)"nw", FL_MENU_DIVIDER,0,0,0,0},
++      {"Reload page", Keys::getShortcut(KEYS_RELOAD), filemenu_cb,
++       (void*)"rl",0,0,0,0,0},
++      {"Bookmark page", Keys::getShortcut(KEYS_BOOKMARKS), filemenu_cb,
++       (void*)"bm",0,0,0,0,0},
++      {"Save page...", Keys::getShortcut(KEYS_SAVE), filemenu_cb,
++       (void*)"sp",FL_MENU_DIVIDER,0,0,0,0},
++      {"Home page", Keys::getShortcut(KEYS_HOME), filemenu_cb,
++       (void*)"hp",0,0,0,0,0},
++      {"Search ...", Keys::getShortcut(KEYS_WEBSEARCH), filemenu_cb,
++       (void*)"sa",0,0,0,0,0},
+       {"Open file...", Keys::getShortcut(KEYS_OPEN), filemenu_cb,
+        (void*)"of",0,0,0,0,0},
+       {"Open URL...", Keys::getShortcut(KEYS_GOTO), filemenu_cb,
+        (void*)"ou",0,0,0,0,0},
+       {"Close", Keys::getShortcut(KEYS_CLOSE_TAB), filemenu_cb,
+        (void*)"cw", FL_MENU_DIVIDER,0,0,0,0},
+-      {"Exit Dillo", Keys::getShortcut(KEYS_CLOSE_ALL), filemenu_cb,
+-       (void*)"ed",0,0,0,0,0},
++//      {"Exit Dillo", Keys::getShortcut(KEYS_CLOSE_ALL), filemenu_cb,
++//       (void*)"ed",0,0,0,0,0},
+       {0,0,0,0,0,0,0,0,0}
+    };
+ 
+diff -rupN dillo-3.0.3/src/uicmd.cc dillo-3.0.3_opentom/src/uicmd.cc
+--- dillo-3.0.3/src/uicmd.cc	2013-03-07 20:19:58.000000000 +0100
++++ dillo-3.0.3_opentom/src/uicmd.cc	2014-03-20 11:02:33.000000000 +0100
+@@ -1481,4 +1481,3 @@ void a_UIcmd_focus_location(void *vbw)
+    BrowserWindow *bw = (BrowserWindow*)vbw;
+    BW2UI(bw)->focus_location();
+ }
+-
+diff -rupN dillo-3.0.3/src/uicmd.hh dillo-3.0.3_opentom/src/uicmd.hh
+--- dillo-3.0.3/src/uicmd.hh	2013-01-27 18:26:38.000000000 +0100
++++ dillo-3.0.3_opentom/src/uicmd.hh	2014-03-20 11:07:04.000000000 +0100
+@@ -2,6 +2,7 @@
+ #define __UICMD_HH__
+ 
+ #include "bw.h"
++#include "nav.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {

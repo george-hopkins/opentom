@@ -36,7 +36,7 @@ export T_ARCH=arm-linux
 PREFIX=/usr/local/cross/arm-linux/sys-root
 export CFLAGS=-mlittle-endian -march=armv5te -mtune=arm9tdmi -mshort-load-bytes -fno-omit-frame-pointer -fno-optimize-sibling-calls -mno-thumb-interwork -O2 -I$(ARM_SYSROOT)/usr/include -L$(ARM_SYSROOT)/usr/lib
 export CPPFLAGS=-march=armv5te -mtune=arm9tdmi -I$(PREFIX)/include -I$(PREFIX)/usr/include
-LDFLAGS=-L$(PREFIX)/lib -L$(ARM_SYSROOT)/usr/lib -L$(ARM_SYSROOT)/usr/lib
+LDFLAGS=-L$(PREFIX)/lib -L$(ARM_SYSROOT)/usr/lib
 COMPILO=$(CROSS)/bin/$(T_ARCH)
 
 export CC=$(T_ARCH)-gcc
@@ -76,7 +76,7 @@ base: tools ttsystem distrib
 	@echo
 
 
-extra: espeak libzip sdl_net
+extra: espeak libzip sdl_net ctorrent
 	make -C applications extra
 	make verif_dist
 	@echo
@@ -104,7 +104,7 @@ build/initramfs.cpio.gz: kernel/arch/arm/boot/zImage initramfs/bin/busybox initr
 
 kernel/arch/arm/boot/zImage: $(ARM_ROOT) kernel/.config
 	mkdir -p initramfs/usr
-	cd kernel && nice -n 19 make $(JOBS) >$(LOGS)/kernel.log 2>&1
+	cd kernel && make clean && nice -n 19 make $(JOBS) >$(LOGS)/kernel.log 2>&1
 
 kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
 	cd src && tar xf ../$(DOWNLOADS)/golinux-tt1114405.tar.gz
@@ -160,7 +160,8 @@ initramfs/bin/busybox: initramfs/etc/rc build/busybox-$(BUSYBOX_VER)/_install/bi
 
 build/busybox-$(BUSYBOX_VER)/_install/bin/busybox: build/busybox-$(BUSYBOX_VER) build/busybox-$(BUSYBOX_VER)/.config
 	cd build/busybox-$(BUSYBOX_VER) && { \
-		make $(JOBS) install >$(LOGS)/busybox.log 2>&1 ; \
+		make $(JOBS) >$(LOGS)/busybox.log 2>&1 && \
+		make install >>$(LOGS)/busybox.log 2>&1 && \
 		chrpath -d _install/bin/busybox; \
 	}
 		
@@ -207,6 +208,13 @@ $(ARM_ROOT)/usr/bin/dbclient: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
 		make install >>$(LOGS)/dropbear.log && \
 		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh; \
 	}
+
+dhclient: $(TOMDIST)/bin/dhclient
+$(TOMDIST)/bin/dhclient: # work only in debian like dist...
+	cd build && apt-get source dhcp3-client && cd dhcp3-* && { \
+		./configure && make && cp work.linux-2.2/client/dhclient $(TOMDIST)/bin; \
+	}
+
 		
 ctorrent: $(TOMDIST)/bin/ctorrent
 $(TOMDIST)/bin/ctorrent: $(ARM_ROOT)/usr/include/openssl/opensslconf.h $(DOWNLOADS)/ctorrent-1.3.4.tar.bz2
@@ -413,7 +421,7 @@ $(ARM_ROOT)/usr/include/expat.h: $(DOWNLOADS)/expat-2.1.0.tar.gz
 espeak: $(ARM_ROOT)/usr/bin/espeak
 $(ARM_ROOT)/usr/bin/espeak: Downloads/pa_stable_v19_20140130.tgz Downloads/espeak-1.48.02-source.zip
 	cd build && tar xf ../Downloads/pa_stable_v19_20140130.tgz && cd portaudio && { \
-		./configure --prefix=$(ARM_APPROOT) --host=arm-linux >$(LOGS)/pa_stable.log && \
+		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --without-alsa --with-alsa --without-jack --without-asihpi --without-winapi >$(LOGS)/pa_stable.log && \
 		make $(JOBS) install >$(LOGS)/pa_stable.log; }
 	cd build && unzip ../Downloads/espeak-1.48.02-source.zip && cd espeak-1.48* && { \
 		cp src/portaudio19.h src/portaudio.h; \
@@ -436,7 +444,15 @@ $(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1f.tar.gz
 			make >>$(LOGS)/ssl.log && \
 			INSTALL_PREFIX=/mnt/sdcard/opentom make install >>$(LOGS)/ssl.log; \
 		}
-	
+
+gtk: $(ARM_ROOT)/usr/include/gtk-1.2/gtk/gtk.h
+/usr/include/gtk-1.2/gtk/gtk.h: Downloads/gtk+-1.2.10.tar.gz
+	cd build && tar xf ../Downloads/gtk+-1.2.10.tar.gz && cd gtk+-1.2.10 && { \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) --with-glib-prefix=$(ARM_APPROOT) && \
+		make install $(JOBS) >$(LOGS)/gtk1.log; \
+		sed 's#glib_libs="-L/lib#glib_libs="-L/${ARM_APPROOT}/lib#' <gtk-config | sed 's#glib_cflags="-I/include/glib-1.2 -I/lib/glib/include"#glib_cflags="-I${ARM_APPROOT}/include/glib-1.2 -I${ARM_APPROOT}/lib/glib/include"#' | sed 's#-L/usr/lib##' | sed 's#-L/lib##' >/backup/TomTom/OpenTomSDK/arm-sysroot/usr/bin/gtk-config; \
+	}
+
 
 ################
 # Apps and Tools
@@ -450,7 +466,7 @@ tools:
 	make $(ARMGCC)/lib
 
 
-apps: $(TOMDIST) tool_apps ctorrent dropbear
+apps: $(TOMDIST) tool_apps dropbear
 	make -C applications install
 
 $(TOMDIST): nano-X
@@ -489,6 +505,7 @@ quick-%:
 	make Downloads/$(@:quick-%=%)
 	cd build && { tar xf ../$(DOWNLOADS)/$(@:quick-%=%)* || unzip ../$(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) >$(LOGS)/$@.log && \
+		find . -name Makefile | while read f; do sed 's/-Wextra//' <$$f >/tmp/tmp$$$$; mv /tmp/tmp$$$$ $$f; done; \
 		make >>$(LOGS)/$@.log && \
 		make $(JOBS) install >>$(LOGS)/$@.log && { \
 			echo "#####"; \
@@ -541,4 +558,11 @@ clean_all:
 Downloads/%:
 	mkdir -p Downloads
 	get_source.sh $*
+
+help:
+	@echo "Usage: make <target>"
+	@echo ""
+	@echo "Where <target> can be :"
+	@echo `grep : Makefile  | cut -f1 -d: | grep -v \( | grep -v build | grep -v \# | grep -v kernel | grep -v echo | grep -v initramfs | xargs`
+
 

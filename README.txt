@@ -15,13 +15,15 @@ Then, you will have :
 - ttsystem boot image into the build directory (before copying it on TomTom SD cars, BACKUP the original ttsystem first !),
 - and a opentom_dist directory (to copy on your tomtom as opentom).
 
-** NB: For dosbox, dune2, gnuboy, linapple, and scummvm games: take it from internet and copying it into opentom/share subdirectories.
+** NB:
+- For dosbox, dune2, gnuboy, linapple, and scummvm games: take it from internet and copying it into opentom/share subdirectories.
+- For Navit, you need the TomTom gltt (see below, that read raw GPS data from /dev/gps and send it to /var/run/gpspipe).
 
 
-* to modify ttsystem :
+* To modify ttsystem :
 - for kernel: cd kernel; make menuconfig
-- for buzybox: cd build/buzibox*; make menuconfig
-- for initramfs: do tou changes and touch etc/rc
+- for busybox: cd build/busybox*; make menuconfig
+- for initramfs: do your changes and touch initramfs/etc/rc
 - Then: return to $ROOT ans type : make ttsystem
 
 
@@ -58,16 +60,31 @@ Then, you will have :
 - then on partition 1 copy the built/ttsystem and the opentom dist directory on SD.part1
 - if something goes wrong, try configs/kernel_config.console_ext2 to activate kernel FrameBuffer console
 
+* To install gltt from TomTom ttsystem file (for Navit)
+- copy your TomTom(tm) ttsystem file into $ROOT/src
+	eg: cp /mnt/TOMTOM/ttsystem $ROOT/src/ttsystem.tomtom
+- type :
+	cd src
+	ttimgextract ttsystem.tomtom 
+	mkdir -p ttsystem.tomtom.initramfs
+	cd ttsystem.tomtom.initramfs
+	gunzip -c ../ttsystem.tomtom.0 | sudo cpio -i
+- now the boot ramdisk of your tomtom is extracted in $ROOT/src/ttsystem.tomtom.initramfs
+	and the TomTom kernel is $ROOT/src/ttsystem.1
+
+Then: cp $ROOT/src/ttsystem.tomtom.initramfs/bin/gltt $TOMDIST/bin
 
 
 * TODO
-- make a real suspend/resume script
+- fix espeak => portaudio => OSS, that currently don't work
+- find how to improve FLTK-nxlib-NanoX stability (notably with menus)
 - patch spreadsheet to be adapted to TomTom screen
 
 
 * In case of problem
-- take a tour into shell scripts, Makefiles, and patchs for more informations, or at http://opentom.free.fr ... 
-- Feel free to send me a mail in case of problem (opentom@free.fr).
+- read specific cases in docs directory,
+- take a tour into shell scripts, Makefiles, and patchs for more informations,
+- feel free to send me a mail in case of problem or found betters URLs for sources.txt (opentom@free.fr).
 
 Have fun,
 

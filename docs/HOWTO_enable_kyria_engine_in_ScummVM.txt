@@ -1,0 +1,21 @@
+In the $ROOT/application/Makefile :
+remove the --disable-engine=kyra configure option for scummvm
+
+type: make extra
+the ScummVM build fails (gcc internal error)
+
+then, cd build/scummvm-1.6.0
+and type :
+
+arm-linux-g++ -MMD -MF "engines/kyra/.deps/screen.d" -MQ "engines/kyra/screen.o" -MP -Wall -march=armv5te -mtune=arm9tdmi -ansi -W -Wno-unused-parameter -Wconversion -pedantic  -Wuninitialized -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wpointer-arith -Wcast-qual -Wshadow -Wnon-virtual-dtor -Wwrite-strings -fno-rtti -fno-exceptions -fcheck-new -DHAVE_CONFIG_H -DARM_TARGET -DSDL_BACKEND -DPOSIX -DDATA_PATH=\"/backup/TomTom/OpenTomSDK/arm-sysroot/usr/share/scummvm\" -DPLUGIN_DIRECTORY=\"/backup/TomTom/OpenTomSDK/arm-sysroot/usr/lib/scummvm\" -DENABLE_SCUMM=STATIC_PLUGIN -DENABLE_SCUMM_7_8 -DENABLE_HE -DENABLE_AGI=STATIC_PLUGIN -DENABLE_AGOS=STATIC_PLUGIN -DENABLE_AGOS2 -DENABLE_CGE=STATIC_PLUGIN -DENABLE_CINE=STATIC_PLUGIN -DENABLE_COMPOSER=STATIC_PLUGIN -DENABLE_CRUISE=STATIC_PLUGIN -DENABLE_DRACI=STATIC_PLUGIN -DENABLE_DRASCULA=STATIC_PLUGIN -DENABLE_DREAMWEB=STATIC_PLUGIN -DENABLE_GOB=STATIC_PLUGIN -DENABLE_GROOVIE=STATIC_PLUGIN -DENABLE_HOPKINS=STATIC_PLUGIN -DENABLE_HUGO=STATIC_PLUGIN -DENABLE_KYRA=STATIC_PLUGIN -DENABLE_LOL -DENABLE_EOB -DENABLE_LURE=STATIC_PLUGIN -DENABLE_MADE=STATIC_PLUGIN -DENABLE_MOHAWK=STATIC_PLUGIN -DENABLE_PARALLACTION=STATIC_PLUGIN -DENABLE_PEGASUS=STATIC_PLUGIN -DENABLE_QUEEN=STATIC_PLUGIN -DENABLE_SAGA=STATIC_PLUGIN -DENABLE_IHNM -DENABLE_SCI=STATIC_PLUGIN -DENABLE_SKY=STATIC_PLUGIN -DENABLE_SWORD1=STATIC_PLUGIN -DENABLE_SWORD2=STATIC_PLUGIN -DENABLE_TEENAGENT=STATIC_PLUGIN -DENABLE_TINSEL=STATIC_PLUGIN -DENABLE_TOLTECS=STATIC_PLUGIN -DENABLE_TONY=STATIC_PLUGIN -DENABLE_TOON=STATIC_PLUGIN -DENABLE_TOUCHE=STATIC_PLUGIN -DENABLE_TSAGE=STATIC_PLUGIN -DENABLE_TUCKER=STATIC_PLUGIN -I. -I. -I./engines -I/backup/TomTom/OpenTomSDK/arm-sysroot/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT    -I/backup/TomTom/OpenTomSDK/arm-sysroot/usr/include/freetype2 -I/backup/TomTom/OpenTomSDK/arm-sysroot/usr/include -c engines/kyra/screen.cpp -o engines/kyra/screen.o
+
+In fact, just remove the -O2 option, to compile the  source file ...
+
+re-type: make 		to finish scumm compilation
+
+finaly, strip and copy scummvm binary on your TomTom.
+
+You need kyra.dat to use this module, I've found one in archive :
+ftp://ftp.halifax.rwth-aachen.de/fedora/linux/development/20/source/SRPMS/s/scummvm-1.6.0-2.fc20.src.rpm
+in dists/engine-data/
+

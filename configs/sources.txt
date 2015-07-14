@@ -32,6 +32,7 @@ wget http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz
 wget http://www.nih.at/libzip/libzip-0.11.2.tar.gz
 wget http://freefr.dl.sourceforge.net/project/cppunit/cppunit/1.12.1/cppunit-1.12.1.tar.gz
 wget http://www.openssl.org/source/openssl-1.0.1f.tar.gz
+wget http://ftp.gnome.org/pub/gnome/sources/gtk+/1.2/gtk+-1.2.10.tar.gz
 # Apps
 wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
 wget http://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz
@@ -47,13 +48,16 @@ wget --no-check-certificate https://fireforge.net/frs/download.php/711/yareversi
 wget --no-check-certificate https://pkgs.fedoraproject.org/repo/pkgs/dillo/dillo-3.0.3.tar.bz2/726cd0b7a18c5e25f4d80ebeffe7607e/dillo-3.0.3.tar.bz2
 wget http://mirrors.usc.edu/pub/gnu/gdb/gdb-7.1.tar.gz
 wget http://freefr.dl.sourceforge.net/project/ctorrent/CTorrent-1.3.4/CTorrent-1.3.4/ctorrent-1.3.4.tar.bz2
+wget http://skylink.dl.sourceforge.net/project/dosbox/dosbox/0.74/dosbox-0.74.tar.gz
+wget http://freefr.dl.sourceforge.net/project/crengine/CoolReader3/cr3-3.0.56/cr3_3.0.56.orig.tar.gz
+[ -f $1 ] || { cd ../build && svn co svn://svn.code.sf.net/p/navit/code/trunk/navit/ navit && tar czf ../Downloads/navit_svn.tgz navit; }
 # Games
 wget http://heanet.dl.sourceforge.net/project/scummvm/scummvm/1.6.0/scummvm-1.6.0.tar.bz2
 wget http://optimate.dl.sourceforge.net/project/linapple/linapple/linapple-2a/linapple-src_2a.tar.bz2
 [ -f $1 ] || { cd ../build && git clone https://github.com/OpenDUNE/OpenDUNE.git && tar czf ../Downloads/OpenDUNE_git.tgz OpenDUNE; }
 wget http://www.users.waitrose.com/~thunor/pipepanic/dload/pipepanic-0.1.3-source.tar.gz
 wget http://heanet.dl.sourceforge.net/project/dragontech/Martian%20Memory/Martian%20Memory%201.2/martian_source.tgz
-wget wget http://switch.dl.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_src.zip
+wget http://switch.dl.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_src.zip
 wget http://switch.dl.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_win32_bin.zip
 wget http://www.tomtomheaven.com/data/zip/TomTom_FreeCell.zip
 wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-bin.zip

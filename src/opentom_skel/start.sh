@@ -36,7 +36,7 @@ while /bin/true
 do
 	sleep 1
 	pidof nano-X || { 
-		nano-X &
+		nice -n -10 nano-X &
 		nanowm &
 	}
 	sleep 1

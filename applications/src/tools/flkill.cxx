@@ -17,8 +17,10 @@ typedef struct _sProcess {
 
 pProcess processToKill, head = 0;
 
-char *add_process( char *line) {
+char *add_process( const char *line) {
 	pProcess h, p = (pProcess)malloc(sizeof( _sProcess));
+	
+	if ( strchr( line, '[') && strchr(line, ']') ) return NULL;
 	
 	while( ((*line) < '0') || ((*line)>'9')) line++;
 	p->pid = atoi(line);
@@ -52,6 +54,7 @@ int get_ps(Fl_Browser *browser){
 	int commpipe[2];		/* This holds the fd for the input & output of the pipe */
 	size_t buf_len;
 	char *buff = 0;
+	const char *str;
 
 	/* Setup communication pipeline first */
 	if(pipe(commpipe)){
@@ -74,7 +77,8 @@ int get_ps(Fl_Browser *browser){
 		
 		clear_process_list(browser);
 		while ( getline(&buff, &buf_len, stdin) >= 0) {
-			browser->add(add_process(buff));
+			str = add_process(buff);
+			if ( str) browser->add( str);
 		}
 		close(commpipe[0]);
 		rv = 0;

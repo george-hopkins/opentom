@@ -1,12 +1,13 @@
 .pdf	mupdf-x11
 .epub	cr3
 .fb2	cr3
-.mp3	madplay  -a 	-15 
-.cxx	/usr/bin/gedit
+.mp3	madplay  -a 	-20
 .html	dillo
 .blocks nanobrick.sh
-.bmp	nxview
-.gif	nxview
-.png	nxview
-.jpeg	nxview
+.bmp	imgv
+.gif	imgv
+.png	imgv
+.jpeg	imgv
+.xpm	imgv
+.gbc	gnuboy.sh
 *	editor

@@ -1,0 +1,6 @@
+get TomPlayer on http://www.tomplayer.net
+
+extract dist/tomplayer directory from archive into /mnt/sdcard/
+
+run it from nxmenu.
+

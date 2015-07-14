@@ -26,7 +26,7 @@
 	<osd enabled="yes" type="gps_status" x="0" y="0" w="80" h="80" />
 	
 	<!-- Le graphique de la prochainne consigne -->
-	<osd enabled="yes" type="navigation_next_turn" x="0" y="-119" background_color="#1b0877cc"/>
+	<osd enabled="yes" type="navigation_next_turn" x="0" y="-119" background_color="#1b0877cc" icon_src="%s_wh_48_48.png"/>
 	<!-- la distance avant la prochaine consigne -->
  	<osd enabled="yes" type="text" label="In ${navigation.item[1].length[named]}"
 	 x="0" y="-49" 
@@ -38,7 +38,7 @@
  	font_size="220" w="100" h="24" align="4" background_color="#1b0877cc"/> 
     <!-- La distance restante avant arrivée à destination -->
  	<osd enabled="no" type="text" label="${navigation.item.destination_length[named]}"
-	 x="-100" y="-15"
+	 x="-100" y="-25"
     font_size="220" w="100" h="24" align="4" background_color="#1b0877cc"/>
     <!-- Le temps restant pour avant arriver à destination -->
  	<osd enabled="yes" type="text" label="${navigation.item.destination_time[remaining]}" x="-100" y="-49"

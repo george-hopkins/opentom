@@ -1,0 +1,11 @@
+<xml>
+<!-- 
+
+- Get your (OpenStreetMap) map at : http://maps.navit-project.org,
+- put it in this directory,
+- change data field below to match your new card name,
+- save this template as <you_map_name>.xml file (or remove .txt suffix).
+
+-->
+<map type="binfile" enabled="yes" description="France" data="$NAVIT_SHAREDIR/maps/france_osm_bbox_-5.5,42.0,8.4,51.7.bin"/>
+</xml>

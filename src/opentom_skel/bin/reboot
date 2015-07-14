@@ -4,4 +4,4 @@
 mount -oremount,ro /
 sync
 sync
-force_reboot
+force_reboot # or echo miaou >/dev/watchdog
