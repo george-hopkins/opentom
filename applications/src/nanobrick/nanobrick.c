@@ -954,11 +954,11 @@ void event_handler (GR_EVENT *event)
 			GrClose();
 			exit (0);
 		case GR_EVENT_TYPE_BUTTON_UP:
-			app.paused = 1;
+			//app.paused = 1;
 		    if ( event->mouse.y <= WIN_SCORE_H) {
 				app.paused = 1;
-				break;
-			}
+				
+			}break;
 		case GR_EVENT_TYPE_BUTTON_DOWN:		
 			if ( app.end_of_level) {
 				load_level( app.level.next);

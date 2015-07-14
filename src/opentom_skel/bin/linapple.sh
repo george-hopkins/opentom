@@ -1,4 +1,4 @@
 #! /bin/sh
 
-cd $DIST/share/linapple-src_2a
+cd $DIST/share/linapple*
 exec linapple

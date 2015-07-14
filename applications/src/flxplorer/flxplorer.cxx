@@ -1,22 +1,3 @@
-/*
- * OpenTom flxplorer, by Clément GERARDIN
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Library General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
- */
- 
- 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -25,7 +6,7 @@
 #include <signal.h>
 #include <dirent.h>
 #include <errno.h>
-
+#include <libgen.h>
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
@@ -33,6 +14,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Menu_Bar.H>
 
 #define MAX_APP_ARGS 10
 typedef struct _sAppExt {
@@ -53,13 +35,30 @@ pItem selected = 0, head = 0;
 Fl_Window *win;
 Fl_Browser *browser; 
 
+int copy_move_selected = 0;
+pid_t running_cmd = 0;
 
-void load_app_ext() {
+void read_dir(char *path);
+
+static void fils_action (int sig) {
+	int status;
+	pid_t pid;
+
+	pid = waitpid( -1, &status, WNOHANG);
+	if ( pid != -1 )
+		if ( pid == running_cmd) {
+                        read_dir( get_current_dir_name());
+			//fl_message("Copy/move/remove command finished.");
+			running_cmd = 0;
+		}
+}
+
+void load_app_ext(const char *mime_file) {
 	size_t len = 0;
 	char *line, *str;
 	pAppExt app, *next = &first_app;
 	
-	FILE *f = fopen("/mnt/sdcard/opentom/etc/flxplorer.mime", "r");
+	FILE *f = fopen(mime_file, "r");
 	if ( f) {
 		while ( getline(&line, &len, f) > 0) {
 			if (*line == '#') continue;
@@ -121,14 +120,28 @@ void clear_item_list() {
 	}
 }
 
-int read_dir(char *path) {
+static char title_buff[1024], title_buff2[1024];
+void read_dir(char *path) {
 	
 	struct dirent *entree;
 	DIR *rep;
+        char *title, *tmp;
+        int mod = 0, i;
+        
+        strncpy(title = title_buff, path, 1023);
+        while ( title && strlen(title)>40) {
+            if ( (tmp =strchr(title, '/'))) title = tmp+1; else break;
+            mod = 1;
+        }
+        
+        if ( mod) {
+                snprintf(title_buff2, 1023, ".../%s", title);
+                win->label(title_buff2);
+        } else
+                win->label(path);
 	
-	clear_item_list();
-	win->label(path);
-	
+        Fl::lock(); 
+        clear_item_list();
 	rep = opendir(path);
 	if ( rep == NULL) add_item(strerror(errno), 0);
 	else {
@@ -136,28 +149,20 @@ int read_dir(char *path) {
 			if ( strcmp(entree->d_name,".") && strcmp(entree->d_name,".."))
 				browser->add(add_item( entree->d_name, entree->d_type));
 		}
-		closedir(rep);
-		return 1;
 	}
-	return 0;
-}
-
-void browser_cb(Fl_Widget *w) {	
-	Fl_Browser *b = (Fl_Browser*)w; //cast to get access to Browser methods
-	// retrieve selected item from browser
-	int index = b->value();
-	if ( index > 0) {
-		selected = head;
-		while (index > 1) { selected = selected->next; index--; }
-	} else
-		selected = 0;	
+	
+	selected = 0;
+	win->redraw();
+	Fl::awake();
+	Fl::unlock();
 }
 
 void open_file( char *file_name)
 {
-	char *ext = strrchr(file_name, '.');
+	const char *ext = strrchr(file_name, '.');
+	if ( ! ext) ext = "";
 	
-	if ( ext) {
+	//if ( ext) {
 		printf("Openning '%s' with : ", ext);
 		
 		pAppExt app = first_app;
@@ -173,24 +178,39 @@ void open_file( char *file_name)
 				return;
 			}
 		}
-	} else {
-		// Running executable
-		if( fork() == 0) {
-			printf("Running '%s' ...\n", file_name);
-			if(execl(file_name, file_name ,NULL) == -1){
-				fprintf(stderr, "exec : %s", strerror(errno));
-				exit(1);
-			}
+	//}
+}
+
+void run_file( char * file_name) {
+	if( fork() == 0)
+	{
+		if(execl(file_name, file_name ,NULL) == -1){
+			fprintf(stderr, "exec : %s", strerror(errno));
+			exit(1);
 		}
 	}
 }
 
-void buttons_cb(Fl_Widget* buttonptr, long int userdata)
-{
-	switch ( userdata) {
-	  case 0: // Open
+#define CMD_QUIT 1
+#define CMD_OPEN 2
+#define CMD_RUN	 3
+#define CMD_CUT  4
+#define CMD_COPY 5
+#define CMD_PASTE 6
+#define CMD_DELETE 7
+#define CMD_UP 8
+#define CMD_RENAME 9
+#define CMD_DUPLICATE 10
+
+char copy_move_source_file[2048];
+
+void menu_cb(Fl_Widget*, void*item) {
+	const char *new_name;
+	
+	switch ( (int)item)
+	{
+	case CMD_OPEN:
 		if ( ! selected) break;
-		printf("Openning '%s' with signal %ld\n", selected->name, userdata);
 		if ( selected->d_type & DT_DIR ) {
 			chdir( selected->name);
 			read_dir( get_current_dir_name());
@@ -199,44 +219,139 @@ void buttons_cb(Fl_Widget* buttonptr, long int userdata)
 			browser->select(0, 0);
 		}
 		break;
-	  case 1: // UP
+		
+	case CMD_RUN:
+		run_file( selected->name);
+		break;
+		
+	case CMD_DUPLICATE:
+	case CMD_RENAME:
+		if ( running_cmd || ! selected) break;
+		fl_message_title("Rename ...");
+		if ( (new_name = fl_input( "New name :", selected->name, NULL))) {
+			if( (running_cmd = fork()) == 0) {
+				if ( (int)item == CMD_RENAME)
+					running_cmd = execl("/bin/mv", "/bin/mv", selected->name, new_name, NULL);
+				else
+					running_cmd = execl("/bin/cp", "/bin/cp", "-R", selected->name, new_name, NULL);
+				perror("/bin/mv");
+				exit(1);
+			}
+		}
+                break;
+		
+	case CMD_DELETE:
+		if ( running_cmd || ! selected) break;
+		fl_message_title("Delete ...");
+		if ( fl_ask("Sure to delete '%s'%s ?", selected->name, (selected->d_type== DT_DIR)?" directory !":"")) {
+			if( (running_cmd = fork()) == 0) {
+				execl("/bin/rm", "/bin/rm", "-R", selected->name, NULL);
+				perror("/bin/mv");
+				exit(1);
+			}
+			read_dir( get_current_dir_name());
+		}
+                break;
+		
+	case CMD_UP:
 		chdir("..");
 		read_dir( get_current_dir_name());
 		break;
-	  case 4: // Delete
-		if ( ! selected) break;
-		if ( fl_ask("Delete file '%s'", selected->name)) {
-			unlink(selected->name);
-			read_dir( get_current_dir_name());
+		
+	case CMD_QUIT: exit(0); break;
+	
+	case CMD_COPY:
+	case CMD_CUT:
+		copy_move_selected = (int)item;
+		snprintf(copy_move_source_file, 2048, "%s/%s", get_current_dir_name(), selected->name);
+		break;
+	
+	case CMD_PASTE:
+		if ( !running_cmd && copy_move_selected) {
+			fl_message_title("Copy/move ...");
+			if ( fl_ask("Sure to %s :\n%s\n\tinto :\n%s/\n?", 
+							(copy_move_selected==CMD_COPY)?"COPY":"MOVE", copy_move_source_file, 
+								get_current_dir_name())) {
+									
+				if( (running_cmd = fork()) == 0)
+				{
+					if (copy_move_selected==CMD_COPY)
+						execl("/bin/cp", "/bin/cp", "-R",  copy_move_source_file, get_current_dir_name(), NULL);
+					else
+						execl("/bin/mv", "/bin/mv", copy_move_source_file, get_current_dir_name(), NULL);
+						
+					exit(1);
+				}
+				if (copy_move_selected==CMD_CUT) copy_move_selected = 0;
+				read_dir( get_current_dir_name());
+			}
 		}
+		break;
+		
 	}
 }
 
+void browser_cb(Fl_Widget *w) {	
+	Fl_Browser *b = (Fl_Browser*)w; //cast to get access to Browser methods
+	// retrieve selected item from browser
+	int index = b->value();
+	if ( index > 0) {
+		selected = head;
+		while (index > 1) { selected = selected->next; index--; }
+	} else
+		selected = 0;	
+}
+
+Fl_Menu_Item menutable[] = {
+  {"goUP", 	0, menu_cb, (void*)CMD_UP, FL_MENU_DIVIDER},
+  {"Edit",		0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+	{"Rename",  0, menu_cb, (void*)CMD_RENAME, FL_MENU_DIVIDER},
+    {"Cut",     0, menu_cb, (void*)CMD_CUT},
+    {"Copy",    0, menu_cb, (void*)CMD_COPY, FL_MENU_DIVIDER},
+    {"Paste",   0, menu_cb, (void*)CMD_PASTE},
+    {"Duplicate", 0, menu_cb, (void*)CMD_DUPLICATE, FL_MENU_DIVIDER},
+    {"Delete",	0, menu_cb, (void*)CMD_DELETE},   
+    {0},
+  {"Open",		0, menu_cb, (void*)CMD_OPEN},
+  {"Run",		0, menu_cb, (void*)CMD_RUN},
+  {"   ", 	    0, 0, 0, FL_MENU_INACTIVE},
+  {"Close",		0, menu_cb, (void*)CMD_QUIT},
+    {0},
+  {0}
+};
+
+
 int main(int argc, char **argv) {
+	int opt;
+
+	while ((opt = getopt(argc, argv, "c:")) != -1) {
+	   switch (opt) {
+	   case 'c':
+			load_app_ext(optarg);
+			break;
+	   default: /* '?' */
+		   fprintf(stderr, "Usage: %s [-c <mime file>] [directory]\n", argv[0]);
+		   exit(EXIT_FAILURE);
+	   }
+	}
+
+	if ( ! first_app)
+		load_app_ext("/mnt/sdcard/opentom/etc/flxplorer.mime");
 	
-	load_app_ext();
+	signal( SIGCHLD, &fils_action);
 	
 	win = new Fl_Window(300,200,"Process Killer !");
-	browser = new Fl_Browser(1,1,win->w()-1, win->h()-22);
+	Fl_Menu_Bar menubar(0,0, 300, 20);
+	menubar.menu(menutable);
+	
+	browser = new Fl_Browser(0,21,win->w()-1, win->h()-22);
 	browser->type(FL_HOLD_BROWSER);
 	// browser->fl_font(FL_TIMES, 13);
 	
-	if ( argc > 1) read_dir(argv[0]);
+	if ( optind < argc) read_dir(argv[optind]);
 	else read_dir(get_current_dir_name());
 	
 	browser->callback(browser_cb);
-	Fl_Button *button0 = new Fl_Button(5,win->h()-20,50,20,"Open");
-	Fl_Button *button1 = new Fl_Button(65,win->h()-20,40,20,"UP");
-	//Fl_Button *button2 = new Fl_Button(110,win->h()-20,40,20,"Copy");
-	//Fl_Button *button3 = new Fl_Button(155,win->h()-20,40,20,"Paste");
-	Fl_Button *button4 = new Fl_Button(210,win->h()-20,40,20,"Delete");
-	//Fl_Button *button5 = new Fl_Button(win->w()-45,win->h()-20,40,20,"KILL !"); */
-	button0->callback(buttons_cb, 0);
-	button1->callback(buttons_cb, 1);
-	//button2->callback(buttons_cb, 2);
-	//button3->callback(buttons_cb, 3);
-	button4->callback(buttons_cb, 4);
-	//button5->callback(buttons_cb, 5);
 	win->show();
 	return(Fl::run());
 }

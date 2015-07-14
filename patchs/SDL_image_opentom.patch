@@ -1,0 +1,15 @@
+diff -rupN SDL_image-1.2.12/configure SDL_image-1.2.12_opentom/configure
+--- SDL_image-1.2.12/configure  2012-01-21 02:51:33.000000000 +0100
++++ SDL_image-1.2.12_opentom/configure  2014-03-07 17:06:08.000000000 +0100
+@@ -14156,7 +14156,10 @@ _ACEOF
+                 png_lib=`find_lib "libpng*.dll"`
+                 ;;
+             *)
+-                png_lib=`find_lib "libpng.so.[0-9]"`
++                png_lib=`find_lib "libpng12.so.[0-9]"`
++                if test x$png_lib = x; then
++                       png_lib=`find_lib "libpng.so.[0-9]"`
++               fi
+                 if test x$png_lib = x; then
+                     png_lib=`find_lib "libpng.so.[0-9]*"`
+                 fi

@@ -1,0 +1,24 @@
+diff -rupN espeak-1.48.01-source/src/Makefile espeak-1.48.01-source_opentom/src/Makefile
+--- espeak-1.48.01-source/src/Makefile	2014-02-02 11:58:11.000000000 +0100
++++ espeak-1.48.01-source_opentom/src/Makefile	2014-03-07 18:52:24.000000000 +0100
+@@ -1,8 +1,8 @@
+ # remove -fno-exceptions  if it causes problems with stdio library on some platforms (ARM)
+ 
+-DATADIR=/usr/share/espeak-data
++DATADIR==$(ARM_APPROOT)/share/espeak-data
+ 
+-PREFIX=/usr
++PREFIX=$(ARM_APPROOT)
+ BINDIR=$(PREFIX)/bin
+ INCDIR=$(PREFIX)/include/espeak
+ LIBDIR=$(PREFIX)/lib
+@@ -110,7 +110,7 @@ $(BIN2_NAME): $(OBJS3) $(LIB_NAME)
+ 
+ 
+ x_%.o: %.cpp
+-	$(CXX) $(CXXFLAGS) $(USE_AUDIO) -D PATH_ESPEAK_DATA=\"$(DATADIR)\" -Wall -fpic -fvisibility=hidden -pedantic \
++	$(CXX) $(CXXFLAGS) $(USE_AUDIO) -D PATH_ESPEAK_DATA=\"$(DATADIR)\" -Wall -fpic -pedantic \
+ 	-I. -D LIBRARY -c -fno-exceptions  $<  -o x_$*.o
+ 
+ $(LIB_NAME): $(OBJS2)
+ 

@@ -45,9 +45,22 @@ Then, you will have :
 - configure the all with LDFLAGS=-L/usr/local/lib --prefix=/usr/local
 - try NetBeans to perform you developments ?
 
+* To free some memory (~3-4Mo on 32 !) : use an ext2 partion on your SDcard to remplace (and free) initramfs with buzybox pivot_root/chroot :
+- use fdisk to create two partitions on your SDCARD : partion1=vfat(TomTom), partition2=ext2(10Mo?)
+- copy ttsystem into SD.part1 and verify it boot, if not try to copy gns and program directory from original TomTom and others...
+- when it boot :
+- verify that busybox include chroot and pivot_root,
+- copy the unmodified initramfs/* into linux SD partition, with /var/* linked on /tmp
+- copy the configs/etc_rc_ext2 to SD.part2/etc/rc
+- verify that kernel include ext2 filesystem support,
+- copy configs/etc_rc_file.pivot_root_ext2 to initramfs/etc/rc
+- make ttsystem
+- then on partition 1 copy the built/ttsystem and the opentom dist directory on SD.part1
+- if something goes wrong, try configs/kernel_config.console_ext2 to activate kernel FrameBuffer console
+
+
 
 * TODO
-- make init and shutdown scripts (with pivo_root or switch_root and ext2 partition) to free 3~5 Mo of RAM (the size of the initramfs)
 - make a real suspend/resume script
 - patch spreadsheet to be adapted to TomTom screen
 

@@ -3,7 +3,9 @@
                        OpenTom LICENSE
                   Version 1 - 4 March 2014
 
- Copyright (C) 2014 Clément GERARDIN - opentom@free.fr
+ Copyright (C) 2014 :
+       Clément GERARDIN - opentom@free.fr
+       And all others contributors (see in files)
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
 
@@ -34,7 +36,9 @@ ____________________________________________________________________________
                       LICENCE de OpenTom
                    Version 1 - 4 Mars 2014
 
- Copyright (C) 2014 Clément GERARDIN - opentom@free.fr
+ Copyright (C) 2014 :
+ 	Clément GERARDIN - opentom@free.fr
+ 	Et tous les autres participants (voir dans les fichiers)
  Chacun est autorise a copier et distribuer des copies conformes de
  ce document de licence, mais toute modification en est proscrite.
 

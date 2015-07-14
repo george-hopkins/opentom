@@ -1,0 +1,197 @@
+diff -rupN net-bubble-0.9.1-ezx80-0/display.c net-bubble-0.9.1-ezx80-0_opentom/display.c
+--- net-bubble-0.9.1-ezx80-0/display.c	2007-06-28 22:43:26.000000000 +0200
++++ net-bubble-0.9.1-ezx80-0_opentom/display.c	2014-03-07 05:41:03.000000000 +0100
+@@ -205,7 +205,7 @@ SDL_Surface *display_InitSDL(void) {
+ 
+ /*	dbgprintf("Calling GP2Xscreen=SDL_SetVideoMode()\n");*/
+ 
+-	if ((screen=SDL_SetVideoMode(320, 240, 16, SDL_FULLSCREEN))==NULL) {
++	if ((screen=SDL_SetVideoMode(320, 240, 16, fullscreen?SDL_FULLSCREEN:0))==NULL) {
+ 		
+ 		fprintf(stderr, "display.c SDL_SetVideoMode() failed. Reason: %s\n",SDL_GetError());
+ 		
+diff -rupN net-bubble-0.9.1-ezx80-0/main.c net-bubble-0.9.1-ezx80-0_opentom/main.c
+--- net-bubble-0.9.1-ezx80-0/main.c	2007-06-30 15:34:51.000000000 +0200
++++ net-bubble-0.9.1-ezx80-0_opentom/main.c	2014-03-08 22:29:50.000000000 +0100
+@@ -12,8 +12,8 @@
+    EN-TETES SDL
+    ============ */
+ 
+-#include <SDL/SDL.h>
+-#include <SDL/SDL_thread.h>
++#include <SDL.h>
++#include <SDL_thread.h>
+ 
+ /* ================
+    EN-TETES SOURCES
+@@ -3658,6 +3658,7 @@ static void InitOneLevel(player_p p) {
+ 			i++;
+ 		}
+ 		else if	(ca_caractere_lu==32) {}
++                else if	(ca_caractere_lu==13) {}
+ 		else { /* Le caract�re lu n'est pas un de ceux attendus. */
+ 
+ 			fprintf(stderr, "Dans le fichier main.c (lecture du fichier \"%s\"), code ascii: %d non attendu\n",level_tab_char,ca_caractere_lu); 
+@@ -5468,13 +5469,16 @@ static void PlayGame(void) {
+ 
+ 			/* Grab a snapshot of the keyboard. */
+ 
+-			keystate=SDL_GetKeyState(NULL);
++                        int mousex, mousey, mouseb;
++			keystate=SDL_GetKeyState(NULL); 
++                        mouseb = SDL_GetMouseState(&mousex, &mousey);
++                        
+ 			
+ 			/* Quit the game loop. */
+ #ifndef DEVEZX
+-			if ((keystate[SDLK_ESCAPE])&&(player.lose!=1)) { /* &&(player.lose!=1) ? pq ? car si jamais on lose => on envoie las � 1 si jamais plus de stick � envoyer => si esc � ce moment-l�, on voudra envoyer las 2 mais on ne peut plus rien � envoyer => wait et comme on a fait esc, on ne comprend pas pq wait. */
++			if (((mouseb&&(mousex<50)&&(mousey<50))||(keystate[SDLK_ESCAPE]))&&(player.lose!=1)) { /* &&(player.lose!=1) ? pq ? car si jamais on lose => on envoie las � 1 si jamais plus de stick � envoyer => si esc � ce moment-l�, on voudra envoyer las 2 mais on ne peut plus rien � envoyer => wait et comme on a fait esc, on ne comprend pas pq wait. */
+ #else
+-			if ((keystate[290] || keystate[289])&&(player.lose!=1)) {
++			if (((mouseb&&(mousex<50)&&(mousey<50))||(keystate[SDLK_ESCAPE] || keystate[SDLK_q]))&&(player.lose!=1)) {//CLM
+ #endif
+ 				quit_to_main_menu=1;
+ 				disconnect_tem=1; /* pour afficher le msg */
+@@ -5514,9 +5518,9 @@ static void PlayGame(void) {
+ 
+ 			/* PAUSE */
+ 
+-			/*
++			/* 
+ 
+-			if (opponent_type!=NETWORK_OPPONENT) { pause ds tous les modes sauf NT. 
++			if (opponent_type!=NETWORK_OPPONENT) {  pause ds tous les modes sauf NT.  
+ 
+ 				if (keystate[SDLK_p]!=1) release_pause=1;
+ 			
+@@ -5532,7 +5536,7 @@ static void PlayGame(void) {
+ 
+ 						keystate=SDL_GetKeyState(NULL);
+ 					
+-						Pouvoir permettre de quitter le mode de jeu en cours meme si
++						/*Pouvoir permettre de quitter le mode de jeu en cours meme si
+ 						pendant une pause. 
+ 					
+ 						if (keystate[SDLK_ESCAPE]) {
+@@ -5551,7 +5555,7 @@ static void PlayGame(void) {
+ 				}
+ 			}
+ 
+-			*/
++			/* */
+ 			
+ 			/* fin PAUSE */
+ 							
+@@ -5608,11 +5612,13 @@ static void PlayGame(void) {
+ 			/* Release */
+ 
+ 			if ((opponent_type==NO_OPPONENT) || (opponent_type==COMPUTER_OPPONENT) || (opponent_type==NETWORK_OPPONENT)) {
++                                
+ 
+ #ifdef DEVEZX
+-				if (keystate[283] !=1) player.release_space=1;	
+-				if (keystate[293]!=1 || keystate[281] !=1) player.release_left=1;
+-				if (keystate[292]!=1 || keystate[280] !=1) player.release_right=1;			
++				if (keystate[SDLK_SPACE] !=1) player.release_space=1;	
++				if (keystate[SDLK_LEFT]!=1 || keystate[SDLK_a] !=1) player.release_left=1;
++				if (keystate[SDLK_RIGHT]!=1 || keystate[SDLK_z] !=1) player.release_right=1;	
++                                
+ #else
+ 
+ 				if (keystate[SDLK_SPACE]!=1) player.release_space=1;
+@@ -5666,14 +5672,14 @@ static void PlayGame(void) {
+ 
+ 				SDL_LockMutex(player_mutex);
+ 
+-				if ((keystate[293] || keystate[281])&&(player.release_left)&&(!fini)) {
++				if ((keystate[SDLK_o] || keystate[281])&&(player.release_left)&&(!fini)) {
+ 					player.previous_angle_shooter=player.angle_shooter;
+ 					player.rot_speed=ROTATION_SPEED;
+ 					player.shooter_state=1;
+ 					/* pas de player.release_left=0 comme pour la touche 'space' car ici, juste pour �viter que le shooter aille � fond � gauche ou � droite si on maintient la touche correspondante affich�e. */
+ 				}
+ 		
+-				if ((keystate[292] || keystate[280])&&(player.release_right)&&(!fini)) {
++				if ((keystate[SDLK_p] || keystate[280])&&(player.release_right)&&(!fini)) {
+ 					player.previous_angle_shooter=player.angle_shooter;
+ 					player.rot_speed=-ROTATION_SPEED;
+ 					player.shooter_state=1;
+@@ -5686,6 +5692,7 @@ static void PlayGame(void) {
+ 					player.angle_launched_bubble=player.angle_shooter;
+ 				}
+ 
++                              
+ 				SDL_UnlockMutex(player_mutex);
+ 
+ 				if (opponent_type!=NO_OPPONENT) {
+@@ -5806,11 +5813,40 @@ static void PlayGame(void) {
+ 			/* ======================================================
+ 			   UPDATE SUBSYSTEM: UPDATE ALL and also NETWORK OPPONENT
+ 			   ====================================================== */
+-			   
++			
++                        SDL_LockMutex(player_mutex); 
++                        if (mouseb) { // CLM
++                            printf("(%d,%d)", mousex, mousey);
++                                if (((opponent_type==NO_OPPONENT)&&(mousey>190)&&(mousey<215)&&(mousex>150)&&(mousex<175))||
++                                    ((opponent_type!=NO_OPPONENT)&&((mousey>190)&&(mousex>80)&&(mousex<100)&&(mousey<215)))){
++                                    player.release_space=0;
++                                    if (opponent_type!=NO_OPPONENT) 
++                                        player.launched_bubble_velocity=BUBBLE_VELOCITY; /* if pour laisser le mode matrix facilement accessible. */
++                                    player.angle_launched_bubble=player.angle_shooter;
++                                    player.shoot_state=1;
++                                } else {
++
++                                if (((opponent_type==NO_OPPONENT)&&(mousex <160))||(mousex<86)){
++                                    player.release_right=0;player.rot_speed=ROTATION_SPEED;
++                                } else {
++                                    player.release_left=0;
++                                    player.rot_speed=-ROTATION_SPEED;
++                                }
++                                player.previous_angle_shooter=player.angle_shooter;
++                                player.shooter_state=1;
++                                }
++
++                            } else {
++                                player.release_right= player.release_left=0;
++                                player.release_space=1;
++                            }
++                           SDL_UnlockMutex(player_mutex); 
++                        
+ 			if (!fini) {
+ 			
+ 				SDL_LockMutex(player_mutex); 
+ 			
++                                
+ 				UpdatePlayer(&player); /* First computer in the case of 'COMPUTER_ONLY' mode. */ /* pq pas mettre fini dans updateplayer() ? Car sinon, var global ou param: pas joli. En plus + clair ici. */
+ 			
+ 				SDL_UnlockMutex(player_mutex); 
+@@ -6624,9 +6660,9 @@ static void PlayGame(void) {
+ 
+ 				if ((keystate[SDLK_ESCAPE])&&(release_esc)&&(local_arret_send==2)) {
+ #else
+-				if ((keystate[290]!=1|| keystate[289]!=1)) release_esc=1;
++				if ((keystate[SDLK_ESCAPE]!=1|| keystate[289]!=1)) release_esc=1;
+ 
+-				if ((keystate[290] || keystate[289])&&(release_esc)&&(local_arret_send==2)) {
++				if ((keystate[SDLK_ESCAPE] || keystate[289])&&(release_esc)&&(local_arret_send==2)) {
+ #endif
+ 					fin_nt=1;
+ 					/* pas besoin de release_esc=0 car ds MainMenu() un release_esc � 0 est initialis�. */
+diff -rupN net-bubble-0.9.1-ezx80-0/Makefile net-bubble-0.9.1-ezx80-0_opentom/Makefile
+--- net-bubble-0.9.1-ezx80-0/Makefile	2007-06-30 15:11:48.000000000 +0200
++++ net-bubble-0.9.1-ezx80-0_opentom/Makefile	2014-03-08 18:08:42.000000000 +0100
+@@ -1,8 +1,9 @@
+-ROOT_DIR=/home/azbuky/ezx/_root
+-CC = arm-linux-gcc
+-CFLAGS = `$(ROOT_DIR)/bin/sdl-config --cflags`
++#ROOT_DIR=/home/azbuky/ezx/_root
++#CC = arm-linux-gcc
++ARM_APPROOT ?= .
++CFLAGS = -g `sdl-config --cflags` -I$(ARM_APPROOT)
+ OBJ = main.o display.o chargement.o utils.o paraboles.o fallen.o fonts.o network.o pix.o
+-LIBS=-lm `$(ROOT_DIR)/bin/sdl-config --libs` -lSDL_image -lSDL_net
++LIBS=-lm `sdl-config --libs` -lSDL_image -lSDL_net
+ 
+ net-bubble: $(OBJ)
+ 	$(CC) $(OBJ) -o net-bubble $(LIBS)

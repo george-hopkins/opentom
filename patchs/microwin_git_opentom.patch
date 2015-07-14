@@ -10,6 +10,15 @@ diff -rupN microwin/src/config microwin_opentom/src/config
  BIGENDIAN                = N
  NATIVETOOLSPREFIX        = 
  ARMTOOLSPREFIX           = arm-linux-
+@@ -50,7 +50,7 @@ PSPTOOLSPREFIX           = psp-
+ #
+ ####################################################################
+ OPTIMIZE                 = Y
+-DEBUG                    = Y
++DEBUG                    = N
+ VERBOSE                  = N
+ THREADSAFE               = Y
+ GPROF                    = N
 @@ -80,7 +80,7 @@ NANOXDEMO                = Y
  #
  ####################################################################
@@ -102,15 +111,15 @@ diff -rupN microwin/src/config microwin_opentom/src/config
  
  # memory screen driver
  SCRMEM                   = N
-@@ -323,7 +323,7 @@ YOPYMOUSE                = N
+@@ -322,7 +322,7 @@ PSIONMOUSE               = N
+ YOPYMOUSE                = N
  HARRIERMOUSE             = N
  LIRCMOUSE                = N
- TSLIBMOUSE               = N
--TTMOUSE                  = N
-+TTMOUSE                  = Y
+-TSLIBMOUSE               = N
++TSLIBMOUSE               = Y
+ TTMOUSE                  = N
  PSPMOUSE                 = N
  NDSMOUSE                 = N
- EVENTMOUSE               = N
 @@ -336,7 +336,7 @@ IPAQKBD                  = N
  LIRCKBD                  = N
  PSPKBD                   = N
@@ -198,3 +207,13 @@ diff -rupN microwin/src/Makefile.rules microwin_opentom/src/Makefile.rules
    HDRINSTALLDIR = $(INSTALL_PREFIX)/include/microwin
    LIBINSTALLDIR = $(INSTALL_PREFIX)/lib
    BININSTALLDIR = $(INSTALL_PREFIX)/bin
+@@ -40,6 +40,9 @@ INSTALL_BIN   = install -c -m 755 $(INST
+ # Defines, includes, and core libraries.  Controlled by the config file.
+ ##############################################################################
+
++# for TSLIBMOUSE
++LDFLAGS += -lts
++
+ # Defines
+ DEFINES += -DMWPIXEL_FORMAT=$(SCREEN_PIXTYPE)
+

@@ -4,9 +4,10 @@ $(NAME): gamepad.cc
 	$(CXX) $(CPPFLAGS) -o $@ gamepad.cc -L$(ARM_APPSYSROOT)/lib -lnano-X 
 
 install: $(NAME)
-	mkdir -p $(TOMDIST)/bin/$(NAME)
-	cp $(NAME) nxpad2* $(TOMDIST)/bin/$(NAME)/
-	echo echo '#! /bin/sh\n\ncd $$DIST/bin/$(NAME)\nexec ./$(NAME) nxpad2$1-skin.txt\n' >$(TOMDIST)/bin/$(NAME).sh; \
+	cp $(NAME) $(TOMDIST)/bin
+	mkdir -p $(TOMDIST)/share/$(NAME)
+	cp $(NAME) nxpad2* $(TOMDIST)/share/$(NAME)/
+	echo '#! /bin/sh§§cd $$DIST/share/$(NAME)§exec ./$(NAME) nxpad2$$*-skin.txt§' | tr '§' '\n' >$(TOMDIST)/bin/$(NAME).sh; \
 
 clean:
 	rm -f $(NAME)

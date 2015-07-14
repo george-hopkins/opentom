@@ -16,7 +16,7 @@ TMP=/tmp
 export APPS_ROOT=$(ROOT)/applications
 export LOGS=$(APPS_ROOT)/logs
 
-APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal
+APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
 CLEAN_APPS= $(APPS:%=clean-%)
 
 EXTRA= 	12swap ntetris pipepanic \
@@ -25,7 +25,7 @@ EXTRA= 	12swap ntetris pipepanic \
 	dosbox dillo gnuboy scummvm \
 	martian jooleem.sh tuxchess cr3 \
 	sudoku checkers freecell nxpad_gnuboy \
-	eggchess.sh
+	eggchess.sh navit net-bubble
 
 BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
 
@@ -33,8 +33,6 @@ BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
 .PHONY: $(CLEAN_APPS)
 
 install: $(APPS)
-	cp ../build/microwin/src/bin/nxmag $(TOMDIST)/bin
-	cp ../build/microwin/src/bin/nxview $(TOMDIST)/bin
 
 clean: $(CLEAN_APPS)
 
@@ -71,13 +69,34 @@ patch-%:
 	fi
 	cd build && diff -rupN $(ONAME) $(NAME) >../patchs/$(NAME)_$(shell date +%y%m%d%k%M).patch
 
+$(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
+	cd build && tar xf ../Downloads/net-bubble-0.9.1-ezx80-0* && cd net-bubble-0.9.1-ezx80-0 && { \
+		patch -p1 <../../patchs/net-bubble-0.9.1-ezx80-0_opentom.patch; \
+		make >$(LOGS)/netbubble.log && cp net-bubble $(TOMDIST)/bin; \
+		mkdir -p $(TOMDIST)/share/net-bubble && cp -R levels gfx $(TOMDIST)/share/net-bubble; \
+	}
+	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
+
+
+$(TOMDIST)/bin/navit: Downloads/navit_git.tgz
+	cd build && tar xf ../Downloads/navit_git.tgz && cd navit && { \
+		./autogen.sh >$(LOGS)/navit.log && \
+		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo >>$(LOGS)/navit.log && \
+		echo '#define SDL_IMAGE 1§' | tr '§' '\n' >>config.h && \
+		make -j6 >>$(LOGS)/navit.log 2>&1 && make install >>$(LOGS)/navit.log && \
+		cd $(TOMDIST)/share && rm -Rf icons applications man; \
+		rm $(TOMDIST)/lib/navit/*/*.*a*; \
+		cp $(ARM_APPROOT)/bin/espeak $(TOMDIST)/bin; \
+		echo Navit build OK; \
+	}
+		
 
 $(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
 	mkdir -p $(TOMDIST)/share/eggchess
 	cd build && tar xf ../Downloads/eggchess-1.1-A780-0.tar.gz && cd eggchess && { \
 		patch -p1 <../../patchs/eggchess_oppentom.patch && \
 		make && cp eggchess $(TOMDIST)/share/eggchess && \
-		echo '#! /bin/sh\n\ncd $$DIST/share/eggchess\nexec ./eggchess\n' >$(TOMDIST)/bin/eggchess.sh; \
+		echo '#! /bin/sh§§cd $$DIST/share/eggchess§exec ./eggchess§' | tr '§' '\n' >$(TOMDIST)/bin/eggchess.sh; \
 		cd gfx && mogrify -resize 71.4285714% big.bmp empty.bmp full.bmp half.bmp shell.bmp; \
 	}
 	cp -R build/eggchess/gfx $(TOMDIST)/share/eggchess
@@ -131,7 +150,7 @@ $(TOMDIST)/bin/12swap: Downloads/caanoo-12swap-v1.0-bin.zip Downloads/caanoo-12s
 		cd caanoo-12swap-v1.0 && { \
 			patch -p1 <../../patchs/caanoo-12swap-v1.0_1402241302.patch; \
 			make; \
-			echo '#! /bin/sh\n\ncd $$DIST/bin/12swap\nexec ./12swap\n' >$(TOMDIST)/bin/12swap.sh; \
+			echo '#! /bin/sh§§cd $$DIST/bin/12swap§exec ./12swap§' | tr '§' '\n' >$(TOMDIST)/bin/12swap.sh; \
 		}
 
 $(TOMDIST)/bin/ntetris:
@@ -143,7 +162,7 @@ $(TOMDIST)/bin/pipepanic: Downloads/pipepanic-0.1.3-source.tar.gz
 		make; \
 		mkdir -p $(TOMDIST)/bin/pipepanic; \
 		cp *.bmp pipepanic $(TOMDIST)/bin/pipepanic; \
-		echo '#! /bin/sh\n\ncd $$DIST/bin/pipepanic\nexec ./pipepanic -320x240\n' >$(TOMDIST)/bin/pipepanic/pipe.sh; \
+		echo '#! /bin/sh§§cd $$DIST/bin/pipepanic§exec ./pipepanic -320x240§' | tr '§' '\n' >$(TOMDIST)/bin/pipepanic/pipe.sh; \
 	}
 		
 $(TOMDIST)/bin/madplay: Downloads/madplay-0.15.2b.tar.gz
@@ -185,8 +204,8 @@ $(TOMDIST)/bin/opendune: Downloads/OpenDUNE_git.tgz
 $(TOMDIST)/bin/linapple: Downloads/linapple-src_2a.tar.bz2 
 	cd build && tar xf ../Downloads/linapple-src_2a.tar.bz2 && cd linapple-src_2a && { \
 		patch -p1 <../../patchs/linapple-src_2a_1402241834.patch; \
-		make >$(LOGS)/linapple.log 2>&1 && cp linapple-src_2a $(TOMDIST)/bin/linapple; \
-		mkdir -p $(TOMDIST)/share/linapple-src_2a; \
+		CFLAGS="" CPPFLAGS="" make >$(LOGS)/linapple.log 2>&1 && cp linapple-src_2a $(TOMDIST)/bin/linapple && \
+		mkdir -p $(TOMDIST)/share/linapple-src_2a && \
 		cp charset40.bmp font.bmp splash.bmp Master.dsk $(TOMDIST)/share/linapple-src_2a; \
 	}
 
@@ -242,7 +261,7 @@ $(TOMDIST)/bin/martian: Downloads/martian_source.tgz
 			cp src/martian $(TOMDIST)/bin/martian; \
 			mkdir -p $(TOMDIST)/share/Martian; \
 			cp -R fonts sounds gfx music data $(TOMDIST)/share/Martian; \
-			echo '#! /bin/sh\n\ncd $$DIST/share/Martian\nexec martian\n' >$(TOMDIST)/bin/martian.sh; \
+			echo '#! /bin/sh§§cd $$DIST/share/Martian§exec martian§' | tr '§' '\n' >$(TOMDIST)/bin/martian.sh; \
 		} \
 	}
 
@@ -254,7 +273,7 @@ $(TOMDIST)/bin/jooleem.sh: Downloads/jooleem_0.1.4_win32_bin.zip Downloads/joole
 		mogrify -resize 50% data/interface/*  data/marbles/*; \
 		mkdir -p $(TOMDIST)/share/jooleem; \
 		cp -R data jooleem $(TOMDIST)/share/jooleem; \
-		echo '#! /bin/sh\n\ncd $$DIST/share/jooleem\nexec ./jooleem\n' >$(TOMDIST)/bin/jooleem.sh; \
+		echo '#! /bin/sh§§cd $$DIST/share/jooleem§exec ./jooleem§' | tr '§' '\n' >$(TOMDIST)/bin/jooleem.sh; \
 	}
 
 $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
@@ -266,6 +285,8 @@ $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
 			make && cp cr3gui/cr3 $(TOMDIST)/bin/cr3 && make install; \
 		} \
 	}
+	# You need at least one font to use CoolReader
+	cp "`locate times.ttf | head -1`" $(TOMDIST)/fonts
 		
 
 clean_duplicate_patchs:

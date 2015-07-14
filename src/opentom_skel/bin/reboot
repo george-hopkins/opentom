@@ -1,0 +1,7 @@
+#! /bin/sh
+
+# in case of ext2 root SDpart
+mount -oremount,ro /
+sync
+sync
+force_reboot

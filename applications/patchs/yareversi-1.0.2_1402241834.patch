@@ -1,6 +1,27 @@
 diff -rupN yareversi-1.0.2.original/flothello.cc yareversi-1.0.2/flothello.cc
 --- yareversi-1.0.2.original/flothello.cc	2011-03-04 12:59:28.000000000 +0100
 +++ yareversi-1.0.2/flothello.cc	2014-02-24 15:26:53.000000000 +0100
+@@ -52,14 +52,14 @@ void Fl_RevBoard::draw(){
+ Fl_RevBoard* Fl_RevBoard::brd;
+ void Fl_RevBoard::flip_animate(){
+   if(brd->board.game_in_progress==0){
+-    brd->board.animate_stagger=29;
+-    Fl::add_timeout(0.01,(Fl_Timeout_Handler)animate,brd);
++    brd->board.animate_stagger=24;
++    Fl::add_timeout(0.001,(Fl_Timeout_Handler)animate,brd);
+   }else if(brd->board.whose_turn == rev_board::WHITE_TURN){
+-    brd->board.animate_stagger=29;
+-    Fl::add_timeout(0.01,(Fl_Timeout_Handler)animate,brd);
++    brd->board.animate_stagger=24;
++    Fl::add_timeout(0.001,(Fl_Timeout_Handler)animate,brd);
+   }else{
+-    brd->board.animate_stagger=-30;
+-    Fl::add_timeout(0.01,(Fl_Timeout_Handler)animate,brd);
++    brd->board.animate_stagger=-26;
++    Fl::add_timeout(0.001,(Fl_Timeout_Handler)animate,brd);
+   }
+ }
+ 
 @@ -89,22 +89,24 @@ int Fl_RevBoard::handle(int e){
    }
  }

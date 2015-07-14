@@ -1,6 +1,7 @@
 #!/bin/sh
+# used as /etc/rc on EXT2 partition on TomTom SDCARD run after a pivot_root/chroot in initramfs
 
-echo Runnning \(ttsystem\) etc/rc ...
+echo Runnning \(OpenTom\) etc/rc ...
 
 fstype="vfat"
 mntopt="rw,exec,noatime,nodev,nosuid"
@@ -9,12 +10,15 @@ devbase="/dev"
 initial_mount() {
 	mount -n -t proc none /proc
 	mount -n -t sysfs none /sys
-	# Remount root fs as R/W
-	mount -o remount,rw /
+	# Remount root fs as R/W => no, not need and seems to have problem with this kernel
+#	mount -o remount,rw /
 	
 	# Mount Ramfs in dir likely to be written
 	mount -n -t tmpfs  none /dev/shm      
 #	mount -n -t tmpfs  none /tmp          
+	# Clean rootfs mounted on /tmp and now used as tmpfs
+	rm -Rf /tmp/*
+	# /var/run must be linked to /tmp
 #	mount -n -t tmpfs  none /var/run     
 	mount -n -t usbfs none /proc/bus/usb 
 	mount -n -t devpts none /dev/pts     
@@ -143,6 +147,8 @@ udhcpd -f /etc/udhcpd.conf &
 # Running /mnt/sdcard/opentom/start.sh script ...
 sh $DIST/start.sh >$DIST/logs/start.log 2>&1
 
-sleep 10
+# Clean umount / (in case) 
+mount -oremount,ro /
+sync
 force_reboot
 

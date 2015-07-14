@@ -39,7 +39,7 @@ sAppState app;
 char **env; //, *sprites = "nanobrick/nanobrick_images.gif";
 
 int status, sel_x, sel_y, sel_type, sel_mod, pushed, board_number;
-pid_t game_pid;
+pid_t game_pid = 0;
 char level_name[200], game_name[180];
 pBrick selected_brick;
 
@@ -140,12 +140,14 @@ void save_level() {
 
 void play_level() {
 	
-	char *av[6] = { "nanobrick", /* "-s", sprites, */ "-l", app.level.name, 0 };
+//	char args[1024];
+//	snprintf(args, 1024, "-l %s", app.level.name);
+//	char *av[6] = { "nanobrick", /* "-s", sprites, */ "-l", app.level.name, 0 };
 	
 	if ( game_pid ) return;
 	save_level();
-	//fprintf(stderr, "spr=[%s]\n", sprites);
-	if ( ! (game_pid=fork()) ) { execve(av[0], av, env); exit(0); }
+//	fprintf(stderr, "spr=[%s]\n", sprites);
+	if ( ! (game_pid=fork()) ) { execlp("nanobrick", "nanobrick", "-l", app.level.name, 0, env); perror("nanobrick"); exit(1); }
 }
 
 void set_level_size(int sx, int sy) {

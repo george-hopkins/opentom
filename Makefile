@@ -76,7 +76,7 @@ base: tools ttsystem distrib
 	@echo
 
 
-extra:
+extra: espeak libzip sdl_net
 	make -C applications extra
 	make verif_dist
 	@echo
@@ -180,12 +180,11 @@ build/busybox-$(BUSYBOX_VER)/.config:
 
 distrib: libs apps verif_dist
 
-nano-X: build/microwin/src $(ARM_ROOT)/usr/include/microwin/nano-X.h
+nano-X: tslib build/microwin/src $(ARM_ROOT)/usr/include/microwin/nano-X.h
 $(ARM_ROOT)/usr/include/microwin/nano-X.h: $(ARM_ROOT)/usr/include/zlib.h $(ARM_ROOT)/usr/include/jpeglib.h $(ARM_ROOT)/usr/include/freetype2/freetype/freetype.h $(ARM_ROOT)/usr/include/png.h
 	cd build/microwin/src && { \
-		CFLAGS="" make $(JOBS) >$(LOGS)/nanox.log 2>&1 ; \
-		make >$(LOGS)/nanox.log 2>&1; \
-		make install >>$(LOGS)/nanox.log; \
+		make >$(LOGS)/nanox.log 2>&1 && \
+		make install >>$(LOGS)/nanox.log 2>&1 && \
 		cp bin/convb* $(ARM_APPROOT)/bin; \
 	}
 
@@ -199,12 +198,21 @@ build/microwin/src: $(DOWNLOADS)/microwin_git.tgz
 		cd microwin && patch -p1 <$(ROOT)/patchs/microwin_git_opentom.patch; \
 	}
 
-dropbear: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
-	cd build && tar xf ../Downloads/dropbear-2013.62.tar.bz2 && cd dropbear* { \
-		./configure --host=arm-linux --prefix=$(ARM_APPROOT) --disable-lastlog --disable-utmp --disable-utmpx --disable-wtmp --disable-wtmpx --disable-loginfunc --disable-pututline --disable-pututxline --enable-bundled-libtom --disable-syslog --disable-largefile >$(LOGS)/dropbear.log; \
-		make $(JOBS) install; \
+dropbear: $(ARM_ROOT)/usr/bin/dbclient
+$(ARM_ROOT)/usr/bin/dbclient: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
+	cd build && tar xf ../Downloads/dropbear-2013.62.tar.bz2 && cd dropbear* && { \
+		./configure --host=arm-linux --prefix=$(ARM_APPROOT) --disable-lastlog --disable-utmp --disable-utmpx --disable-wtmp --disable-wtmpx --disable-loginfunc --disable-pututline --disable-pututxline --enable-bundled-libtom --disable-syslog --disable-largefile >$(LOGS)/dropbear.log && \
+		echo "#include <asm/types.h>§" | tr '§' '\n' >>includes.h; \
+		make $(JOBS) >>$(LOGS)/dropbear.log && \
+		make install >>$(LOGS)/dropbear.log && \
+		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh; \
 	}
 		
+ctorrent: $(TOMDIST)/bin/ctorrent
+$(TOMDIST)/bin/ctorrent: $(ARM_ROOT)/usr/include/openssl/opensslconf.h $(DOWNLOADS)/ctorrent-1.3.4.tar.bz2
+	make quick-ctorrent
+	cp $(ARM_APPROOT)/bin/ctorrent $(TOMDIST)/bin
+
 		
 ################
 # Libs
@@ -212,12 +220,13 @@ dropbear: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
 
 libs: nano-X sdl fltk13 extra_libs
 
-extra_libs: sdl_mixer sdl_image sdl_ttf libmad tslib glib1 glib2 bluez-libs curl libid3tag expat
+extra_libs: sdl_mixer sdl_image sdl_ttf libmad glib1 glib2 bluez-libs curl libid3tag expat
 
 sdl: $(ARM_ROOT)/usr/include/SDL/SDL.h
 $(ARM_ROOT)/usr/include/SDL/SDL.h: $(DOWNLOADS)/SDL-1.2.15.tar.gz $(ARM_ROOT)/usr/include/microwin/nano-X.h
 	cd build && tar xf ../Downloads/SDL-1.2.15.tar.gz && cd SDL-1.2.15 && { \
-		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --disable-joystick --disable-cdrom --disable-alsa --disable-esd --disable-pulseaudio --disable-arts --disable-nas --disable-diskaudio --disable-mintaudio --disable-nasm --disable-altivec --disable-ipod --disable-video-x11 --disable-dga --disable-video-x11-vm --disable-video-x11-xv --disable-video-x11-xme --disable-video-x11-xrandr --disable-video-photon --disable-video-carbon --disable-cocoa --disable-ps2gs  --disable-ps3  --disable-ggi  --disable-svga  --disable-vgl  --disable-wscons --disable-video-aalib --disable-video-directfb --disable-video-caca --disable-video-qtopia --disable-video-picogui --disable-video-xbios --disable-video-gem --disable-video-opengl --disable-osmesa-shared --disable-screensaver --disable-directx --disable-atari-ldg  --enable-video-nanox --enable-nanox-share-memory >$(LOGS)/sdl.log; \
+		patch -p1 <../../patchs/SDL-1.2.1_opentom.patch && \
+		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --disable-joystick --disable-cdrom --disable-alsa --disable-esd --disable-pulseaudio --disable-arts --disable-nas --disable-diskaudio --disable-mintaudio --disable-nasm --disable-altivec --disable-ipod --disable-video-x11 --disable-dga --disable-video-x11-vm --disable-video-x11-xv --disable-video-x11-xme --disable-video-x11-xrandr --disable-video-photon --disable-video-carbon --disable-cocoa --disable-ps2gs  --disable-ps3  --disable-ggi  --disable-svga  --disable-vgl  --disable-wscons --disable-video-aalib --disable-video-directfb --disable-video-caca --disable-video-qtopia --disable-video-picogui --disable-video-xbios --disable-video-gem --disable-video-opengl --disable-osmesa-shared --disable-screensaver --disable-directx --disable-atari-ldg  --enable-video-nanox --enable-nanox-share-memory --disable-video-fbcon >$(LOGS)/sdl.log; \
 		make $(JOBS) install >>$(LOGS)/sdl.log 2>&1 ; \
 	}
 
@@ -241,6 +250,7 @@ sdl_image: $(ARM_ROOT)/usr/include/SDL/SDL_image.h
 $(ARM_ROOT)/usr/include/SDL/SDL_image.h: $(DOWNLOADS)/SDL_image-1.2.12.tar.gz $(ARM_ROOT)/usr/include/SDL/SDL.h
 	cd build && { \
 		tar xf ../Downloads/SDL_image-1.2.12.tar.gz && cd SDL_image* && { \
+			patch -p1 <../../patchs/SDL_image_opentom.patch; \
 			./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >$(LOGS)/SDL_images.log; \
 			make $(JOBS) install >>$(LOGS)/SDL_images.log 2>&1; \
 		} \
@@ -254,6 +264,10 @@ $(ARM_ROOT)/usr/include/SDL/SDL_ttf.h: $(DOWNLOADS)/SDL_ttf-2.0.11.tar.gz
                         make $(JOBS) install >>$(LOGS)/SDL_ttf.log; \
                 } \
         }
+
+sdl_net: $(ARM_ROOT)/usr/include/SDL/SDL_net.h
+$(ARM_ROOT)/usr/include/SDL/SDL_net.h:
+	make quick-SDL_net
 
 libmad: $(ARM_ROOT)/usr/include/mad.h
 $(ARM_ROOT)/usr/include/mad.h: $(DOWNLOADS)/libmad-0.15.1b.tar.gz
@@ -393,25 +407,56 @@ expat: $(ARM_ROOT)/usr/include/expat.h
 $(ARM_ROOT)/usr/include/expat.h: $(DOWNLOADS)/expat-2.1.0.tar.gz
         cd build && tar xf ../Downloads/expat-2.1.0.tar.gz && cd expat-2.1.0 && { \
                 ./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH); \
-                make install >/$(LOGS)/libexpat.log 2>&1; \
+                make $(JOBS) install >/$(LOGS)/libexpat.log 2>&1; \
         }
+
+espeak: $(ARM_ROOT)/usr/bin/espeak
+$(ARM_ROOT)/usr/bin/espeak: Downloads/pa_stable_v19_20140130.tgz Downloads/espeak-1.48.02-source.zip
+	cd build && tar xf ../Downloads/pa_stable_v19_20140130.tgz && cd portaudio && { \
+		./configure --prefix=$(ARM_APPROOT) --host=arm-linux >$(LOGS)/pa_stable.log && \
+		make $(JOBS) install >$(LOGS)/pa_stable.log; }
+	cd build && unzip ../Downloads/espeak-1.48.02-source.zip && cd espeak-1.48* && { \
+		cp src/portaudio19.h src/portaudio.h; \
+		patch -p1 <../../patchs/espeak-1.48.01-source_opentom.patch; \
+		make -C src $(JOBS) install >$(LOGS)/espeak.log; \
+	}
+
+libzip: $(ARM_ROOT)/usr/include/zip.h
+$(ARM_ROOT)/usr/include/zip.h: $(DOWNLOADS)/libzip-0.11.2.tar.gz
+	cd build && tar xf ../Downloads/libzip-0.11.2.tar.gz && cd libzip-0.11.2 && { \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >$(LOGS)/libzip.log && \
+		make $(JOBS) install >>$(LOGS)/libzip.log && \
+	cp $(ARM_APPROOT)/lib/libzip/include/zipconf.h $(ARM_APPROOT)/include/; \
+	}
+
+ssl: $(ARM_ROOT)/usr/include/openssl/opensslconf.h
+$(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1f.tar.gz
+		cd build && tar xf ../Downloads/openssl-1.0.1f.tar.gz && cd openssl-1.0.1f && { \
+			CC=gcc ./Configure linux-armv4 shared --prefix=$(ARM_APPROOT) >$(LOGS)/ssl.log && \
+			make >>$(LOGS)/ssl.log && \
+			INSTALL_PREFIX=/mnt/sdcard/opentom make install >>$(LOGS)/ssl.log; \
+		}
+	
 
 ################
 # Apps and Tools
 ################
+
+gdb: $(ARM_ROOT)/usr/bin/gdb
+$(ARM_ROOT)/usr/bin/gdb: quick-gdb-7.1
 
 tools:
 	make -C src/tools
 	make $(ARMGCC)/lib
 
 
-apps: $(TOMDIST) tool_apps
+apps: $(TOMDIST) tool_apps ctorrent dropbear
 	make -C applications install
 
-$(TOMDIST):
+$(TOMDIST): nano-X
 	cp -R src/opentom_skel $(TOMDIST)
 	cp $(ARM_APPROOT)/bin/nano-X $(TOMDIST)/bin
-	cd build/microwin/src/bin && cp nanowm setportrait nxclock nxroach slider vnc $(TOMDIST)/bin
+	cd build/microwin/src/bin && cp nanowm setportrait nxeyes nxclock nxroach nxmag nxview slider vnc $(TOMDIST)/bin
 	cp -R $(ARM_SYSROOT)/usr/lib/ts/*.so $(TOMDIST)/lib/ts/
 	cp $(ARM_SYSROOT)/usr/bin/ts_calibrate $(ARM_SYSROOT)/usr/bin/ts_test  $(TOMDIST)/bin
 
@@ -445,7 +490,7 @@ quick-%:
 	cd build && { tar xf ../$(DOWNLOADS)/$(@:quick-%=%)* || unzip ../$(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) >$(LOGS)/$@.log && \
 		make >>$(LOGS)/$@.log && \
-		make install >>$(LOGS)/$@.log && { \
+		make $(JOBS) install >>$(LOGS)/$@.log && { \
 			echo "#####"; \
 			echo "# Package \"$(@:quick-%=%)\" have been successfully installed in $(ARM_APPROOT)"; \
 			echo "#####"; \
@@ -477,6 +522,10 @@ verif_dist:
 	# 2eme passe
 	install_shared_libs.sh $(TOMDIST) "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
 	cd $(TOMDIST) && find . -type f -exec $(STRIP) 2>/dev/null {} \;
+	# need unstripped freetype lib for navit dynamic lib loading ...
+	cp $(ARM_ROOT)/usr/lib/libfreetype.so.6 $(TOMDIST)/lib
+	$(STRIP) --strip-unneeded $(TOMDIST)/lib/libfreetype.so.6
+
 	
 extract_initramfs:
 	mkdir -p /tmp/initramfs

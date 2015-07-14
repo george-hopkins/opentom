@@ -1,0 +1,30 @@
+--- SDL-1.2.15/src/video/nanox/SDL_nxmodes.c	2012-01-19 07:30:06.000000000 +0100
++++ SDL-1.2.15_opentom/src/video/nanox/SDL_nxmodes.c	2014-03-12 19:06:03.000000000 +0100
+@@ -58,9 +58,10 @@ int NX_EnterFullScreen (_THIS)
+     if (! currently_fullscreen) {
+         GR_SCREEN_INFO si ;
+ 
++        GrUnmapWindow (SDL_Window) ;
++	GrFlush();
+         GrGetScreenInfo (& si) ;
+         GrResizeWindow (FSwindow, si.cols, si.rows) ;
+-        GrUnmapWindow (SDL_Window) ;
+         GrMapWindow (FSwindow) ;
+         GrRaiseWindow (FSwindow) ;
+         GrSetFocus (FSwindow) ;
+diff -rupN SDL-1.2.15/src/video/nanox/SDL_nxvideo.c SDL-1.2.15_opentom/src/video/nanox/SDL_nxvideo.c
+--- SDL-1.2.15/src/video/nanox/SDL_nxvideo.c	2012-01-19 07:30:06.000000000 +0100
++++ SDL-1.2.15_opentom/src/video/nanox/SDL_nxvideo.c	2014-03-13 19:22:07.000000000 +0100
+@@ -341,11 +341,11 @@ static int NX_CreateWindow (_THIS, SDL_S
+ 
+     // Map them both and go fullscreen, if requested
+     if (! SDL_windowid) {
+-        GrMapWindow (SDL_Window) ;
+         if (flags & SDL_FULLSCREEN) {
+             screen -> flags |= SDL_FULLSCREEN ;
+             NX_EnterFullScreen (this) ;
+         } else {
++        	GrMapWindow (SDL_Window) ;
+             screen -> flags &= ~ SDL_FULLSCREEN ;
+         }
+     }

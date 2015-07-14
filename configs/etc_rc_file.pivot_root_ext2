@@ -1,0 +1,15 @@
+#!/bin/sh
+
+echo Runnning \(ttsystem\) etc/rc ...
+
+ext2p=mmcblk0p2
+
+mount -n -t proc none /proc
+while ! cat /proc/partitions | grep $ext2p; do echo Waiting for SD; sleep 1; done
+umount /proc
+
+mount -o ro -t ext2 /dev/$ext2p /tmp
+cd /tmp
+/tmp/sbin/pivot_root . tmp
+exec usr/sbin/chroot . /etc/rc < dev/console > dev/console 2>&1
+

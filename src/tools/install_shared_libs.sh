@@ -32,7 +32,7 @@ do
 		fi
 	done
 
-	if [[ found -eq 0 ]]; then
+	if [[ $found -eq 0 ]]; then
 		echo WARNING: Can\'t find : $lib for this files :
 		find $initramfs_dir -type f -exec is_use_lib.sh {} $lib \; -print
 	fi

@@ -28,6 +28,9 @@ cd /dev
 ln -s fb fb0
 export NANOX_YRES=`fbset -s | grep geometry | if read x x yres x; then echo $yres; fi`
 
+# Verify TS is calibrated
+if [ ! -f $TSLIB_CALIBFILE ]; then ts_calibrate; fi
+
 cd $DIST
 while /bin/true
 do

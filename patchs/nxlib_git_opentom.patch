@@ -31,7 +31,7 @@ diff -rupN nxlib/Makefile nxlib.opentom/Makefile
  
  # comment out to stop debug printfs
 -CFLAGS += -DDEBUG=1 -g
-+CFLAGS += -DDEBUG=1 -g -DNANOX_SHARE_MEMORY=1
++CFLAGS += -g -DNANOX_SHARE_MEMORY=1
 +
  
  # Compile-time nano-X include and lib directories. (relative paths ok)

@@ -1,5 +1,0 @@
-#!/bin/sh
-
-mount -o remount,ro /
-sync
-force_reboot

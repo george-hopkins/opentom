@@ -1,5 +1,0 @@
-::sysinit:/etc/rc
-::restart:/sbin/init
-::shutdown:/etc/rc.shutdown
-::reboot:/etc/rc.reboot
-::ctrlaltdel:/etc/rc.reboot
