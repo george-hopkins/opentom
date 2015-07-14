@@ -370,6 +370,7 @@ $(ARM_ROOT)/usr/include/glib-1.2: $(DOWNLOADS)/glib-1.2.10.tar.gz
 	cd build && { \
 		tar xf ../Downloads/glib-1.2.10.tar.gz && cd glib-1.2.10 && { \
 			patch -p1 <../../patchs/glib-1.2.10_ready2make_arm.patch; \
+			patch -p1 <../../patchs/glib-1.2.10_pretty_function.patch; \
 			make $(JOBS) >$(LOGS)/glib1.log 2>&1; \
 			make install >>$(LOGS)/glib1.log; \
 		}; \
