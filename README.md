@@ -3,7 +3,7 @@
 **OpenTom** is a tiny, open source Linux distribution for TomTom™ devices.
 
 
-## How to use this SDK
+## Getting Started
 
 - Install the following dependencies: subversion chrpath fluid imagemagick
 - Set the `ROOT` envvar in `get_cross_env.sh`
@@ -11,7 +11,7 @@
 - Run `make` to start the initial OpenTom build
 - This may take a while; consider getting yourself a coffee ;-)
 - Copy `build/ttsystem` (boot image) to the root folder of your SD card (backup the original one first!)
-- Copy  the contents of `opentom_dist/` to a (new) folder called `opentom` on your SD card
+- Copy the contents of `opentom_dist/` to a (new) folder called `opentom` on your SD card
 
 
 ## How to build extra applications
@@ -30,64 +30,68 @@
 
 ## How to add some new applications
 
-- Just extract you source into $ROOT/src (for libraries) or applications/src (or build if no patch to apply) or into build directory for existing source
-- type: configure --prefix=$ARM_APPROOT --host=$T_ARCH (if possible)
-- copy the final executable into $(TOMDIST)/bin (update Makefile to automate this ?)
-- type: make verif_dist (in $ROOT dir) to update used shared libs on opentom_dist
-- copy it on your TomTom
-- if it works as you want, make a patch (with make patch-<my_app_dir_name>), update applications/Makefile
+- Just extract you source into `$ROOT/src` (for libraries) or `applications/src` (or `build` if no patches should be applied)
+- Run `./configure --prefix=$ARM_APPROOT --host=$T_ARCH` (adapt accordingly in case the project is not based on Autoconf)
+- Copy the final executable into `$(TOMDIST)/bin`
+- Rune `make verif_dist` (inside `$ROOT` directory) to update used shared libs in `opentom_dist`
+- Copy the files to your TomTom device
+- If it works as you wish, make a patch (with `make patch-<my_app_dir_name>`) and update `applications/Makefile`
 
 ### On the TomTom side
-- When you boot your TomTom with OpenTom ttsystem, you can directly use Telnet to loggin in as root from USB
-- Use FTP server to update your files
-- strace and gdb are ready to be used to debug you programs
+- When you boot your TomTom with OpenTom, you can directly use Telnet to login in as root from USB
+- Use the built-in FTP server to update your files
+- `strace` and `gdb` are ready to be used to debug your programs
 
-* Creating Nano-X test platform on your system:
-- create $ROOT/i386 directory, extract, configure, install : microwin, nxlib (with libNX11), SDL, Fltk ...
-- configure the all with LDFLAGS=-L/usr/local/lib --prefix=/usr/local
-- try NetBeans to perform you developments ?
 
-* To free some memory (~3-4Mo on 32 !) : use an ext2 partion on your SDcard to remplace (and free) initramfs with buzybox pivot_root/chroot :
-- use fdisk to create two partitions on your SDCARD : partion1=vfat(TomTom), partition2=ext2(10Mo?)
-- copy ttsystem into SD.part1 and verify it boot, if not try to copy gns and program directory from original TomTom and others...
-- when it boot :
-- verify that busybox include chroot and pivot_root,
-- copy the unmodified initramfs/* into linux SD partition, with /var/* linked on /tmp
-- copy the configs/etc_rc_ext2 to SD.part2/etc/rc
-- verify that kernel include ext2 filesystem support,
-- copy configs/etc_rc_file.pivot_root_ext2 to initramfs/etc/rc
-- make ttsystem
-- then on partition 1 copy the built/ttsystem and the opentom dist directory on SD.part1
-- if something goes wrong, try configs/kernel_config.console_ext2 to activate kernel FrameBuffer console
+## Creating Nano-X test platform on your system
+
+- Create `$ROOT/i386` directory
+- Extract, configure and install: microwin, nxlib (with libNX11), SDL, Fltk, ... (with `LDFLAGS=-L/usr/local/lib --prefix=/usr/local`)
+- Try NetBeans to perform you developments?
+
+
+## How to free some memory (~3-4Mo on 32!)
+
+Use an ext2 partion on your SDcard to replace (and free) initramfs with busybox pivot_root/chroot:
+
+- Use `fdisk` to create two partitions on your SD card: partion1=vfat(TomTom), partition2=ext2(10Mo?)
+- Copy `ttsystem` into SD.part1 and verify it boots, if not try to copy gns and program directory from original TomTom and others...
+- When it boots:
+- Verify that busybox include chroot and pivot_root,
+- Copy the unmodified `initramfs/*` into linux SD partition, with `/var/*` linked to `/tmp`
+- Copy the `configs/etc_rc_ext2` to `SD.part2/etc/rc`
+- Verify that kernel include ext2 filesystem support
+- Copy `configs/etc_rc_file.pivot_root_ext2` to `initramfs/etc/rc`
+- `make ttsystem`
+- Then on partition 1 copy `build/ttsystem` and the `opentom_dist` directory on SD.part1
+- If something goes wrong, try `configs/kernel_config.console_ext2` to activate kernel FrameBuffer console
 
 
 ## How to install gltt from TomTom `ttsystem` file (for Navit)
-- copy your TomTom(tm) ttsystem file into $ROOT/src
-	eg: cp /mnt/TOMTOM/ttsystem $ROOT/src/ttsystem.tomtom
-- type :
-	cd src
-	ttimgextract ttsystem.tomtom 
-	mkdir -p ttsystem.tomtom.initramfs
-	cd ttsystem.tomtom.initramfs
-	gunzip -c ../ttsystem.tomtom.0 | sudo cpio -i
-- now the boot ramdisk of your tomtom is extracted in $ROOT/src/ttsystem.tomtom.initramfs
-	and the TomTom kernel is $ROOT/src/ttsystem.1
-- Then: cp $ROOT/src/ttsystem.tomtom.initramfs/bin/gltt $TOMDIST/bin
+
+- Copy your TomTom™ `ttsystem` file into `$ROOT/src` (e.g. `cp /mnt/TOMTOM/ttsystem $ROOT/src/ttsystem.tomtom`)
+- `cd $ROOT/src`
+- `ttimgextract ttsystem.tomtom `
+- `mkdir -p ttsystem.tomtom.initramfs`
+- `cd ttsystem.tomtom.initramfs`
+- `gunzip -c ../ttsystem.tomtom.0 | sudo cpio -i`
+- Now the boot ramdisk of your TomTom is extracted to `$ROOT/src/ttsystem.tomtom.initramfs` and the TomTom kernel is in `$ROOT/src/ttsystem.1`
+- Then: `cp $ROOT/src/ttsystem.tomtom.initramfs/bin/gltt $TOMDIST/bin`
 
 
 ## To-Do
 
-- fix espeak => portaudio => OSS, that currently don't work
-- patch spreadsheet to be adapted to TomTom screen
+- Fix espeak => portaudio => OSS, that currently don't work
+- Patch spreadsheet to be adapted to TomTom screen
 
 
 ## Support
 
 - Checkout our documentation in `docs/`
-- Take a look at the shell scripts, Makefiles, and patches
+- Take a look at the shell scripts, Makefiles and patches
 - Feel free to send an email in case of a problem or if you found betters URLs for sources.txt (opentom@free.fr).
 
 
 ## Authors
 
-- Clément (opentom@free.fr)
+- Clément Gerardin (opentom@free.fr)
