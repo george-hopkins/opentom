@@ -44,7 +44,7 @@ wget http://mupdf.googlecode.com/files/mupdf-1.3-source.tar.gz
 #wget http://nab.pcug.org.au/spreadsheet1.2.2.tar.gz
 [ -f $1 ] || { cd ../build && wget -nH --max-redirect=0 -r -l 2 -k -L -np -R \*index.html\* http://nab.pcug.org.au/spreadsheet1.2.2/ && tar czf ../Downloads/spreadsheet1.2.2.tar.gz spreadsheet1.2.2; }
 wget http://fedorchenko.net/src/yacheckers-1.4.0.tar.bz2
-wget --no-check-certificate https://fireforge.net/frs/download.php/711/yareversi-1.0.2.tar.bz2
+wget http://fedorchenko.net/src/yareversi-1.0.2.tar.bz2
 wget --no-check-certificate https://pkgs.fedoraproject.org/repo/pkgs/dillo/dillo-3.0.3.tar.bz2/726cd0b7a18c5e25f4d80ebeffe7607e/dillo-3.0.3.tar.bz2
 wget http://mirrors.usc.edu/pub/gnu/gdb/gdb-7.1.tar.gz
 wget http://freefr.dl.sourceforge.net/project/ctorrent/CTorrent-1.3.4/CTorrent-1.3.4/ctorrent-1.3.4.tar.bz2
