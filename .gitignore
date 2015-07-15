@@ -1,0 +1,7 @@
+arm-sysroot/
+build/
+Downloads/
+initramfs/
+logs/
+opentom_dist/
+src/linux-s3c24xx/
