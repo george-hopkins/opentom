@@ -420,8 +420,8 @@ $(ARM_ROOT)/usr/include/expat.h: $(DOWNLOADS)/expat-2.1.0.tar.gz
                 make $(JOBS) install >/$(LOGS)/libexpat.log 2>&1; \
         }
 
-espeak: $(ARM_ROOT)/usr/bin/espeak
-$(ARM_ROOT)/usr/bin/espeak: Downloads/pa_stable_v19_20140130.tgz Downloads/espeak-1.48.02-source.zip
+espeak: $(TOMDIST)/bin/espeak
+$(TOMDIST)/bin/espeak: Downloads/pa_stable_v19_20140130.tgz Downloads/espeak-1.48.02-source.zip
 	cd build && tar xf ../Downloads/pa_stable_v19_20140130.tgz && cd portaudio && { \
 		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --without-alsa --with-alsa --without-jack --without-asihpi --without-winapi >$(LOGS)/pa_stable.log && \
 		make $(JOBS) install >$(LOGS)/pa_stable.log; }
@@ -429,6 +429,7 @@ $(ARM_ROOT)/usr/bin/espeak: Downloads/pa_stable_v19_20140130.tgz Downloads/espea
 		cp src/portaudio19.h src/portaudio.h; \
 		patch -p1 <../../patchs/espeak-1.48.01-source_opentom.patch; \
 		make -C src $(JOBS) install >$(LOGS)/espeak.log; \
+		cp $(ARM_APPROOT)/bin/espeak $(TOMDIST)/bin; \
 	}
 
 libzip: $(ARM_ROOT)/usr/include/zip.h

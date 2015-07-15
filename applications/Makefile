@@ -89,8 +89,6 @@ $(TOMDIST)/bin/navit: Downloads/navit_svn.tgz
 		mogrify -resize 33.33% $(TOMDIST)/share/navit/xpm/gui_strength_*; \
 		cd $(TOMDIST)/share && rm -Rf icons applications man navit/xpm/*.svg*; \
 		rm $(TOMDIST)/lib/navit/*/*.*a*; \
-		cp $(ARM_APPROOT)/bin/espeak $(TOMDIST)/bin; \
-		cp -R $(ROOT)/build/espeak-*/espeak-data $(TOMDIST)/share; \
 	}
 		
 

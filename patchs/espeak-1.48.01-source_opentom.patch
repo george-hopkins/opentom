@@ -1,18 +1,18 @@
-diff -rupN espeak-1.48.01-source/src/Makefile espeak-1.48.01-source_opentom/src/Makefile
---- espeak-1.48.01-source/src/Makefile	2014-02-02 11:58:11.000000000 +0100
-+++ espeak-1.48.01-source_opentom/src/Makefile	2014-03-07 18:52:24.000000000 +0100
-@@ -1,8 +1,8 @@
+--- espeak-1.48.01-source.orig/src/Makefile	2014-02-02 11:58:11.000000000 +0100
++++ espeak-1.48.01-source/src/Makefile	2015-07-15 10:23:28.160059925 +0200
+@@ -1,8 +1,9 @@
  # remove -fno-exceptions  if it causes problems with stdio library on some platforms (ARM)
  
 -DATADIR=/usr/share/espeak-data
 +DATADIR=/mnt/sdcard/opentom/share/espeak-data
++DESTDATADIR=$(TOMDIST)/share/espeak-data
  
 -PREFIX=/usr
 +PREFIX=$(ARM_APPROOT)
  BINDIR=$(PREFIX)/bin
  INCDIR=$(PREFIX)/include/espeak
  LIBDIR=$(PREFIX)/lib
-@@ -110,7 +110,7 @@ $(BIN2_NAME): $(OBJS3) $(LIB_NAME)
+@@ -110,7 +111,7 @@ $(BIN2_NAME): $(OBJS3) $(LIB_NAME)
  
  
  x_%.o: %.cpp
@@ -21,4 +21,24 @@ diff -rupN espeak-1.48.01-source/src/Makefile espeak-1.48.01-source_opentom/src/
  	-I. -D LIBRARY -c -fno-exceptions  $<  -o x_$*.o
  
  $(LIB_NAME): $(OBJS2)
+@@ -133,11 +134,11 @@ distclean: clean
+ 
+ install: all
+ 	# Create directories
+-	rm -rf $(DESTDIR)$(DATADIR)
++	rm -rf $(DESTDATADIR)
+ 	$(MKDIR) $(DESTDIR)$(BINDIR)
+ 	$(MKDIR) $(DESTDIR)$(LIBDIR)
+ 	$(MKDIR) $(DESTDIR)$(INCDIR)
+-	$(MKDIR) $(DESTDIR)$(DATADIR)
++	$(MKDIR) $(DESTDATADIR)
+ 	# Install espeak executable
+ 	$(INSTALL) -m 755 $(BIN2_NAME) $(DESTDIR)$(BINDIR)
+ 	# Install shared library
+@@ -149,5 +150,5 @@ install: all
+ 	# Install development headers
+ 	$(INSTALL) -pm 644 speak_lib.h $(DESTDIR)$(INCDIR)
+ 	# Install data files
+-	cp -prf ../espeak-data/* $(DESTDIR)$(DATADIR)
++	cp -prf ../espeak-data/* $(DESTDATADIR)
  
