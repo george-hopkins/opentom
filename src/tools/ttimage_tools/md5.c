@@ -16,6 +16,7 @@
  */
 
 #include "md5.h"
+#include "string.h"
 
 static void MD5Transform(unsigned int buf[4], unsigned int const in[16]);
 
