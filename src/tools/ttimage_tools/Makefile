@@ -1,17 +1,22 @@
 CC=gcc
 CFLAGS= 
 
-all: $(CROSS)/bin/mkttimage $(CROSS)/bin/ttimgextract
+all: mkttimage ttimgextract
 
-$(CROSS)/bin/mkttimage: mkttimage.o md5.o blowfish.o
-	$(CC) -o $(CROSS)/bin/mkttimage mkttimage.o md5.o blowfish.o
+.PHONY: install
+install: mkttimage ttimgextract
+	install -D mkttimage $(ROOT)/tools/mkttimage
+	install -D ttimgextract $(ROOT)/tools/ttimgextract
 
-$(CROSS)/bin/ttimgextract: ttimgextract.o
-	$(CC) -o $(CROSS)/bin/ttimgextract ttimgextract.o
+mkttimage: mkttimage.o md5.o blowfish.o
+	$(CC) -o mkttimage mkttimage.o md5.o blowfish.o
+
+ttimgextract: ttimgextract.o
+	$(CC) -o ttimgextract ttimgextract.o
 
 %.o: %.c
 	$(CC) -c $<
 
+.PHONY: clean
 clean:
 	rm -f ttimgextract mkttimage *.o
-
