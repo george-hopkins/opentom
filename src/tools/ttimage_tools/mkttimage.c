@@ -59,7 +59,7 @@ unsigned int filesize(char *name)
 
   if(stat(name, &statbuf) != 0) {
     fprintf(stderr, "Cannot open file %s\n", name);
-    exit(0);
+    exit(1);
   }
   return statbuf.st_size;
 }
@@ -72,18 +72,18 @@ char *readfile(char *name, unsigned int size)
   f = fopen(name, "rb");
   if(f == NULL) {
     fprintf(stderr, "Cannot open file %s\n", name);
-    exit(0);
+    exit(1);
   }
   buf = (char *)malloc(size);
   if (!buf) {
-	  fprintf(stderr, "error while malloc(%ld)\n", size);
+	  fprintf(stderr, "error while malloc(%u)\n", size);
 	  fclose(f);
 	  exit(1);
   }
   if(fread(buf, 1, size, f) != size) {
     fprintf(stderr, "Error while reading file %s\n", name);
     fclose(f);
-    exit(0);
+    exit(1);
   }
   fclose(f);
   return buf;
@@ -113,9 +113,8 @@ int main(int argc, char *argv[])
   unsigned char kernelsig[16];
 
   if(argc != 3) {
-    fprintf(stderr, "Error - call with: builder [root.gz] [zImage]\n");
-    fprintf(stderr, "- image file will be written to stdout\n");
-    return 0;
+    fprintf(stderr, "Usage: %s [root.gz] [zImage]\n", argv[0]);
+    return 1;
   }
 
   rootsize = filesize(argv[1]);
