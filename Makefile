@@ -10,9 +10,9 @@
 # Sanity checks
 
 ifeq ($(ROOT),)
-	$(error Please, do first : source get_build_env.sh)
+    $(error Please, do first : source get_cross_env.sh)
 else
-	export $(ROOT)
+    export $(ROOT)
 endif
 
 # Speedup compilation (choose 1~2 x number of CPU/Core)
