@@ -1479,7 +1479,7 @@ diff -rupN glib-1.2.10/config.status glib-1.2.10.readky2make/config.status
 +s%@build_vendor@%unknown%g
 +s%@build_os@%linux-gnu%g
 +s%@RANLIB@%ranlib%g
-+s%@CC@%gcc%g
++s%@CC@%arm-linux-gcc%g
 +s%@LN_S@%ln -s%g
 +s%@LIBTOOL@%$(SHELL) $(top_builddir)/libtool%g
 +s%@MAINTAINER_MODE_TRUE@%#%g
