@@ -86,7 +86,7 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 $(TOMDIST)/bin/navit: Downloads/navit_svn.tgz
 	mkdir -p build
 	cd build && tar xf ../Downloads/navit_svn.tgz && cd navit && { \
-		patch -p1 <../../patchs/navit_opentom.patch && \
+#		patch -p1 <../../patchs/navit_opentom.patch && \
 		./autogen.sh >$(LOGS)/navit.log && \
 		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo --enable-svg2png-scaling=16,48 --enable-svg2png-scaling-flag=16 --enable-svg2png-scaling-nav=48 >>$(LOGS)/navit.log && \
 		echo '#define SDL_IMAGE 1§' | tr '§' '\n' >>config.h && \
