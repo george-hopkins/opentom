@@ -104,6 +104,7 @@ build/initramfs.cpio.gz: kernel/arch/arm/boot/zImage initramfs/bin/busybox initr
 
 kernel/arch/arm/boot/zImage: $(ARM_ROOT) kernel/.config
 	mkdir -p initramfs/usr
+	mkdir -p $(LOGS)
 	cd kernel && make clean && nice -n 19 make $(JOBS) >$(LOGS)/kernel.log 2>&1
 
 kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
@@ -474,9 +475,11 @@ apps: $(TOMDIST) tool_apps dropbear
 
 $(TOMDIST): nano-X
 	mkdir -p $(TOMDIST)
+	mkdir -p $(TOMDIST)/logs
 	cp -R src/opentom_skel/* $(TOMDIST)/
 	cp $(ARM_APPROOT)/bin/nano-X $(TOMDIST)/bin
 	cd build/microwin/src/bin && cp nanowm setportrait nxeyes nxclock nxroach nxmag nxview slider vnc $(TOMDIST)/bin
+	mkdir -p $(TOMDIST)/lib/ts/
 	cp -R $(ARM_SYSROOT)/usr/lib/ts/*.so $(TOMDIST)/lib/ts/
 	cp $(ARM_SYSROOT)/usr/bin/ts_calibrate $(ARM_SYSROOT)/usr/bin/ts_test  $(TOMDIST)/bin
 
