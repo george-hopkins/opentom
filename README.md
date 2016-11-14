@@ -15,6 +15,7 @@
 
 
 ## How to build extra applications
+- run 'sudo updatedb' coolreader need it to find the default font
 - Run `make extra` and copy the files as described above
 - For dosbox, dune2, gnuboy, linapple, and scummvm games: Take it from internet and copying it into opentom/share subdirectories.
 - For Navit, you need the TomTom gltt (see below, that read raw GPS data from /dev/gps and send it to /var/run/gpspipe).

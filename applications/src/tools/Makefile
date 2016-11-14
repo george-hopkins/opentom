@@ -1,4 +1,4 @@
-TOOLS=	dogfeed nxloadmon flkill flmessage nxlight \
+TOOLS=	espeakdsp dogfeed nxloadmon flkill flmessage nxlight \
 	nx_bat_monitor_console nx_bat_monitor \
 	power_button editor fonts flchoose
 
