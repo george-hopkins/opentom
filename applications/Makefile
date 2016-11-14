@@ -86,7 +86,6 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 $(TOMDIST)/bin/navit: Downloads/navit_svn.tgz
 	mkdir -p build
 	cd build && tar xf ../Downloads/navit_svn.tgz && cd navit && { \
-#		patch -p1 <../../patchs/navit_opentom.patch && \
 		./autogen.sh >$(LOGS)/navit.log && \
 		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo --enable-svg2png-scaling=16,48 --enable-svg2png-scaling-flag=16 --enable-svg2png-scaling-nav=48 >>$(LOGS)/navit.log && \
 		echo '#define SDL_IMAGE 1§' | tr '§' '\n' >>config.h && \
@@ -96,7 +95,7 @@ $(TOMDIST)/bin/navit: Downloads/navit_svn.tgz
 		cd $(TOMDIST)/share && rm -Rf icons applications man navit/xpm/*.svg*; \
 		rm $(TOMDIST)/lib/navit/*/*.*a*; \
 	}
-		
+
 
 $(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
 	mkdir -p $(TOMDIST)/share/eggchess
@@ -108,8 +107,8 @@ $(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
 		cd gfx && mogrify -resize 71.4285714% big.bmp empty.bmp full.bmp half.bmp shell.bmp; \
 	}
 	cp -R build/eggchess/gfx $(TOMDIST)/share/eggchess
-	
-	
+
+
 $(TOMDIST)/bin/nxpad_gnuboy:
 	make -C src/nxpad_gnuboy install
 
@@ -122,8 +121,8 @@ $(TOMDIST)/bin/freecell: Downloads/TomTom_FreeCell.zip
 		mkdir -p $(TOMDIST)/share/freecell; \
 		cp catapps/freecell/*.bmp $(TOMDIST)/share/freecell; \
 	}
-		
-		
+
+
 $(TOMDIST)/bin/sudoku:
 	cd ../build/fltk-1.3.2/test && $(CC) -I.. sudoku.cxx -lfltk -lfltk_images -o $(TOMDIST)/bin/sudoku
 
@@ -151,7 +150,7 @@ $(TOMDIST)/bin/tuxchess:
 		$(CC) -o $(TOMDIST)/bin/tuxchess -I/usr/local/include/microwin *.c -lnano-X; \
 		mkdir -p $(TOMDIST)/share/tuxchess && cp -R images $(TOMDIST)/share/tuxchess; \
 	}
-		
+
 $(TOMDIST)/bin/12swap: Downloads/caanoo-12swap-v1.0-bin.zip Downloads/caanoo-12swap-v1.0-src.zip
 	mkdir -p build
 	cd build && \
@@ -175,7 +174,7 @@ $(TOMDIST)/bin/pipepanic: Downloads/pipepanic-0.1.3-source.tar.gz
 		cp *.bmp pipepanic $(TOMDIST)/bin/pipepanic; \
 		echo '#! /bin/sh§§cd $$DIST/bin/pipepanic§exec ./pipepanic -320x240§' | tr '§' '\n' >$(TOMDIST)/bin/pipepanic/pipe.sh; \
 	}
-		
+
 $(TOMDIST)/bin/madplay: Downloads/madplay-0.15.2b.tar.gz
 	mkdir -p build
 	cd build && tar xf ../Downloads/madplay-0.15.2b.tar.gz && cd madplay-0.15.2b && { \
@@ -217,7 +216,7 @@ $(TOMDIST)/bin/opendune: Downloads/OpenDUNE_git.tgz
 		echo "# Copy Dune2 files here !" >$(TOMDIST)/share/dune2/data/README; \
 	}
 
-$(TOMDIST)/bin/linapple: Downloads/linapple-src_2a.tar.bz2 
+$(TOMDIST)/bin/linapple: Downloads/linapple-src_2a.tar.bz2
 	mkdir -p build
 	cd build && tar xf ../Downloads/linapple-src_2a.tar.bz2 && cd linapple-src_2a && { \
 		patch -p1 <../../patchs/linapple-src_2a_1402241834.patch; \
@@ -244,7 +243,7 @@ $(TOMDIST)/bin/dosbox: Downloads/dosbox-0.74.tar.gz
 		cp ../../patchs/dosbox-0.74_config.h config.h; \
 		make $(JOBS) >$(LOGS)/dosbox.log && cp src/dosbox $(TOMDIST)/bin; \
 	}
-		
+
 
 $(TOMDIST)/bin/dillo: Downloads/dillo-3.0.3.tar.bz2
 	mkdir -p build
@@ -268,7 +267,7 @@ $(TOMDIST)/bin/mupdf: Downloads/mupdf-1.3-source.tar.gz
 		gcc  -Iinclude -Iscripts -Igenerated -Wall -pipe -g -DDEBUG -Ithirdparty/freetype/include -Ithirdparty/jbig2dec -Ithirdparty/jpeg -Ithirdparty/openjpeg/src/lib/openjp2  -Ithirdparty/zlib -o build/debug/bin2hex scripts/bin2hex.c; \
 		CROSSCOMPILE=yes verbose=yes make prefix=$(ARM_APPROOT) install >$(LOGS)/mupdf.log && cp build/debug/mupdf-x11 $(TOMDIST)/bin/mupdf; \
 	}
-		
+
 $(TOMDIST)/bin/gnuboy: Downloads/gnuboy-1.0.3.tar.gz
 	mkdir -p build
 	cd build && tar xf ../Downloads/gnuboy-1.0.3.tar.gz && cd gnuboy-1.0.3 && { \
@@ -277,7 +276,7 @@ $(TOMDIST)/bin/gnuboy: Downloads/gnuboy-1.0.3.tar.gz
 		make clean >>$(LOGS)/gnuboy.log; \
 		make $(JOBS) >>$(LOGS)/gnuboy.log && cp sdlgnuboy $(TOMDIST)/bin/gnuboy; \
 	}
-		
+
 $(TOMDIST)/bin/martian: Downloads/martian_source.tgz
 	mkdir -p build
 	cd build && tar xf ../Downloads/martian_source.tgz && cd Martian-Memory && { \
@@ -315,7 +314,7 @@ $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
 	}
 	# You need at least one font to use CoolReader
 	cp "`locate times.ttf | head -1`" $(TOMDIST)/fonts
-		
+
 
 clean_duplicate_patchs:
 	#
@@ -334,4 +333,3 @@ Downloads/%:
 	mkdir -p Downloads
 	mkdir -p logs
 	get_source.sh $(@:Downloads/%=%)
-

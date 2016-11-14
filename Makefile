@@ -112,7 +112,7 @@ kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
 	ln -s src/linux-s3c24xx kernel
 	cd kernel && patch -p1 <$(ROOT)/patchs/kernel_tt1114405_opentom.patch
 	cp $(CONFIGS)/kernel_config.no_console kernel/.config
-	
+
 $(ARM_ROOT): $(ARMGCC)/lib
 	mkdir -p $(ARM_ROOT)/bin
 	cd $(CROSS)/$(T_ARCH)/libc/ && cp -R etc sbin lib usr $(ARM_SYSROOT)/
@@ -160,7 +160,7 @@ build/busybox-$(BUSYBOX_VER)/_install/bin/busybox: build/busybox-$(BUSYBOX_VER) 
 		make install >>$(LOGS)/busybox.log 2>&1 && \
 		chrpath -d _install/bin/busybox; \
 	}
-		
+
 
 build/busybox-$(BUSYBOX_VER): $(DOWNLOADS)/busybox-$(BUSYBOX_VER).tar.bz2
 	mkdir -p build
@@ -211,13 +211,13 @@ $(TOMDIST)/bin/dhclient: # work only in debian like dist...
 		./configure && make && cp work.linux-2.2/client/dhclient $(TOMDIST)/bin; \
 	}
 
-		
+
 ctorrent: $(TOMDIST)/bin/ctorrent
 $(TOMDIST)/bin/ctorrent: $(ARM_ROOT)/usr/include/openssl/opensslconf.h $(DOWNLOADS)/ctorrent-1.3.4.tar.bz2
 	make quick-ctorrent
 	cp $(ARM_APPROOT)/bin/ctorrent $(TOMDIST)/bin
 
-		
+
 ################
 # Libs
 ################
@@ -295,7 +295,7 @@ $(ARM_ROOT)/usr/include/png.h: $(DOWNLOADS)/libpng-1.2.50.tar.gz
                 ./configure --prefix=$(ARM_APPROOT) --host=arm-linux --enable-shared --enable-static >$(LOGS)/libpng.log; \
                 make $(JOBS) install >>$(LOGS)/libpng.log 2>&1 ; \
         }
-	
+
 zlib: $(ARM_ROOT)/usr/include/zlib.h
 $(ARM_ROOT)/usr/include/zlib.h: $(DOWNLOADS)/zlib-1.2.8.tar.gz $(ARM_ROOT)
 	cd build && tar xf ../Downloads/zlib-1.2.8.tar.gz && cd zlib-1.2.8 && { \
@@ -524,7 +524,7 @@ quickb-%:
 		make && \
 		make install; \
 	}
-	
+
 quicka-%:
 	make Downloads/$(@:quicka-%=%)
 	cd build && { tar xf ../$(DOWNLOADS)/$(@:quicka-%=%)* || unzip ../$(DOWNLOADS)/$(@:quicka-%=%)*; } && cd $(@:quicka-%=%)* && { \
@@ -545,7 +545,7 @@ verif_dist:
 	cp $(ARM_ROOT)/usr/lib/libfreetype.so.6 $(TOMDIST)/lib
 	$(STRIP) --strip-unneeded $(TOMDIST)/lib/libfreetype.so.6
 
-	
+
 extract_initramfs:
 	mkdir -p /tmp/initramfs
 	cd /tmp/initramfs && { sudo rm -Rf /tmp/initramfs/*; gunzip -c $(ROOT)/build/initramfs.cpio.gz | sudo cpio -i; }
@@ -566,5 +566,3 @@ help:
 	@echo ""
 	@echo "Where <target> can be :"
 	@echo `grep : Makefile  | cut -f1 -d: | grep -v \( | grep -v build | grep -v \# | grep -v kernel | grep -v echo | grep -v initramfs | xargs`
-
-

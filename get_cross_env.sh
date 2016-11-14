@@ -67,4 +67,3 @@ export INSTALL_MOD_PATH=${INITRAMFS_ROOT}/usr
 # exec ${CROSS}/bin/${T_ARCH}-gcc --arm-root=$PREFIX $*
 #
 # Changer PATH=/usr/local/bin:${CROSS}/bin:/usr/bin:/bin
-
