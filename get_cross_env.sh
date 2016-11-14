@@ -18,9 +18,9 @@ export DOWNLOADS=Downloads
 
 	export TOOLCHAIN=old
 	echo Utilisation de gcc-3.3.4_glibc-2.3.2
-	export CROSS="/usr/local/cross/gcc-3.3.4_glibc-2.3.2"
+	export CROSS="$ROOT/gcc-3.3.4_glibc-2.3.2"
 	# obligatoire pour ce GCC (je pense qu'il utilise des sys-root/../../../lib_du_compilo)
-	export PREFIX=/usr/local/cross/gcc-3.3.4_glibc-2.3.2/arm-linux/sys-root
+	export PREFIX="$CROSS/arm-linux/sys-root"
 	export T_ARCH=arm-linux
 	unset MARCH
 #	export CFLAGS="-mlittle-endian -march=armv4 -mtune=arm9tdmi -mshort-load-bytes -fno-omit-frame-pointer -fno-optimize-sibling-calls -mno-thumb-interwork -O2 -I$PREFIX/include -I$PREFIX/usr/include"

@@ -33,7 +33,7 @@ export DOWNLOADS=Downloads
 export ARMGCC=gcc-3.3.4_glibc-2.3.2
 export CROSS=$(ROOT)/$(ARMGCC)
 export T_ARCH=arm-linux
-PREFIX=/usr/local/cross/arm-linux/sys-root
+PREFIX=$(CROSS)/arm-linux/sys-root
 export CFLAGS=-mlittle-endian -march=armv5te -mtune=arm9tdmi -mshort-load-bytes -fno-omit-frame-pointer -fno-optimize-sibling-calls -mno-thumb-interwork -O2 -I$(ARM_SYSROOT)/usr/include -L$(ARM_SYSROOT)/usr/lib
 export CPPFLAGS=-march=armv5te -mtune=arm9tdmi -I$(PREFIX)/include -I$(PREFIX)/usr/include
 LDFLAGS=-L$(PREFIX)/lib -L$(ARM_SYSROOT)/usr/lib
@@ -131,12 +131,7 @@ $(ARMGCC)/lib: $(DOWNLOADS)/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar
 		}; \
 		cd $(ROOT)/$(ARMGCC)/bin && cat $(CONFIGS)/install_links.txt | while read file; do ln -s $$file; done; \
 	}
-	if test -d /usr/local/cross; then \
-		ls -l /usr/local/cross | grep $(ROOT) || echo WARNING WRONG LINK /usr/local/cross != $(ROOT); \
-	else \
-		sudo ln -s $(ROOT) /usr/local/cross; \
-	fi
-	
+
 initramfs/etc/rc:
 	cp -Rf src/initramfs_skel/* initramfs
 	@echo "We must be root to use mknod:"
@@ -466,7 +461,7 @@ gdb: $(ARM_ROOT)/usr/bin/gdb
 $(ARM_ROOT)/usr/bin/gdb: quick-gdb-7.1
 
 tools:
-	make -C src/tools
+	make -C src/tools install
 	make $(ARMGCC)/lib
 
 

@@ -353,7 +353,7 @@ lt_cv_objdir=${lt_cv_objdir=.libs}
 lt_cv_path_LD=${lt_cv_path_LD=/usr/bin/ld}
 lt_cv_path_LDCXX=${lt_cv_path_LDCXX=/usr/bin/ld}
 lt_cv_path_NM=${lt_cv_path_NM='/usr/bin/nm -B'}
-lt_cv_path_SED=${lt_cv_path_SED=/usr/local/cross/gcc-3.3.4_glibc-2.3.2/bin/sed}
+lt_cv_path_SED=${lt_cv_path_SED=/bin/sed}
 lt_cv_path_mainfest_tool=${lt_cv_path_mainfest_tool=no}
 lt_cv_prog_compiler_c_o=${lt_cv_prog_compiler_c_o=yes}
 lt_cv_prog_compiler_c_o_CXX=${lt_cv_prog_compiler_c_o_CXX=yes}
