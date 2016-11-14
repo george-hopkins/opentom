@@ -62,6 +62,6 @@ wget http://downloads.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.
 wget http://www.tomtomheaven.com/data/zip/TomTom_FreeCell.zip
 wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-bin.zip
 wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-src.zip
-wget http://sylar-stuff.googlecode.com/files/gnuboy-1.0.3.tar.gz
+wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/sylar-stuff/gnuboy-1.0.3.tar.gz
 wget http://downloads.sourceforge.net/project/devezx/eggchess/eggchess-1.1-A780-0/eggchess-1.1-A780-0.tar.gz
 wget http://downloads.sourceforge.net/project/devezx/net-bubble/net-bubble-0.9.1-ezx80-0/net-bubble-0.9.1-ezx80-0.tar.gz
