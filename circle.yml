@@ -1,18 +1,31 @@
 general:
   artifacts:
     - "logs"
+    - "applications/logs"
     - "target/opentom.tar.gz"
+    - "target/opentom-extra.tar.gz"
 
 dependencies:
   override:
     - sudo apt-get install -y subversion chrpath fluid imagemagick
+    - sudo updatedb
 
 test:
+  pre:
+    - mkdir -p target/opentom target/opentom-extra
   override:
     - sed -i '/^export ROOT=/d' get_cross_env.sh
-    - (export ROOT=`pwd` && source get_cross_env.sh && make base)
+    - >
+      (
+      export ROOT=`pwd` &&
+      source get_cross_env.sh &&
+      make base &&
+      cp build/ttsystem target/opentom &&
+      cp -r opentom_dist target/opentom/opentom &&
+      make extra &&
+      cp build/ttsystem target/opentom-extra &&
+      cp -r opentom_dist target/opentom-extra/opentom
+      )
   post:
-    - mkdir -p target/opentom
-    - cp build/ttsystem target/opentom
-    - cp -r opentom_dist target/opentom/opentom
     - tar -C target -cvzf target/opentom.tar.gz opentom
+    - tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
