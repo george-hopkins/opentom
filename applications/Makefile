@@ -26,9 +26,9 @@ EXTRA= 	12swap ntetris pipepanic \
 	dosbox dillo \
 	martian jooleem.sh tuxchess cr3 \
 	sudoku checkers freecell nxpad_gnuboy \
-	eggchess.sh navit net-bubble
+	eggchess.sh net-bubble
 
-BROKEN_EXTRA= gnuboy scummvm
+BROKEN_EXTRA= gnuboy scummvm navit
 
 
 BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
