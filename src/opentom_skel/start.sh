@@ -31,6 +31,10 @@ export NANOX_YRES=`fbset -s | grep geometry | if read x x yres x; then echo $yre
 # Verify TS is calibrated
 if [ ! -f $TSLIB_CALIBFILE ]; then ts_calibrate; fi
 
+# make ". s" usable to get environment in telnet 
+cp $DIST/getenv.sh /s
+echo cd $DIST >> /s
+
 cd $DIST
 while /bin/true
 do
