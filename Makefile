@@ -95,15 +95,17 @@ tt2: build/initramfs.cpio.gz
 build/ttsystem: build/initramfs.cpio.gz kernel/arch/arm/boot/zImage
 	mkttimage build/initramfs.cpio.gz kernel/arch/arm/boot/zImage >build/ttsystem
 
-build/initramfs.cpio.gz: kernel/arch/arm/boot/zImage initramfs/bin/busybox initramfs/etc/rc
+build/initramfs.cpio.gz: $(CONFIGS)/initramfs_prepend kernel/arch/arm/boot/zImage initramfs/bin/busybox initramfs/etc/rc
+	cp $(CONFIGS)/initramfs_prepend build/cpio_list
 	rm -Rf $(INITRAMFS_ROOT)/lib/modules/*
 	cd kernel && INSTALL_MOD_PATH=$(INITRAMFS_ROOT)/ make modules_install
 	# 3rd pass for new sharedlibs
 	install_shared_libs.sh initramfs "$(ARM_ROOT)/lib $(ARM_ROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
-	cd initramfs && find . | cpio -H newc -o | gzip -9 > ../build/initramfs.cpio.gz
+	chmod u+x kernel/scripts/gen_initramfs_list.sh
+	kernel/scripts/gen_initramfs_list.sh -u `id -u` -g `id -g` $(INITRAMFS_ROOT) >>build/cpio_list
+	kernel/usr/gen_init_cpio build/cpio_list | gzip -9 >build/initramfs.cpio.gz
 
 kernel/arch/arm/boot/zImage: $(ARM_ROOT) kernel/.config
-	mkdir -p initramfs/usr
 	mkdir -p $(LOGS)
 	cd kernel && make clean && nice -n 19 make $(JOBS) >$(LOGS)/kernel.log 2>&1
 
@@ -133,11 +135,8 @@ $(ARMGCC)/lib: $(DOWNLOADS)/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar
 	}
 
 initramfs/etc/rc:
+	mkdir -p initramfs/lib
 	cp -Rf src/initramfs_skel/* initramfs
-	@echo "We must be root to use mknod:"
-	sudo tar xf src/empty_initramfs.tar.gz
-	#cd initramfs && gunzip -c ../src/sample.cpio.gz | sudo cpio -id
-	sudo chown -R $(USER):$(USER) initramfs
 	cp $(ARM_SYSROOT)/lib/libnss_dns.so.2 $(ARM_SYSROOT)/lib/libnss_files.so.2 initramfs/lib
 	cd initramfs/lib && find . -type f -exec $(CROSS)/bin/$(STRIP) 2>/dev/null {} \;
 	install_shared_libs.sh initramfs "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
