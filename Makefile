@@ -184,10 +184,10 @@ $(ARM_ROOT)/usr/include/microwin/nano-X.h: $(ARM_ROOT)/usr/include/zlib.h $(ARM_
 		cp bin/convb* $(ARM_APPROOT)/bin; \
 	}
 
-build/microwin/src: $(DOWNLOADS)/microwin_git.tgz
+build/microwin/src: $(DOWNLOADS)/microwin_9ffcd17.tgz
 	cd build && { \
 		if ! test -d microwin; then \
-			tar xf ../Downloads/microwin_git.tgz; \
+			tar xf ../Downloads/microwin_9ffcd17.tgz; \
 		else \
 			touch microwin/src; \
 		fi; \
@@ -323,10 +323,10 @@ $(ARM_ROOT)/usr/include/X11/X.h: build/nxlib $(ARM_ROOT)/usr/include/microwin/na
 	cd $(ARM_ROOT)/usr/lib && ln -s libX11.so libX11.so.0
 
 
-build/nxlib: $(DOWNLOADS)/nxlib_nanox_git.tgz
+build/nxlib: $(DOWNLOADS)/nxlib_7adaf0e.tgz
 	cd build && { \
                 if ! test -d nxlib; then \
-                        tar xf ../Downloads/nxlib_nanox_git.tgz; \
+                        tar xf ../Downloads/nxlib_7adaf0e.tgz; \
                 else \
                         touch nxlib; \
 		fi; \

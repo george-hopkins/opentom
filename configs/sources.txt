@@ -7,8 +7,8 @@ wget http://zlib.net/zlib-1.2.8.tar.gz
 wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
 wget ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng12/libpng-1.2.51.tar.gz
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && tar czf ../Downloads/microwin_git.tgz microwin; }
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && tar czf ../Downloads/nxlib_nanox_git.tgz nxlib; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && git -C microwin checkout 9ffcd17 && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && git -C nxlib checkout 7adaf0e && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
 wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz
 wget http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
 wget http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
@@ -19,7 +19,6 @@ wget http://fltk.org/pub/fltk/1.3.2/fltk-1.3.2-source.tar.gz
 wget ftp://microwindows.org/pub/microwindows/microwindows-fonts-snapshot.tar.gz
 wget http://downloads.sourceforge.net/mad/libmad-0.15.1b.tar.gz
 wget http://www.tomtom.com/gpl/csrinit-tt531604.tar.gz
-svn co svn://svn.berlios.de/tslib/trunk/tslib tslib
 wget http://pkgs.fedoraproject.org/repo/pkgs/tslib/tslib-1.0.tar.bz2/92b2eb55b1e4ef7e2c0347069389390e/tslib-1.0.tar.bz2
 wget http://ftp.gnome.org/pub/gnome/sources/glib/1.2/glib-1.2.10.tar.gz
 wget http://ftp.gnome.org/pub/gnome/sources/glib/2.14/glib-2.14.6.tar.gz
@@ -54,7 +53,7 @@ wget http://downloads.sourceforge.net/project/crengine/CoolReader3/cr3-3.0.56/cr
 # Games
 wget http://downloads.sourceforge.net/project/scummvm/scummvm/1.6.0/scummvm-1.6.0.tar.bz2
 wget http://downloads.sourceforge.net/project/linapple/linapple/linapple-2a/linapple-src_2a.tar.bz2
-[ -f $1 ] || { cd ../build && git clone https://github.com/OpenDUNE/OpenDUNE.git && tar czf ../Downloads/OpenDUNE_git.tgz OpenDUNE; }
+wget -O OpenDUNE-0.8.zip https://github.com/OpenDUNE/OpenDUNE/archive/0.8.zip
 wget http://www.users.waitrose.com/~thunor/pipepanic/dload/pipepanic-0.1.3-source.tar.gz
 wget http://downloads.sourceforge.net/project/dragontech/Martian%20Memory/Martian%20Memory%201.2/martian_source.tgz
 wget http://downloads.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_src.zip

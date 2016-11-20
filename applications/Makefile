@@ -205,9 +205,9 @@ $(TOMDIST)/bin/yareversi: Downloads/yareversi-1.0.2.tar.bz2
 		cp yareversi $(TOMDIST)/bin; \
 	}
 
-$(TOMDIST)/bin/opendune: Downloads/OpenDUNE_git.tgz
+$(TOMDIST)/bin/opendune: Downloads/OpenDUNE-0.8.zip
 	mkdir -p build
-	cd build && tar xf ../Downloads/OpenDUNE_git.tgz && cd OpenDUNE && { \
+	cd build && unzip ../Downloads/OpenDUNE-0.8.zip && cd OpenDUNE-0.8 && { \
 		./configure --prefix=$(ARM_APPROOT) --enable-debug=0 --disable-assert --host=$(T_ARCH) --without-alsa && \
 		patch -p1 <../../patchs/OpenDUNE_opentom.patch && \
 		make $(JOBS) >/$(LOGS)/opendune.log 2>&1 && \
