@@ -313,7 +313,7 @@ $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
 		} \
 	}
 	# You need at least one font to use CoolReader
-	cp "`locate times.ttf | head -1`" $(TOMDIST)/fonts
+	cp $(ROOT)/build/microwin/src/fonts/truetype/times.ttf $(TOMDIST)/fonts || cp "`locate times.ttf | head -1`" $(TOMDIST)/fonts
 
 
 clean_duplicate_patchs:
