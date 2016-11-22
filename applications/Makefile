@@ -23,12 +23,12 @@ CLEAN_APPS= $(APPS:%=clean-%)
 EXTRA= 	12swap ntetris pipepanic \
 	madplay sprsht flchekers \
 	yareversi opendune linapple \
-	dosbox dillo gnuboy \
+	dosbox dillo gnuboy scummvm \
 	martian jooleem.sh tuxchess cr3 \
 	sudoku checkers freecell nxpad_gnuboy \
 	eggchess.sh net-bubble
 
-BROKEN_EXTRA= scummvm navit
+BROKEN_EXTRA= navit
 
 
 BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
@@ -229,7 +229,7 @@ $(TOMDIST)/bin/scummvm: Downloads/scummvm-1.6.0.tar.bz2
 	mkdir -p build
 	cd build && tar xf ../Downloads/scummvm-1.6.0.tar.bz2 && cd scummvm-1.6.0 && { \
 		patch -p1 <../../patchs/scummvm-1.6.0_opentom.patch; \
-		./configure --prefix=$(ARM_SYSROOT)/usr --host=$(T_ARCH) --disable-debug --default-dynamic --disable-scalers --disable-hq-scalers --disable-translation --disable-bink --with-sdl-prefix=$(ARM_SYSROOT)/usr/bin --disable-nasm --disable-readline --disable-libunity --disable-sndio --backend=sdl --enable-optimizations --disable-engine=kyra >$(LOGS)/scummvm.log >$(LOGS)/scummvm.log; \
+		./configure --prefix=$(ARM_SYSROOT)/usr --host=$(T_ARCH) --disable-debug --default-dynamic --disable-scalers --disable-hq-scalers --disable-translation --disable-bink --with-sdl-prefix=$(ARM_SYSROOT)/usr/bin --disable-nasm --disable-readline --disable-libunity --disable-sndio --backend=sdl --enable-optimizations --disable-engine=kyra --disable-engine=hopkins >$(LOGS)/scummvm.log >$(LOGS)/scummvm.log; \
 		VERBOSE_BUILD=1 AS=arm-linux-as make $(JOBS) >$(LOGS)/scummvm.log 2>&1; \
 		make $(JOBS) >../../logs/scummvm.log && cp scummvm $(TOMDIST)/bin; \
 		mkdir -p $(TOMDIST)/share/scumm_games; \
