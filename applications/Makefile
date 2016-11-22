@@ -23,12 +23,12 @@ CLEAN_APPS= $(APPS:%=clean-%)
 EXTRA= 	12swap ntetris pipepanic \
 	madplay sprsht flchekers \
 	yareversi opendune linapple \
-	dosbox dillo \
+	dosbox dillo gnuboy \
 	martian jooleem.sh tuxchess cr3 \
 	sudoku checkers freecell nxpad_gnuboy \
 	eggchess.sh net-bubble
 
-BROKEN_EXTRA= gnuboy scummvm navit
+BROKEN_EXTRA= scummvm navit
 
 
 BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
