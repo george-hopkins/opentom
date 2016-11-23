@@ -7,8 +7,7 @@ general:
 
 dependencies:
   override:
-    - sudo apt-get install -y subversion chrpath fluid imagemagick
-    - sudo updatedb
+    - sudo apt-get install -y subversion chrpath fluid imagemagick autopoint
 
 test:
   pre:
