@@ -6,9 +6,21 @@ general:
     - "target/opentom-extra.tar.gz"
 
 dependencies:
+  cache_directories:
+    - "Downloads"
+    - "applications/Downloads"
   override:
     - sudo apt-get install -y subversion chrpath fluid imagemagick
-    - sudo updatedb
+    - >
+      (
+      export CONFIGS=`pwd`/configs &&
+      export DOWNLOADS=Downloads &&
+      mkdir -p build Downloads &&
+      grep -oE '\$\(DOWNLOADS\)/(\S+)' Makefile | sed 's/.*\///' | grep -v '[*$%;]' | sort | uniq | xargs -i -n1 bash -c "src/tools/get_source.sh {} || true" &&
+      cd applications &&
+      mkdir -p build Downloads logs &&
+      grep -oE 'Downloads/(\S+)' Makefile | sed 's/.*\///' | grep -v '[*$%;]' | sort | uniq | xargs -i -n1 bash -c "../src/tools/get_source.sh {} || true"
+      )
 
 test:
   pre:
