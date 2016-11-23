@@ -146,7 +146,7 @@ $(TOMDIST)/bin/tuxchess:
 		rm images/board.gif; \
 	fi
 	cd build/tuxchess && { \
-		$(CC) -o $(TOMDIST)/bin/tuxchess -I/usr/local/include/microwin *.c -lnano-X; \
+		$(CC) -o $(TOMDIST)/bin/tuxchess -I $(ARM_SYSROOT)/usr/include/microwin *.c -lnano-X; \
 		mkdir -p $(TOMDIST)/share/tuxchess && cp -R images $(TOMDIST)/share/tuxchess; \
 	}
 
