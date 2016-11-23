@@ -26,9 +26,7 @@ EXTRA= 	12swap ntetris pipepanic \
 	dosbox dillo gnuboy scummvm \
 	martian jooleem.sh tuxchess cr3 \
 	sudoku checkers freecell nxpad_gnuboy \
-	eggchess.sh net-bubble
-
-BROKEN_EXTRA= navit
+	eggchess.sh navit net-bubble
 
 
 BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
@@ -83,11 +81,11 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
 
-$(TOMDIST)/bin/navit: Downloads/navit_svn.tgz
+$(TOMDIST)/bin/navit: Downloads/navit-R6816.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/navit_svn.tgz && cd navit && { \
+	cd build && tar xf ../Downloads/navit-R6816.tar.gz && cd navit-R6816 && { \
 		./autogen.sh >$(LOGS)/navit.log && \
-		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo --enable-svg2png-scaling=16,48 --enable-svg2png-scaling-flag=16 --enable-svg2png-scaling-nav=48 >>$(LOGS)/navit.log && \
+		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --disable-nls --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo --enable-svg2png-scaling=16,24,32,48 --enable-svg2png-scaling-flag=16 --enable-svg2png-scaling-nav=48 >>$(LOGS)/navit.log && \
 		echo '#define SDL_IMAGE 1§' | tr '§' '\n' >>config.h && \
 		make -j6 >>$(LOGS)/navit.log 2>&1 && make install >>$(LOGS)/navit.log && \
 		echo Navit build OK; \
