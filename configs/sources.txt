@@ -7,8 +7,8 @@ wget http://zlib.net/zlib-1.2.8.tar.gz
 wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
 wget ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng12/libpng-1.2.51.tar.gz
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && git -C microwin checkout 9ffcd17 && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && git -C nxlib checkout 7adaf0e && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. &&tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. &&tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
 wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz
 wget http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
 wget http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
@@ -49,7 +49,7 @@ wget http://mirrors.usc.edu/pub/gnu/gdb/gdb-7.1.tar.gz
 wget http://downloads.sourceforge.net/project/ctorrent/CTorrent-1.3.4/CTorrent-1.3.4/ctorrent-1.3.4.tar.bz2
 wget http://downloads.sourceforge.net/project/dosbox/dosbox/0.74/dosbox-0.74.tar.gz
 wget http://downloads.sourceforge.net/project/crengine/CoolReader3/cr3-3.0.56/cr3_3.0.56.orig.tar.gz
-[ -f $1 ] || { cd ../build && svn co svn://svn.code.sf.net/p/navit/code/trunk/navit/ navit && tar czf ../Downloads/navit_svn.tgz navit; }
+wget https://github.com/navit-gps/navit/archive/R6816.tar.gz -O navit-R6816.tar.gz
 # Games
 wget http://downloads.sourceforge.net/project/scummvm/scummvm/1.6.0/scummvm-1.6.0.tar.bz2
 wget http://downloads.sourceforge.net/project/linapple/linapple/linapple-2a/linapple-src_2a.tar.bz2
