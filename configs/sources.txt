@@ -7,8 +7,8 @@ wget http://zlib.net/zlib-1.2.8.tar.gz
 wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
 wget ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng12/libpng-1.2.51.tar.gz
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && git -C microwin checkout 9ffcd17 && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && git -C nxlib checkout 7adaf0e && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
+[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
 wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz
 wget http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
 wget http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
