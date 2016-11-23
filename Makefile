@@ -201,7 +201,8 @@ $(ARM_ROOT)/usr/bin/dbclient: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
 		echo "#include <asm/types.h>§" | tr '§' '\n' >>includes.h; \
 		make $(JOBS) >>$(LOGS)/dropbear.log && \
 		make install >>$(LOGS)/dropbear.log && \
-		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh; \
+		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh && \
+		cp $(ARM_APPROOT)/sbin/dropbear $(TOMDIST)/bin ;\
 	}
 
 dhclient: $(TOMDIST)/bin/dhclient
@@ -497,6 +498,7 @@ $(ARM_ROOT)/usr/bin/rfcomm: $(DOWNLOADS)/bluez-utils-2.15.tar.gz $(ARM_ROOT)/usr
 	}
 	cp $(ARM_APPROOT)/bin/rfcomm $(TOMDIST)/bin
 	cp $(ARM_APPROOT)/sbin/hciconfig $(TOMDIST)/bin
+	cp $(ARM_APPROOT)/sbin/hciattach $(TOMDIST)/bin
 
 ####
 # Macro
