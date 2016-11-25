@@ -29,16 +29,15 @@ EXTRA= 	12swap ntetris pipepanic \
 	eggchess.sh navit net-bubble
 
 
-BIN_EXTRA = $(EXTRA:%=$(TOMDIST)/bin/%)
-
 .PHONY: $(APPS)
 .PHONY: $(CLEAN_APPS)
+.PHONY: $(EXTRA)
 
 install: $(APPS)
 
 clean: $(CLEAN_APPS)
 
-extra: $(BIN_EXTRA)
+extra: $(EXTRA)
 	@echo
 	@echo "######################################################################################"
 	@echo "# Build of Extra apps are done"
@@ -53,6 +52,8 @@ $(APPS):
 
 $(CLEAN_APPS):
 	make -C src/$(@:clean-%=%) clean
+
+$(EXTRA): %: $(TOMDIST)/bin/%
 
 
 build/%/Makefile:
