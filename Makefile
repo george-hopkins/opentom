@@ -77,7 +77,7 @@ base: tools ttsystem distrib
 
 
 extra: espeak libzip sdl_net ctorrent
-	make -C applications extra
+	make -C applications navit
 	make verif_dist
 	@echo
 	@echo "######################################################################################"
