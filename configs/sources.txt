@@ -23,7 +23,7 @@ wget http://pkgs.fedoraproject.org/repo/pkgs/tslib/tslib-1.0.tar.bz2/92b2eb55b1e
 wget http://ftp.gnome.org/pub/gnome/sources/glib/1.2/glib-1.2.10.tar.gz
 wget http://ftp.gnome.org/pub/gnome/sources/glib/2.14/glib-2.14.6.tar.gz
 wget http://www.tomtom.com/gpl/bluez-libs-2.15-tt350126.tar.gz
-wget http://curl.haxx.se/download/curl-7.35.0.tar.gz
+wget https://curl.haxx.se/download/curl-7.51.0.tar.gz
 wget http://downloads.sourceforge.net/project/mad/libid3tag/0.15.1b/libid3tag-0.15.1b.tar.gz
 wget http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
 wget http://downloads.sourceforge.net/project/espeak/espeak/espeak-1.48/espeak-1.48.02-source.zip

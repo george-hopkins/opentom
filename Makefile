@@ -393,9 +393,9 @@ $(ARM_ROOT)/usr/include/bluetooth/hci.h: $(DOWNLOADS)/bluez-libs-2.15-tt350126.t
 	}
 
 curl: $(ARM_ROOT)/usr/include/curl/curl.h
-$(ARM_ROOT)/usr/include/curl/curl.h: $(DOWNLOADS)/curl-7.35.0.tar.gz
+$(ARM_ROOT)/usr/include/curl/curl.h: $(DOWNLOADS)/curl-7.51.0.tar.gz
 	cd build && { \
-                tar xf ../Downloads/curl-7.35.0.tar.gz && cd curl-7.35.0 && { \
+		tar xf ../Downloads/curl-7.51.0.tar.gz && cd curl-7.51.0 && { \
 			./configure --prefix=$(ARM_APPROOT) --host=arm-linux >$(LOGS)/curl.log; \
 			make $(JOBS) install >>$(LOGS)/curl.log; \
 		} \
