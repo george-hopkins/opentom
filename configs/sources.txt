@@ -32,6 +32,8 @@ wget http://www.nih.at/libzip/libzip-0.11.2.tar.gz
 wget http://downloads.sourceforge.net/project/cppunit/cppunit/1.12.1/cppunit-1.12.1.tar.gz
 wget http://www.openssl.org/source/openssl-1.0.1f.tar.gz
 wget http://ftp.gnome.org/pub/gnome/sources/gtk+/1.2/gtk+-1.2.10.tar.gz
+wget https://download.samba.org/pub/ppp/ppp-2.4.5.tar.gz
+
 # Apps
 wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
 wget http://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz

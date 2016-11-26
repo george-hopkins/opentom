@@ -2,11 +2,13 @@
 # Thank's to  Roberto Piola (http://www.ilpiola.it/roberto/tomtom)
 
 start_bt
+modprobe ppp-async
 
 stty -hup < `tty`
 if [ ! -d /var/lock ]; then
   mkdir /var/lock
 fi
+rfcomm listen /dev/rfcomm3 3 &
 while [ true ] ; do
     if ps w | grep rfcomm | grep listen | grep -v grep | grep -c rfcomm3
     then

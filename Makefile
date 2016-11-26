@@ -201,6 +201,7 @@ $(ARM_ROOT)/usr/bin/dbclient: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
 		echo "#include <asm/types.h>§" | tr '§' '\n' >>includes.h; \
 		make $(JOBS) >>$(LOGS)/dropbear.log && \
 		make install >>$(LOGS)/dropbear.log && \
+		make scp && cp scp $(TOMDIST)/bin && \
 		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh && \
 		cp $(ARM_APPROOT)/sbin/dropbear $(TOMDIST)/bin; \
 	}
@@ -211,6 +212,11 @@ $(TOMDIST)/bin/dhclient: # work only in debian like dist...
 		./configure && make && cp work.linux-2.2/client/dhclient $(TOMDIST)/bin; \
 	}
 
+pppd: $(TOMDIST)/bin/pppd
+$(TOMDIST)/bin/pppd: $(DOWNLOADS)/ppp-2.4.5.tar.gz
+	cd build && tar -xvzf ../$(DOWNLOADS)/ppp-2.4.5.tar.gz && cd ppp-2.4.5 && \
+	./configure --host=arm-linux prefix=$(ARM_SYSROOT) && \
+	cd pppd && make && cp pppd $(TOMDIST)/bin
 
 ctorrent: $(TOMDIST)/bin/ctorrent
 $(TOMDIST)/bin/ctorrent: $(ARM_ROOT)/usr/include/openssl/opensslconf.h $(DOWNLOADS)/ctorrent-1.3.4.tar.bz2
@@ -478,7 +484,7 @@ $(TOMDIST): nano-X
 	cp -R $(ARM_SYSROOT)/usr/lib/ts/*.so $(TOMDIST)/lib/ts/
 	cp $(ARM_SYSROOT)/usr/bin/ts_calibrate $(ARM_SYSROOT)/usr/bin/ts_test  $(TOMDIST)/bin
 
-tool_apps: csrinit bluez-utils
+tool_apps: csrinit bluez-utils pppd
 
 csrinit: $(TOMDIST)/bin/csrinit
 $(TOMDIST)/bin/csrinit: $(DOWNLOADS)/csrinit-tt531604.tar.gz
