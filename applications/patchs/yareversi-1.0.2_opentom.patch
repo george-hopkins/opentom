@@ -1,0 +1,146 @@
+diff -rupN yareversi-1.0.2.original/flothello.cc yareversi-1.0.2/flothello.cc
+--- yareversi-1.0.2.original/flothello.cc	2011-03-04 12:59:28.000000000 +0100
++++ yareversi-1.0.2/flothello.cc	2016-11-26 16:29:31.693000069 +0100
+@@ -52,14 +52,14 @@ void Fl_RevBoard::draw(){
+ Fl_RevBoard* Fl_RevBoard::brd;
+ void Fl_RevBoard::flip_animate(){
+   if(brd->board.game_in_progress==0){
+-    brd->board.animate_stagger=29;
+-    Fl::add_timeout(0.01,(Fl_Timeout_Handler)animate,brd);
++    brd->board.animate_stagger=24;
++    Fl::add_timeout(0.001,(Fl_Timeout_Handler)animate,brd);
+   }else if(brd->board.whose_turn == rev_board::WHITE_TURN){
+-    brd->board.animate_stagger=29;
+-    Fl::add_timeout(0.01,(Fl_Timeout_Handler)animate,brd);
++    brd->board.animate_stagger=24;
++    Fl::add_timeout(0.001,(Fl_Timeout_Handler)animate,brd);
+   }else{
+-    brd->board.animate_stagger=-30;
+-    Fl::add_timeout(0.01,(Fl_Timeout_Handler)animate,brd);
++    brd->board.animate_stagger=-26;
++    Fl::add_timeout(0.001,(Fl_Timeout_Handler)animate,brd);
+   }
+ }
+ 
+@@ -89,22 +89,24 @@ int Fl_RevBoard::handle(int e){
+   }
+ }
+ 
+-Fl_Output* out;
+-Fl_Box* status;
+-
+-int Fl_RevBoard::gui_message(const char* str){
+-  out->value(str);
++Fl_Double_Window *main_window;
++//Fl_Output* out;
++//Fl_Box* status;
++static char str[1024];
++
++int Fl_RevBoard::gui_message(const char* msg){
++  sprintf(str,"FLReversi - %s", msg);
++  main_window->label((const char *)str);
+ }
+ void Fl_RevBoard::gui_status(){
+-  static char str[128];
+-  sprintf(str,_("black:%.2d white:%.2d"), brd->board.bcount, brd->board.wcount); 
+-  if (brd->board.whose_turn == rev_board::BLACK_TURN) {
+-    gui_message (_("Dark's move"));
+-  } else if (brd->board.whose_turn == rev_board::WHITE_TURN) {
+-    gui_message (_("Light's move"));
+-  }
+-  status->label(str);
+-  status->redraw();
++  //static char str[128];
++  sprintf(str,_("FLReversi - B:%.2d W:%.2d, %s"), brd->board.bcount, brd->board.wcount,
++    ((brd->board.whose_turn == rev_board::BLACK_TURN)?"Dark's move":
++        (brd->board.whose_turn == rev_board::WHITE_TURN)?"Light's move":""));
++  
++  main_window->label((const char *)str);
++  //status->label(str);
++  //status->redraw();
+ }
+ 
+ Fl_RevBoard* board;
+@@ -132,7 +134,7 @@ void cb_close(Fl_Widget*o,void*){
+ Fl_Window *opt_wnd=(Fl_Window *)0;
+ void cb_options(Fl_Widget*,void*){
+   if(!opt_wnd){
+-    opt_wnd = new Fl_Window(320,240,"Options");
++    opt_wnd = new Fl_Window(320,190,"Options");
+     Fl_Group *lgr= new Fl_Group(0,25,160,100,"Lights");
+     lgr->begin();
+     {Fl_Round_Button *b0 = new Fl_Radio_Round_Button(0,25,160,25,"Human");
+@@ -157,7 +159,7 @@ void cb_options(Fl_Widget*,void*){
+     b3r->callback(cb_dark,3);}
+     rgr->end();
+     ((Fl_Round_Button *)rgr->child(board->board.black_computer_level))->value(1);
+-    (new Fl_Button(110,200,100,25,"Close"))->callback(cb_close);
++    (new Fl_Button(110,160,100,25,"Close"))->callback(cb_close);
+     opt_wnd->end();
+     opt_wnd->set_modal();
+   }
+@@ -165,7 +167,7 @@ void cb_options(Fl_Widget*,void*){
+ }
+ 
+ void cb_about(Fl_Widget*o,void*){
+-  fl_message("flreversi v1.0.2\nYury P. Fedorchenko 2009-2011\nwww.fedorchenko.net");
++  fl_message("flreversi v1.0.2\nYury P. Fedorchenko 2009-2011\nwww.fedorchenko.net\nOpenTom version");
+ }
+ 
+ Fl_Menu_Item menu[]={
+@@ -181,13 +183,13 @@ Fl_Menu_Item menu[]={
+ };
+ 
+ int main(int argc,char** argv){
+-  Fl_Double_Window a(404,404+25+25+25,"Flreversi");
+-  Fl_Menu_Bar bar(2,0,400,25);
++  main_window = new Fl_Double_Window(216,216+20,"Flreversi");
++  Fl_Menu_Bar bar(0,0,240,20);
+   bar.menu(menu);
+-  board = new Fl_RevBoard(2,25);
+-  out = new Fl_Output(2,427,400,25);
+-  status = new Fl_Box(2,452,400,25);
+-  a.show(argc,argv);
++  board = new Fl_RevBoard(0,20);
++  //out = new Fl_Output(2,210,240,20);
++  //status = new Fl_Box(2,230,240,20);
++  main_window->show(argc,argv);
+   return Fl::run();
+ }
+ 
+diff -rupN yareversi-1.0.2.original/flothello.h yareversi-1.0.2/flothello.h
+--- yareversi-1.0.2.original/flothello.h	2011-03-04 11:18:41.000000000 +0100
++++ yareversi-1.0.2/flothello.h	2016-11-26 16:29:31.693000069 +0100
+@@ -22,10 +22,10 @@
+ #include "revboard.h"
+ 
+ class Fl_RevBoard : public Fl_Widget , public RevBoard{
+-  static const int csize=50;
++  static const int csize=27;
+   Fl_PNG_Image*  pixmaps;
+ public:
+-  Fl_RevBoard(int X,int Y) : Fl_Widget(X,Y,400,400){
++  Fl_RevBoard(int X,int Y) : Fl_Widget(X,Y,csize * 8,csize * 8){
+     box(FL_FLAT_BOX);
+     color(FL_BLUE);
+     board.msg = gui_message;
+diff -rupN yareversi-1.0.2.original/makedepend yareversi-1.0.2/makedepend
+--- yareversi-1.0.2.original/makedepend	1970-01-01 01:00:00.000000000 +0100
++++ yareversi-1.0.2/makedepend	2016-11-26 16:29:31.697000083 +0100
+@@ -0,0 +1,2 @@
++revboard.o: revboard.cc revboard.h
++flothello.o: flothello.cc flothello.h revboard.h
+diff -rupN yareversi-1.0.2.original/Makefile.fl yareversi-1.0.2/Makefile.fl
+--- yareversi-1.0.2.original/Makefile.fl	2011-03-04 11:30:30.000000000 +0100
++++ yareversi-1.0.2/Makefile.fl	2016-11-26 16:36:25.019049654 +0100
+@@ -6,8 +6,8 @@ PREFIX=.
+ REV_DATADIR=${PREFIX}/img
+ else
+ FLTK=fltk-config
+-PREFIX?=/usr/local
+-REV_DATADIR=${PREFIX}/share/flreversi
++PREFIX?=$(ARM_APPROOT)
++REV_DATADIR=/mnt/sdcard/opentom/share/flreversi
+ endif
+ 
+ SRC = revboard.cc\

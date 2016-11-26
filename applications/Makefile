@@ -199,8 +199,8 @@ $(TOMDIST)/bin/flchekers: Downloads/yacheckers-1.4.0.tar.bz2
 $(TOMDIST)/bin/yareversi: Downloads/yareversi-1.0.2.tar.bz2
 	mkdir -p build
 	cd build && tar xf ../Downloads/yareversi-1.0.2.tar.bz2 && cd yareversi-1.0.2 && { \
-		patch -p1 <../../patchs/yareversi-1.0.2_1402241834.patch; \
-		make -f Makefile.opentom >$(LOGS)/yareversi.log && \
+		patch -p1 <../../patchs/yareversi-1.0.2_opentom.patch && \
+		make -f Makefile.fl >$(LOGS)/yareversi.log && \
 		cp yareversi $(TOMDIST)/bin; \
 	}
 
