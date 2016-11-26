@@ -2,6 +2,7 @@
 # Thank's to  Roberto Piola (http://www.ilpiola.it/roberto/tomtom)
 
 start_bt
+modprobe ppp-async
 
 stty -hup < `tty`
 if [ ! -d /var/lock ]; then
