@@ -34,7 +34,7 @@ wget http://www.openssl.org/source/openssl-1.0.1f.tar.gz
 wget http://ftp.gnome.org/pub/gnome/sources/gtk+/1.2/gtk+-1.2.10.tar.gz
 # Apps
 wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
-wget http://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz
+wget https://download.samba.org/pub/ppp/ppp-2.4.7.tar.gz
 wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2013.62.tar.bz2
 wget http://pkgs.fedoraproject.org/repo/pkgs/bluez-utils/bluez-utils-2.15.tar.gz/4e86dfd4449ff49e82696d8a3b254002/bluez-utils-2.15.tar.gz
 wget https://picocom.googlecode.com/files/picocom-1.7.tar.gz

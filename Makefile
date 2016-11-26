@@ -480,7 +480,7 @@ $(TOMDIST): nano-X
 	cp -R $(ARM_SYSROOT)/usr/lib/ts/*.so $(TOMDIST)/lib/ts/
 	cp $(ARM_SYSROOT)/usr/bin/ts_calibrate $(ARM_SYSROOT)/usr/bin/ts_test  $(TOMDIST)/bin
 
-tool_apps: csrinit bluez-utils
+tool_apps: csrinit bluez-utils pppd
 
 csrinit: $(TOMDIST)/bin/csrinit
 $(TOMDIST)/bin/csrinit: $(DOWNLOADS)/csrinit-tt531604.tar.gz
@@ -501,6 +501,15 @@ $(ARM_ROOT)/usr/bin/rfcomm: $(DOWNLOADS)/bluez-utils-2.15.tar.gz $(ARM_ROOT)/usr
 	cp $(ARM_APPROOT)/bin/rfcomm $(TOMDIST)/bin
 	cp $(ARM_APPROOT)/sbin/hciconfig $(TOMDIST)/bin
 	cp $(ARM_APPROOT)/sbin/hciattach $(TOMDIST)/bin
+
+pppd: $(TOMDIST)/bin/pppd
+$(TOMDIST)/bin/pppd: $(DOWNLOADS)/ppp-2.4.7.tar.gz
+	cd build && tar xf ../Downloads/ppp-2.4.7.tar.gz && cd ppp-2.4.7 && { \
+		patch -p1 <../../patchs/ppp-2.4.7_opentom.patch && \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >$(LOGS)/ppp.log && \
+		make -C pppd $(JOBS) install >>$(LOGS)/ppp.log && \
+		cp $(ARM_APPROOT)/sbin/pppd $(TOMDIST)/bin/pppd; \
+	}
 
 ####
 # Macro
