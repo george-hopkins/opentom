@@ -17,6 +17,8 @@ export LD_LIBRARY_PATH=$DIST/lib
 
 ln -s $DIST/lib/libz.so.1 /lib/libz.so
 
+if [ ! -e /etc/profile ]; then ln -s $DIST/etc/profile /etc/profile; fi
+
 echo "Disabling BT"
 stop_bt -s
 

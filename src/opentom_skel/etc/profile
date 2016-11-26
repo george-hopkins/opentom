@@ -1,0 +1,4 @@
+# Load environment variables
+if [ -e /mnt/sdcard/opentom/getenv.sh ]; then
+	source /mnt/sdcard/opentom/getenv.sh
+fi
