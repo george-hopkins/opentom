@@ -85,14 +85,17 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 $(TOMDIST)/bin/navit: Downloads/navit-trunk.tar.gz
 	mkdir -p build
 	cd build && tar xf ../Downloads/navit-trunk.tar.gz && cd navit-trunk && { \
-		./autogen.sh >$(LOGS)/navit.log && \
-		./configure --prefix=$(TOMDIST) --build=i686-gnu-linux --target=$(T_ARCH) --host=$(T_ARCH) --disable-nls --enable-cache-size=1048576 --disable-postgresql --disable-fontconfig --disable-graphics-opengl --disable-binding-python --disable-binding-dbus --disable-rpath --disable-graphics-gtk-drawing-area --disable-graphics-qt-qpainter --disable-gui-gtk --disable-speech-android --disable-speech-speech-dispatcher --disable-vehicle-android --disable-vehicle-gypsy --disable-vehicle-maemo --disable-vehicle-null --disable-vehicle-wince --disable-binding-dbus-use-system-bus --disable-hildon --disable-osso --disable-garmin --disable-maptool --disable-samplemap --disable-gmodule --disable-map-mg --disable-graphics-null --disable-vehicle-demo --enable-svg2png-scaling=16,24,32,48 --enable-svg2png-scaling-flag=16 --enable-svg2png-scaling-nav=48 >>$(LOGS)/navit.log && \
-		echo '#define SDL_IMAGE 1§' | tr '§' '\n' >>config.h && \
-		make -j6 >>$(LOGS)/navit.log 2>&1 && make install >>$(LOGS)/navit.log && \
-		echo Navit build OK; \
-		mogrify -resize 33.33% $(TOMDIST)/share/navit/xpm/gui_strength_*; \
-		cd $(TOMDIST)/share && rm -Rf icons applications man navit/xpm/*.svg*; \
-		rm $(TOMDIST)/lib/navit/*/*.*a*; \
+		sed -i 's| TOMTOM_SDK_DIR \S*| TOMTOM_SDK_DIR $(ARM_APPROOT)|' Toolchain/$(T_ARCH).cmake && \
+		sed -i 's|/mnt/sdcard/navit/bin/espeakdsp/|/mnt/sdcard/opentom/bin/espeakdsp|' navit/xslt/tomtom.xslt && \
+		sed -i 's/tomtom_plus_80_80/zoom_in_64_64/' navit/xslt/tomtom.xslt && \
+		sed -i 's/tomtom_minus_80_80/zoom_out_64_64/' navit/xslt/tomtom.xslt && \
+		mkdir -p build && cd build && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=$(ARM_APPROOT) -DFREETYPE_INCLUDE_DIRS=$(ARM_APPROOT)/include/freetype2/ -Dsupport/gettext_intl=TRUE -DHAVE_API_TOMTOM=TRUE -DXSLTS=tomtom -DAVOID_FLOAT=TRUE -Dmap/mg=FALSE -DUSE_PLUGINS=0 -DCMAKE_TOOLCHAIN_FILE=../Toolchain/$(T_ARCH).cmake -DDISABLE_QT=ON -DSAMPLE_MAP=n -DBUILD_MAPTOOL=n >$(LOGS)/navit.log 2>&1 && \
+		make $(JOBS) >>$(LOGS)/navit.log && \
+		make install >>$(LOGS)/navit.log && \
+		cp -R $(ARM_APPROOT)/share/navit $(TOMDIST)/share/ && \
+		install -D $(ARM_APPROOT)/share/locale/en/LC_MESSAGES/navit.mo $(TOMDIST)/share/locale/en/LC_MESSAGES/navit.mo && \
+		cp $(ARM_APPROOT)/bin/navit $(TOMDIST)/bin/navit; \
 	}
 
 
