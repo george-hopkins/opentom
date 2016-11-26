@@ -26,7 +26,7 @@ EXTRA= 	12swap ntetris pipepanic \
 	dosbox dillo gnuboy scummvm \
 	martian jooleem.sh tuxchess cr3 \
 	sudoku checkers freecell nxpad_gnuboy \
-	eggchess.sh navit net-bubble
+	eggchess.sh navit net-bubble vp
 
 
 .PHONY: $(APPS)
@@ -313,6 +313,15 @@ $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
 	}
 	# You need at least one font to use CoolReader
 	cp $(ROOT)/build/microwin/src/fonts/truetype/times.ttf $(TOMDIST)/fonts || cp "`locate times.ttf | head -1`" $(TOMDIST)/fonts
+
+$(TOMDIST)/bin/vp: Downloads/vp-1.8.tar.gz
+	mkdir -p build
+	cd build && tar xf ../Downloads/vp-1.8.tar.gz && cd vp-1.8 && { \
+		autoreconf -f -i -I$(ARM_APPROOT)/share/aclocal >$(LOGS)/vp.log && \
+		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >>$(LOGS)/vp.log && \
+		make $(JOBS) install-strip >>$(LOGS)/vp.log && \
+		cp $(ARM_APPROOT)/bin/vp $(TOMDIST)/bin/vp; \
+	}
 
 
 clean_duplicate_patchs:
