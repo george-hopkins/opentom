@@ -199,9 +199,10 @@ $(TOMDIST)/bin/dropbear: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
 	cd build && tar xf ../Downloads/dropbear-2013.62.tar.bz2 && cd dropbear* && { \
 		./configure --host=arm-linux --prefix=$(ARM_APPROOT) --disable-lastlog --disable-utmp --disable-utmpx --disable-wtmp --disable-wtmpx --disable-loginfunc --disable-pututline --disable-pututxline --enable-bundled-libtom --disable-syslog --disable-largefile >$(LOGS)/dropbear.log && \
 		echo "#include <asm/types.h>§" | tr '§' '\n' >>includes.h; \
-		make $(JOBS) PROGRAMS="dropbear dbclient scp" >>$(LOGS)/dropbear.log && \
-		make install PROGRAMS="dropbear dbclient scp" >>$(LOGS)/dropbear.log && \
+		make $(JOBS) PROGRAMS="dropbear dbclient dropbearkey scp" >>$(LOGS)/dropbear.log && \
+		make install PROGRAMS="dropbear dbclient dropbearkey scp" >>$(LOGS)/dropbear.log && \
 		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh && \
+		cp $(ARM_APPROOT)/bin/dropbearkey $(TOMDIST)/bin && \
 		cp $(ARM_APPROOT)/bin/scp $(TOMDIST)/bin && \
 		cp $(ARM_APPROOT)/sbin/dropbear $(TOMDIST)/bin; \
 	}

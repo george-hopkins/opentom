@@ -9,5 +9,8 @@ if [ ! -d /.ssh ]; then
 	mkdir -p /.ssh
 	ln -s $P/etc/id_dsa.pub /.ssh/authorized_keys
 fi
+if [ ! -e $P/etc/dropbear_rsa_host_key ]; then
+	dropbearkey -t rsa -f $P/etc/dropbear_rsa_host_key
+fi
 echo HOME=$HOME
 exec dropbear -sgB -r $P/etc/dropbear_rsa_host_key
