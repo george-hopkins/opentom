@@ -1,7 +1,11 @@
 #! /bin/sh
 
-ln -s $DIST/bin/dbclient /usr/bin/dbclient
-ln -s $DIST/bin/scp /usr/bin/scp
+if [ ! -e /usr/bin/dbclient ]; then
+	ln -s $DIST/bin/ssh /usr/bin/dbclient
+fi
+if [ ! -e /usr/bin/scp ]; then
+	ln -s $DIST/bin/scp /usr/bin/scp
+fi
 
 P=$HOME
 export HOME=/
