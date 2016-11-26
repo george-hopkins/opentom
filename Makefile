@@ -438,12 +438,12 @@ $(ARM_ROOT)/usr/include/zip.h: $(DOWNLOADS)/libzip-0.11.2.tar.gz
 	}
 
 ssl: $(ARM_ROOT)/usr/include/openssl/opensslconf.h
-$(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1f.tar.gz
-		cd build && tar xf ../Downloads/openssl-1.0.1f.tar.gz && cd openssl-1.0.1f && { \
-			CC=gcc ./Configure linux-armv4 shared --prefix=$(ARM_APPROOT) >$(LOGS)/ssl.log && \
-			make >>$(LOGS)/ssl.log && \
-			INSTALL_PREFIX=/mnt/sdcard/opentom make install_sw >>$(LOGS)/ssl.log; \
-		}
+$(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1u.tar.gz
+	cd build && tar xf ../Downloads/openssl-1.0.1u.tar.gz && cd openssl-1.0.1u && { \
+		CC=gcc ./Configure linux-armv4 shared --prefix=$(ARM_APPROOT) >$(LOGS)/ssl.log && \
+		make >>$(LOGS)/ssl.log && \
+		INSTALL_PREFIX=/mnt/sdcard/opentom make install_sw >>$(LOGS)/ssl.log; \
+	}
 
 gtk: $(ARM_ROOT)/usr/include/gtk-1.2/gtk/gtk.h
 /usr/include/gtk-1.2/gtk/gtk.h: Downloads/gtk+-1.2.10.tar.gz
