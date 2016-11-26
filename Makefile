@@ -194,14 +194,15 @@ build/microwin/src: $(DOWNLOADS)/microwin_9ffcd17.tgz
 		cd microwin && patch -p1 <$(ROOT)/patchs/microwin_git_opentom.patch; \
 	}
 
-dropbear: $(ARM_ROOT)/usr/bin/dbclient
-$(ARM_ROOT)/usr/bin/dbclient: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
+dropbear: $(TOMDIST)/bin/dropbear
+$(TOMDIST)/bin/dropbear: $(DOWNLOADS)/dropbear-2013.62.tar.bz2
 	cd build && tar xf ../Downloads/dropbear-2013.62.tar.bz2 && cd dropbear* && { \
 		./configure --host=arm-linux --prefix=$(ARM_APPROOT) --disable-lastlog --disable-utmp --disable-utmpx --disable-wtmp --disable-wtmpx --disable-loginfunc --disable-pututline --disable-pututxline --enable-bundled-libtom --disable-syslog --disable-largefile >$(LOGS)/dropbear.log && \
 		echo "#include <asm/types.h>§" | tr '§' '\n' >>includes.h; \
-		make $(JOBS) >>$(LOGS)/dropbear.log && \
-		make install >>$(LOGS)/dropbear.log && \
+		make $(JOBS) PROGRAMS="dropbear dbclient scp" >>$(LOGS)/dropbear.log && \
+		make install PROGRAMS="dropbear dbclient scp" >>$(LOGS)/dropbear.log && \
 		cp $(ARM_APPROOT)/bin/dbclient $(TOMDIST)/bin/ssh && \
+		cp $(ARM_APPROOT)/bin/scp $(TOMDIST)/bin && \
 		cp $(ARM_APPROOT)/sbin/dropbear $(TOMDIST)/bin; \
 	}
 
