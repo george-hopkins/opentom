@@ -552,9 +552,6 @@ verif_dist:
 	# 2eme passe
 	install_shared_libs.sh $(TOMDIST) "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
 	cd $(TOMDIST) && find . -type f -exec $(STRIP) 2>/dev/null {} \;
-	# need unstripped freetype lib for navit dynamic lib loading ...
-	cp $(ARM_ROOT)/usr/lib/libfreetype.so.6 $(TOMDIST)/lib
-	$(STRIP) --strip-unneeded $(TOMDIST)/lib/libfreetype.so.6
 
 
 extract_initramfs:
