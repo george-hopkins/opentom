@@ -548,9 +548,10 @@ quicka-%:
 
 verif_dist:
 	rm -f $(TOMDIST)/lib/* || echo ok
-	install_shared_libs.sh $(TOMDIST) "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
-	# 2eme passe
-	install_shared_libs.sh $(TOMDIST) "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
+	libcount=0 ; while [ $$libcount -lt `find $(TOMDIST)/lib | wc -l` ] ; do \
+		libcount=`find $(TOMDIST)/lib | wc -l` ; \
+		install_shared_libs.sh $(TOMDIST) "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib" ; \
+	done
 	cd $(TOMDIST) && find . -type f -exec $(STRIP) 2>/dev/null {} \;
 	# need unstripped freetype lib for navit dynamic lib loading ...
 	cp $(ARM_ROOT)/usr/lib/libfreetype.so.6 $(TOMDIST)/lib
