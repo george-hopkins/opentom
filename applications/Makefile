@@ -85,10 +85,8 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 $(TOMDIST)/bin/navit: Downloads/navit-trunk.tar.gz
 	mkdir -p build
 	cd build && tar xf ../Downloads/navit-trunk.tar.gz && cd navit-trunk && { \
+		patch -p1 <../../patchs/navit_opentom.patch && \
 		sed -i 's| TOMTOM_SDK_DIR \S*| TOMTOM_SDK_DIR $(ARM_APPROOT)|' Toolchain/$(T_ARCH).cmake && \
-		sed -i 's|/mnt/sdcard/navit/bin/espeakdsp/|/mnt/sdcard/opentom/bin/espeakdsp|' navit/xslt/tomtom.xslt && \
-		sed -i 's/tomtom_plus_80_80/zoom_in_64_64/' navit/xslt/tomtom.xslt && \
-		sed -i 's/tomtom_minus_80_80/zoom_out_64_64/' navit/xslt/tomtom.xslt && \
 		mkdir -p build && cd build && \
 		cmake .. -DCMAKE_INSTALL_PREFIX=$(ARM_APPROOT) -DFREETYPE_INCLUDE_DIRS=$(ARM_APPROOT)/include/freetype2/ -Dsupport/gettext_intl=TRUE -DHAVE_API_TOMTOM=TRUE -DXSLTS=tomtom -DAVOID_FLOAT=TRUE -Dmap/mg=FALSE -DUSE_PLUGINS=0 -DCMAKE_TOOLCHAIN_FILE=../Toolchain/$(T_ARCH).cmake -DDISABLE_QT=ON -DSAMPLE_MAP=n -DBUILD_MAPTOOL=n >$(LOGS)/navit.log 2>&1 && \
 		make $(JOBS) >>$(LOGS)/navit.log && \
