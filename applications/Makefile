@@ -92,7 +92,7 @@ $(TOMDIST)/bin/navit: Downloads/navit-trunk.tar.gz
 		make $(JOBS) >>$(LOGS)/navit.log && \
 		make install >>$(LOGS)/navit.log && \
 		cp -R $(ARM_APPROOT)/share/navit $(TOMDIST)/share/ && \
-		install -D $(ARM_APPROOT)/share/locale/en/LC_MESSAGES/navit.mo $(TOMDIST)/share/locale/en/LC_MESSAGES/navit.mo && \
+		cd $(ARM_APPROOT) && find share/locale/ -name navit.mo -exec cp --parents '{}' $(TOMDIST) \; && \
 		cp $(ARM_APPROOT)/bin/navit $(TOMDIST)/bin/navit; \
 	}
 
