@@ -1,3 +1,16 @@
+diff --git a/navit/CMakeLists.txt b/navit/CMakeLists.txt
+index 5333c9f..b80c6bc 100644
+--- a/navit/CMakeLists.txt
++++ b/navit/CMakeLists.txt
+@@ -102,7 +102,7 @@ if(NOT MSVC)
+     SET(NAVIT_LIBS ${NAVIT_LIBS} m)
+ endif(NOT MSVC)
+ target_link_libraries(${NAVIT_LIBNAME}  ${MODULES_NAME} ${NAVIT_SUPPORT_LIBS} fib ${NAVIT_LIBS} ) 
+-set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_DEFINITIONS "MODULE=navit;LIBDIR=\"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}\";PREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
++set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_DEFINITIONS "MODULE=navit;LIBDIR=\"/mnt/sdcard/opentom/lib\";PREFIX=\"/mnt/sdcard/opentom\"")
+ if (DEFINED NAVIT_COMPILE_FLAGS)
+    set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_FLAGS "${NAVIT_COMPILE_FLAGS}")
+ endif()
 diff --git a/navit/xpm/Makefile.am b/navit/xpm/Makefile.am
 index 40b7cc8..4db2f61 100644
 --- a/navit/xpm/Makefile.am
