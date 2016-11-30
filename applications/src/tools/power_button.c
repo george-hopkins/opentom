@@ -57,7 +57,7 @@ int waitbutton(int devHWStatus,char *envp[],char *bjob,char *ljob)
 		}
 		if (cpid == 0) {
 			execve(job,NULL,envp);
-                	perror("execute");
+                	perror(job);
 			return -1;
 		}
 		wait(NULL);
