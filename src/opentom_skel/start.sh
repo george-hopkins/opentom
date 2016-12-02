@@ -15,7 +15,7 @@ export TSLIB_CALIBFILE=$DIST/etc/pointercal
 export PATH=$PATH:$DIST/bin
 export LD_LIBRARY_PATH=$DIST/lib
 
-export TZ="GMT-1"
+-ln -s $DIST/lib/libz.so.1 /lib/libz.so
 
 ln -s $DIST/bin/dbclient /usr/bin/dbclient
 ln -s $DIST/bin/scp /usr/bin/scp
