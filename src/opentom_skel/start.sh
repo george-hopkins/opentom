@@ -15,14 +15,17 @@ export TSLIB_CALIBFILE=$DIST/etc/pointercal
 export PATH=$PATH:$DIST/bin
 export LD_LIBRARY_PATH=$DIST/lib
 
-ln -s $DIST/lib/libz.so.1 /lib/libz.so
+export TZ="GMT-1"
 
-if [ ! -e /etc/profile ]; then ln -s $DIST/etc/profile /etc/profile; fi
+ln -s $DIST/bin/dbclient /usr/bin/dbclient
+ln -s $DIST/bin/scp /usr/bin/scp
+ln -s $DIST/lib/libz.so.1 /lib/libz.so
 
 echo "Disabling BT"
 stop_bt -s
 
 ifconfig lo 127.0.0.1 up
+
 
 cd /dev
 ln -s fb fb0
@@ -32,6 +35,19 @@ export NANOX_YRES=`fbset -s | grep geometry | if read x x yres x; then echo $yre
 if [ ! -f $TSLIB_CALIBFILE ]; then ts_calibrate; fi
 
 cd $DIST
+
+
+# activate swap if you have a swap partiton on SD-card
+swapon /dev/mmcblk0p2
+mount /mnt/sdcard -o remount,async
+
+# make it possible to use ". s" to set the sdcard environment on telnet login.  
+cp $DIST/getenv.sh /s
+echo cd $DIST >> /s
+
+# enable powerbutton and low batt suspend
+power_button -b bin/suspend /bin/suspend &
+
 while /bin/true
 do
 	sleep 1
