@@ -15,11 +15,10 @@ export TSLIB_CALIBFILE=$DIST/etc/pointercal
 export PATH=$PATH:$DIST/bin
 export LD_LIBRARY_PATH=$DIST/lib
 
--ln -s $DIST/lib/libz.so.1 /lib/libz.so
-
-ln -s $DIST/bin/dbclient /usr/bin/dbclient
-ln -s $DIST/bin/scp /usr/bin/scp
 ln -s $DIST/lib/libz.so.1 /lib/libz.so
+
+if [ ! -e /etc/profile ]; then ln -s $DIST/etc/profile
+ /etc/profile; fi
 
 echo "Disabling BT"
 stop_bt -s
@@ -38,8 +37,8 @@ cd $DIST
 
 
 # activate swap if you have a swap partiton on SD-card
-swapon /dev/mmcblk0p2
-mount /mnt/sdcard -o remount,async
+#swapon /dev/mmcblk0p2
+#mount /mnt/sdcard -o remount,async
 
 # make it possible to use ". s" to set the sdcard environment on telnet login.  
 cp $DIST/getenv.sh /s
