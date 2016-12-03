@@ -217,3 +217,12 @@ diff -rupN microwin/src/Makefile.rules microwin_opentom/src/Makefile.rules
  # Defines
  DEFINES += -DMWPIXEL_FORMAT=$(SCREEN_PIXTYPE)
 
+@@ -496,7 +499,7 @@ ifeq ($(dirs), )
+ # but ignore the demos/ directory (if present).
+ # Save the list of directory names to $(dirs) - this
+ # variable is empty if the directories do not exist.
+-dirs := $(dir $(wildcard $(MW_DIR_SRC)/$(MW_DIR_RELATIVE)*/Makefile))
++dirs := $(sort $(dir $(wildcard $(MW_DIR_SRC)/$(MW_DIR_RELATIVE)*/Makefile)))
+ dirs := $(filter-out $(MW_DIR_SRC)/$(MW_DIR_RELATIVE)demos/,$(dirs))
+ dirs := $(filter-out $(MW_DIR_SRC)/$(MW_DIR_RELATIVE)ecos/,$(dirs))
+ dirs := $(filter-out $(MW_DIR_SRC)/$(MW_DIR_RELATIVE)rtems/,$(dirs))
