@@ -32,6 +32,10 @@ export NANOX_YRES=`fbset -s | grep geometry | if read x x yres x; then echo $yre
 if [ ! -f $TSLIB_CALIBFILE ]; then ts_calibrate; fi
 
 cd $DIST
+
+# Suspend when the power button is pressed or the battery is low
+power_button -b bin/suspend bin/suspend &
+
 while /bin/true
 do
 	sleep 1
