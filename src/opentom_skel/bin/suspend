@@ -1,7 +1,12 @@
 #! /bin/sh
 
+# Save display brightness
 BRI=`cat /sys/class/backlight/s3c/brightness`
+
 MNTROPT=`mount | grep ext2 | cut -f2 -d"(" | cut -f1 -d")"`
+
+# If gltt is running, restart it after resume
+GLTTPID=`pidof gltt`
 
 echo 0 >/sys/class/backlight/s3c/brightness
 set_cpu_governor powersave
@@ -10,8 +15,9 @@ stop_bt -s
 
 if [ ! -z "$MNTROPT" ]; then
 	mount -oremount,ro /
-	sync
 fi
+
+sync
 
 echo mem > /sys/power/state
 
@@ -20,5 +26,9 @@ if [ ! -z "$MNTROPT" ]; then
 fi
 
 set_cpu_governor performance
+
+# Restore brightness
 echo $BRI >/sys/class/backlight/s3c/brightness
 
+# Restart gltt if it ran before suspend
+[ -z "$GLTTPID" ] || rc.gltt start
