@@ -27,6 +27,9 @@ start() {
     # Create communication pipe for the application
     [ -e /var/run/gpspipe ] || mknod /var/run/gpspipe p
 
+    # Link actual GPS device
+    [ -e /dev/gpsdata ] || ln -s /dev/`cat /proc/barcelona/gpsdev` /dev/gpsdata
+
     # Create log folder
     mkdir -p ${sdcard}/gl/log
 
