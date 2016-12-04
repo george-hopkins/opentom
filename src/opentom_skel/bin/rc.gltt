@@ -24,11 +24,8 @@ start() {
     # Create the GL folder
     mkdir -p ${ramdisk_gl}
 
-    # Remove existing communication pipe
-    rm -f /var/run/gpspipe
-
-    # Create new communication pipe for the application
-    mknod /var/run/gpspipe p
+    # Create communication pipe for the application
+    [ -e /var/run/gpspipe ] || mknod /var/run/gpspipe p
 
     # Create log folder
     mkdir -p ${sdcard}/gl/log
