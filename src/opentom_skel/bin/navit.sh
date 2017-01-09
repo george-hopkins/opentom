@@ -1,20 +1,27 @@
 #! /bin/sh
 
-ls $DIST/bin/gltt || {
-	echo "You need TomTom(tm) gltt\nPlease read documentation." | flmessage -s -t "Can't start Navit"
-	exit
-}
+export LANG=en_US.utf8
 
-export LANG=fr_FR.utf8
+# Navit can use SiRFstar III GPS (device id 3; used in TT7xx) without gltt
+# For GPS chips without NMEA output gltt is used
+if [ `cat /proc/barcelona/gpstype` == 3 ] ; then
+	ln -sf /dev/`cat /proc/barcelona/gpsdev` /var/run/gpspipe
+else
+	ls $DIST/bin/gltt || {
+		echo "You need TomTom(tm) gltt\nPlease read documentation." | flmessage -s -t "Can't start Navit"
+		exit
+	}
 
-export NAVIT_PREFIX=$DIST
-export NAVIT_LIBDIR=$DIST/lib/navit
-export NAVIT_SHAREDIR=$DIST/share/navit
+	if [ -z `pidof gltt` ]; then rc.gltt start; fi
+	echo EnableRawGPSOutput >/dev/gps
+fi
 
-if [ -z `pidof gltt` ]; then rc.gltt start; fi
-echo EnableRawGPSOutput >/dev/gps
+if [ "`cat /proc/barcelona/tfttype`" == 2 ] || [ "`cat /proc/barcelona/tfttype`" == 3 ] ; then
+	NAVIT_CONFIG=$DIST/share/navit/navit.xml
+else
+	NAVIT_CONFIG=$DIST/share/navit/navit_xl.xml
+fi
 
-navit -c $NAVIT_SHAREDIR/navit$NANOX_YRES.xml $* >$DIST/logs/navit.log 2>&1
-rc.gltt stop
+navit -c $NAVIT_CONFIG $* >$DIST/logs/navit.log 2>&1
 
-
+if [ ! -z `pidof gltt` ]; then rc.gltt stop; fi
