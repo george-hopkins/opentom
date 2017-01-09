@@ -3,7 +3,7 @@
 wget http://downloads.sourceforge.net/project/libpng/libpng12/older-releases/1.2.50/libpng-1.2.50.tar.gz
 wget http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
 wget http://www.tomtom.com/gpl/golinux-tt1114405.tar.gz
-wget http://zlib.net/zlib-1.2.8.tar.gz
+wget http://zlib.net/zlib-1.2.10.tar.gz
 wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
 wget ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng12/libpng-1.2.51.tar.gz

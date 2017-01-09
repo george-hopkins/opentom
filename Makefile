@@ -298,8 +298,8 @@ $(ARM_ROOT)/usr/include/png.h: $(DOWNLOADS)/libpng-1.2.50.tar.gz
         }
 
 zlib: $(ARM_ROOT)/usr/include/zlib.h
-$(ARM_ROOT)/usr/include/zlib.h: $(DOWNLOADS)/zlib-1.2.8.tar.gz $(ARM_ROOT)
-	cd build && tar xf ../Downloads/zlib-1.2.8.tar.gz && cd zlib-1.2.8 && { \
+$(ARM_ROOT)/usr/include/zlib.h: $(DOWNLOADS)/zlib-1.2.10.tar.gz $(ARM_ROOT)
+	cd build && tar xf ../Downloads/zlib-1.2.10.tar.gz && cd zlib-1.2.10 && { \
 		LDSHARED="$(T_ARCH)-gcc -shared -Wl,-soname,libz.so.1" ./configure --shared --prefix=$(ARM_APPROOT) >$(LOGS)/zlib.log; \
 		make $(JOBS) install >>$(LOGS)/zlib.log 2>&1 ; \
 	}
