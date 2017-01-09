@@ -191,6 +191,18 @@ diff -rupN microwin/src/engine/font_fnt.c microwin_opentom/src/engine/font_fnt.c
  		goto errout;
  
  	pf = (PMWCFONT)calloc(1, sizeof(MWCFONT));
+diff -rupN microwin/src/engine/image_png.c microwin_opentom/src/engine/image_png.c
+--- microwin/src/engine/image_png.c	2017-01-09 22:35:35.894597190 +0100
++++ microwin_opentom/src/engine/image_png.c	2017-01-09 22:36:19.822968991 +0100
+@@ -32,7 +32,7 @@
+ static void
+ png_read_buffer(png_structp pstruct, png_bytep pointer, png_size_t size)
+ {
+-	GdImageBufferRead(pstruct->io_ptr, pointer, size);
++	GdImageBufferRead(png_get_io_ptr(pstruct), pointer, size);
+ }
+ 
+ PSD
 diff -rupN microwin/src/Makefile.rules microwin_opentom/src/Makefile.rules
 --- microwin/src/Makefile.rules	2014-02-14 16:40:21.000000000 +0100
 +++ microwin_opentom/src/Makefile.rules	2014-01-09 19:03:26.000000000 +0100

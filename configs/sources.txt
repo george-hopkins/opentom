@@ -1,12 +1,11 @@
 # How to get source archives
 # Libs
-wget http://downloads.sourceforge.net/project/libpng/libpng12/older-releases/1.2.50/libpng-1.2.50.tar.gz
 wget http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
 wget http://www.tomtom.com/gpl/golinux-tt1114405.tar.gz
 wget http://zlib.net/zlib-1.2.10.tar.gz
 wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
-wget ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng12/libpng-1.2.51.tar.gz
+wget http://downloads.sourceforge.net/project/libpng/libpng16/1.6.28/libpng-1.6.28.tar.gz
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
 wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz

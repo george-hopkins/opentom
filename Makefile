@@ -291,11 +291,11 @@ $(ARM_ROOT)/usr/include/jpeglib.h: $(DOWNLOADS)/libjpeg-6b.tar.gz $(ARM_ROOT)
 	}
 
 libpng: $(ARM_ROOT)/usr/include/png.h
-$(ARM_ROOT)/usr/include/png.h: $(DOWNLOADS)/libpng-1.2.50.tar.gz
-	cd build && tar xf ../Downloads/libpng-1.2.50.tar.gz && cd libpng-1.2.50 && { \
-                ./configure --prefix=$(ARM_APPROOT) --host=arm-linux --enable-shared --enable-static >$(LOGS)/libpng.log; \
-                make $(JOBS) install >>$(LOGS)/libpng.log 2>&1 ; \
-        }
+$(ARM_ROOT)/usr/include/png.h: $(DOWNLOADS)/libpng-1.6.28.tar.gz
+	cd build && tar xf ../Downloads/libpng-1.6.28.tar.gz && cd libpng-1.6.28 && { \
+		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --enable-shared --enable-static >$(LOGS)/libpng.log; \
+		make $(JOBS) install >>$(LOGS)/libpng.log 2>&1 ; \
+	}
 
 zlib: $(ARM_ROOT)/usr/include/zlib.h
 $(ARM_ROOT)/usr/include/zlib.h: $(DOWNLOADS)/zlib-1.2.10.tar.gz $(ARM_ROOT)
