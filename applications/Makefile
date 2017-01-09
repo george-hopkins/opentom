@@ -82,9 +82,9 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
 
-$(TOMDIST)/bin/navit: Downloads/navit-R7135.tar.gz
+$(TOMDIST)/bin/navit: Downloads/navit-R7213.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/navit-R7135.tar.gz && cd navit-R7135 && { \
+	cd build && tar xf ../Downloads/navit-R7213.tar.gz && cd navit-R7213 && { \
 		patch -p1 <../../patchs/navit_opentom.patch && \
 		sed -i 's| TOMTOM_SDK_DIR \S*| TOMTOM_SDK_DIR $(ARM_APPROOT)|' Toolchain/$(T_ARCH).cmake && \
 		mkdir -p build && cd build && \

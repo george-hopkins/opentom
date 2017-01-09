@@ -53,19 +53,6 @@ index a2ce9e4..c6cd660 100644
           add_scale_targets(${IMAGE_SRC} ${IMAGE} ${svg2png_scaling_nav})
        elseif( DEFINED svg2png_scaling_flag AND ${IMAGE} MATCHES "^country_")
           add_scale_targets(${IMAGE_SRC} ${IMAGE} ${svg2png_scaling_flag})
-diff --git a/navit/xpm/Makefile.am b/navit/xpm/Makefile.am
-index 40b7cc8..4db2f61 100644
---- a/navit/xpm/Makefile.am
-+++ b/navit/xpm/Makefile.am
-@@ -101,6 +101,8 @@ svgs += gui_log.svg
- svgs += gui_search.svg
- svgs += menu.svg
- svgs += toggle_fullscreen.svg
-+svgs += tomtom_minus.svg
-+svgs += tomtom_plus.svg
- 
- svgs += airport.svg
- svgs += atm.svg
 diff --git a/navit/xpm/tomtom_minus.svg b/navit/xpm/tomtom_minus.svg
 new file mode 100644
 index 0000000..6dd6ad2
