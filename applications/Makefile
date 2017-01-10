@@ -305,7 +305,7 @@ $(TOMDIST)/bin/jooleem.sh: Downloads/jooleem_0.1.4_win32_bin.zip Downloads/joole
 $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
 	mkdir -p build
 	cd build && tar xf ../Downloads/cr3_3.0.56.orig.tar.gz && cd cr3.0.56-7 && { \
-		sed 's#OPENTOM_ROOT#$(ROOT)#' <../../patchs/cr3.0.56-7_opentom_fltk.patch | patch -p1; \
+		patch -p1 <../../patchs/cr3.0.56-7_opentom_fltk.patch; \
 		mkdir -p arm_build; \
 		cd arm_build && { \
 			cmake -D MAX_IMAGE_SCALE_MUL=1 -D CMAKE_TOOLCHAIN_FILE=../tools/toolchain-arm-tomtom.cmake -D GUI=CRGUI_NANOX -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX=$(TOMDIST)/share/cr3 ..; \

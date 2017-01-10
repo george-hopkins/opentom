@@ -2315,8 +2315,8 @@ diff -rupN cr3.0.56-7.original/tools/toolchain-arm-tomtom.cmake cr3.0.56-7_opent
 +SET(CMAKE_CXX_COMPILER arm-linux-g++)
 +SET(CMAKE_STRIP arm-linux-strip)
 +
-+# where is the target environment 
-+SET(CMAKE_FIND_ROOT_PATH  /home/clm/TomTom/TTSystem/arm-sysroot)
++# where is the target environment
++SET(CMAKE_FIND_ROOT_PATH "$ENV{ARM_SYSROOT}")
 +
 +# search for programs in the build host directories
 +SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
