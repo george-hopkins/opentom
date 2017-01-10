@@ -308,8 +308,10 @@ $(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
 		patch -p1 <../../patchs/cr3.0.56-7_opentom_fltk.patch; \
 		mkdir -p arm_build; \
 		cd arm_build && { \
-			cmake -D MAX_IMAGE_SCALE_MUL=1 -D CMAKE_TOOLCHAIN_FILE=../tools/toolchain-arm-tomtom.cmake -D GUI=CRGUI_NANOX -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX=$(TOMDIST)/share/cr3 ..; \
-			make && cp cr3gui/cr3 $(TOMDIST)/bin/cr3 && make install; \
+			cmake -D MAX_IMAGE_SCALE_MUL=1 -D CMAKE_TOOLCHAIN_FILE=../tools/toolchain-arm-tomtom.cmake -D GUI=CRGUI_NANOX -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX=$(TOMDIST)/share/cr3 .. >$(LOGS)/cr3.log 2>&1 && \
+			make >>$(LOGS)/cr3.log 2>&1 && \
+			make install >>$(LOGS)/cr3.log 2>&1 && \
+			cp cr3gui/cr3 $(TOMDIST)/bin/cr3; \
 		} \
 	}
 	# You need at least one font to use CoolReader
