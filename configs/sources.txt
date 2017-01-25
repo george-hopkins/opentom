@@ -2,7 +2,7 @@
 # Libs
 wget https://web.archive.org/web/20071013013709/http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
 wget https://archive.org/download/golinux-tt1114405.tar.gz/golinux-tt1114405.tar.gz
-wget http://zlib.net/zlib-1.2.10.tar.gz
+wget https://downloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz
 wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
 wget http://downloads.sourceforge.net/project/libpng/libpng16/1.6.28/libpng-1.6.28.tar.gz
