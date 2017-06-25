@@ -7,9 +7,7 @@ general:
 
 dependencies:
   cache_directories:
-    - "~/NavitTom/Downloads"
     - "Downloads" 
-    - "applications/Downloads" 
   pre:
     - if [[ ! -e ~/NavitTom/Downloads ]]; then mkdir ~/NavitTom/Downloads; fi
   override:
@@ -32,6 +30,6 @@ test:
       cp -r opentom_dist target/opentom-extra/opentom
       )
   post:
-    - if [[ ! -e ~/NavitTom/Downloads/navit.zip ]]; rm ~/NavitTom/Downloads/navit.zip ; fi # just for now
+    - if [[ ! -e ~/NavitTom/Downloads/navit.zip ]]; then rm ~/NavitTom/Downloads/navit.zip ; fi # just for now
     - tar -C target -cvzf target/opentom.tar.gz opentom
     - tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
