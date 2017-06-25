@@ -7,7 +7,7 @@ general:
 
 dependencies:
   cache_directories:
-    - "~/Downloads"
+    - "~/NavitTom/Downloads"
   override:
     - sudo apt-get install -y subversion chrpath fluid imagemagick librsvg2-bin xsltproc
 
