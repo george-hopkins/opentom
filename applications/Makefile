@@ -17,35 +17,17 @@ TMP=/tmp
 export APPS_ROOT=$(ROOT)/applications
 export LOGS=$(APPS_ROOT)/logs
 
-APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
+APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv navit
 CLEAN_APPS= $(APPS:%=clean-%)
-
-EXTRA= 	12swap ntetris pipepanic \
-	madplay sprsht flchekers \
-	yareversi opendune linapple \
-	dosbox dillo gnuboy scummvm \
-	martian jooleem.sh tuxchess cr3 \
-	sudoku checkers freecell nxpad_gnuboy \
-	eggchess.sh navit net-bubble
 
 
 .PHONY: $(APPS)
 .PHONY: $(CLEAN_APPS)
-.PHONY: $(EXTRA)
 
 install: $(APPS)
 
 clean: $(CLEAN_APPS)
 
-extra: $(EXTRA)
-	@echo
-	@echo "######################################################################################"
-	@echo "# Build of Extra apps are done"
-	@echo "# return to $$ROOT and type:"
-	@echo "#"
-	@echo "#       make verif_dist (to set libs and strip the all)."
-	@echo "#"
-	@echo "#####################################################################################"
 
 $(APPS):
 	make -C src/$@ install
@@ -53,7 +35,6 @@ $(APPS):
 $(CLEAN_APPS):
 	make -C src/$(@:clean-%=%) clean
 
-$(EXTRA): %: $(TOMDIST)/bin/%
 
 
 build/%/Makefile:
