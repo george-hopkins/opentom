@@ -32,6 +32,6 @@ test:
       cp -r opentom_dist target/opentom-extra/opentom
       )
   post:
-    - rm ~/NavitTom/Downloads/navit.zip # just for now
+    - if [[ ! -e ~/NavitTom/Downloads/navit.zip ]]; rm ~/NavitTom/Downloads/navit.zip ; fi # just for now
     - tar -C target -cvzf target/opentom.tar.gz opentom
     - tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
