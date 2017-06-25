@@ -8,6 +8,10 @@ general:
 dependencies:
   cache_directories:
     - "~/NavitTom/Downloads"
+    - "Downloads" 
+    - "applications/Downloads" 
+  pre:
+    - if [[ ! -e ~/NavitTom/Downloads ]]; then mkdir ~/NavitTom/Downloads; fi
   override:
     - sudo apt-get install -y subversion chrpath fluid imagemagick librsvg2-bin xsltproc
 
@@ -28,5 +32,6 @@ test:
       cp -r opentom_dist target/opentom-extra/opentom
       )
   post:
+    - rm ~/NavitTom/Downloads/navit.zip # just for now
     - tar -C target -cvzf target/opentom.tar.gz opentom
     - tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
