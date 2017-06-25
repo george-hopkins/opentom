@@ -48,7 +48,7 @@ wget http://mirrors.usc.edu/pub/gnu/gdb/gdb-7.1.tar.gz
 wget http://downloads.sourceforge.net/project/ctorrent/CTorrent-1.3.4/CTorrent-1.3.4/ctorrent-1.3.4.tar.bz2
 wget http://downloads.sourceforge.net/project/dosbox/dosbox/0.74/dosbox-0.74.tar.gz
 wget http://downloads.sourceforge.net/project/crengine/CoolReader3/cr3-3.0.56/cr3_3.0.56.orig.tar.gz
-wget -O navit-R7213.tar.gz https://github.com/navit-gps/navit/archive/R7213.tar.gz
+wget -O navit.zip https://github.com/navit-gps/navit/archive/master.zip
 # Games
 wget http://downloads.sourceforge.net/project/scummvm/scummvm/1.6.0/scummvm-1.6.0.tar.bz2
 wget http://downloads.sourceforge.net/project/linapple/linapple/linapple-2a/linapple-src_2a.tar.bz2

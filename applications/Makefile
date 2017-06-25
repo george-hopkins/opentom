@@ -17,17 +17,29 @@ TMP=/tmp
 export APPS_ROOT=$(ROOT)/applications
 export LOGS=$(APPS_ROOT)/logs
 
-APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv navit
+APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
 CLEAN_APPS= $(APPS:%=clean-%)
+
+EXTRA= 	navit
 
 
 .PHONY: $(APPS)
 .PHONY: $(CLEAN_APPS)
+.PHONY: $(EXTRA)
 
 install: $(APPS)
 
 clean: $(CLEAN_APPS)
 
+extra: $(EXTRA)
+	@echo
+	@echo "######################################################################################"
+	@echo "# Build of Extra apps are done"
+	@echo "# return to $$ROOT and type:"
+	@echo "#"
+	@echo "#       make verif_dist (to set libs and strip the all)."
+	@echo "#"
+	@echo "#####################################################################################"
 
 $(APPS):
 	make -C src/$@ install
@@ -35,6 +47,7 @@ $(APPS):
 $(CLEAN_APPS):
 	make -C src/$(@:clean-%=%) clean
 
+$(EXTRA): %: $(TOMDIST)/bin/%
 
 
 build/%/Makefile:
@@ -63,9 +76,9 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
 
-$(TOMDIST)/bin/navit: Downloads/navit-R7213.tar.gz
+$(TOMDIST)/bin/navit: Downloads/navit.zip
 	mkdir -p build
-	cd build && tar xf ../Downloads/navit-R7213.tar.gz && cd navit-R7213 && { \
+	cd build && unzip ../Downloads/navit.zip && cd navit-* && { \
 		patch -p1 <../../patchs/navit_opentom.patch && \
 		sed -i 's| TOMTOM_SDK_DIR \S*| TOMTOM_SDK_DIR $(ARM_APPROOT)|' Toolchain/$(T_ARCH).cmake && \
 		mkdir -p build && cd build && \
