@@ -387,7 +387,7 @@ bluez-libs: $(ARM_ROOT)/usr/include/bluetooth/hci.h
 $(ARM_ROOT)/usr/include/bluetooth/hci.h: $(DOWNLOADS)/bluez-libs-2.15-tt350126.tar.gz
 	cd build && { \
 		tar xf ../Downloads/bluez-libs-2.15-tt350126.tar.gz && cd bluez-libs* && { \
-			./configure --prefix=$(ARM_SYSROOT)/usr --host=arm-linux >$(LOGS)/bluez-libs.log; \
+			./configure --prefix=$(TOMDIST)/usr --host=arm-linux >$(LOGS)/bluez-libs.log; \
 			make $(JOBS) install >>$(LOGS)/bluez-libs.log; \
 		} \
 	}
@@ -493,13 +493,10 @@ $(ARM_ROOT)/usr/bin/rfcomm: $(DOWNLOADS)/bluez-utils-2.15.tar.gz $(ARM_ROOT)/usr
 	cd build && { \
 		tar xf ../Downloads/bluez-utils-2.15.tar.gz; \
 		cd bluez-utils-2.15 && { \
-			./configure --prefix=$(ARM_APPROOT) --host=arm-linux; \
+			./configure --prefix=$(TOMDIST) --host=arm-linux; \
 			make install; \
 		} >$(LOGS)/bluez-utils.log 2>&1; \
 	}
-	cp $(ARM_APPROOT)/bin/rfcomm $(TOMDIST)/bin
-	cp $(ARM_APPROOT)/sbin/hciconfig $(TOMDIST)/bin
-	cp $(ARM_APPROOT)/sbin/hciattach $(TOMDIST)/bin
 
 pppd: $(TOMDIST)/bin/pppd
 $(TOMDIST)/bin/pppd: $(DOWNLOADS)/ppp-2.4.7.tar.gz
