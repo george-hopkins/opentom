@@ -291,8 +291,8 @@ $(ARM_ROOT)/usr/include/jpeglib.h: $(DOWNLOADS)/libjpeg-6b.tar.gz $(ARM_ROOT)
 	}
 
 libpng: $(ARM_ROOT)/usr/include/png.h
-$(ARM_ROOT)/usr/include/png.h: $(DOWNLOADS)/libpng-1.6.28.tar.gz
-	cd build && tar xf ../Downloads/libpng-1.6.28.tar.gz && cd libpng-1.6.28 && { \
+$(ARM_ROOT)/usr/include/png.h: $(DOWNLOADS)/libpng-1.6.29.tar.gz
+	cd build && tar xf ../Downloads/libpng-1.6.29.tar.gz && cd libpng-1.6.29 && { \
 		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --enable-shared --enable-static >$(LOGS)/libpng.log; \
 		make $(JOBS) install >>$(LOGS)/libpng.log 2>&1 ; \
 	}
