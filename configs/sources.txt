@@ -5,7 +5,7 @@ wget --progress=dot https://archive.org/download/golinux-tt1114405.tar.gz/golinu
 wget --progress=dot https://downloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz
 wget --progress=dot ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
 wget --progress=dot http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
-wget --progress=dot http://downloads.sourceforge.net/project/libpng/libpng16/1.6.28/libpng-1.6.28.tar.gz
+wget --progress=dot https://github.com/navit-gps/dependencies/raw/master/tomtom/libpng-1.6.29.tar.gz
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
 wget --progress=dot http://www.libsdl.org/release/SDL-1.2.15.tar.gz
