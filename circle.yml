@@ -11,8 +11,8 @@ dependencies:
   pre:
     - if [[ ! -e ~/NavitTom/Downloads ]]; then mkdir ~/NavitTom/Downloads; fi
   override:
-    - sudo apt-get update # okay... dont upgrade ... see  #18 && DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y
-    - sudo apt-get install -y subversion chrpath fluid imagemagick librsvg2-bin xsltproc
+    - sudo apt-get -q update # okay... dont upgrade ... see  #18 && DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -y
+    - sudo apt-get -q -y  install subversion chrpath fluid imagemagick librsvg2-bin xsltproc
 
 test:
   pre:
