@@ -3,7 +3,16 @@
 [![Build Status](https://img.shields.io/circleci/project/github/navit-gps/NavitTom.svg)](https://circleci.com/gh/navit-gps/NavitTom)
 [![Latest Pre-Built Image](https://img.shields.io/badge/pre--built%20image-latest-green.svg)](https://circleci.com/api/v1/project/navit-gps/NavitTom/latest/artifacts/0/home/ubuntu/NavitTom/target/opentom.tar.gz?branch=master&filter=successful)
 
-**OpenTom** is a tiny, open source Linux distribution for TomTom™ devices.
+**NavitTom** is a tiny, open source Linux distribution for TomTom™ devices. Its includes Navit with specific Configurations.
+
+Planned Features are:
+ - Download Maps over Bluetooth Internet connection
+ - Automatic update to the last version of Navit
+ 
+## Tested Devices
+|team member|device|
+|---|---|
+| [jkoan](https://github.com/jkoan) |TomTom One|
 
 
 ## Getting Started
