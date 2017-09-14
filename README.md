@@ -1,7 +1,7 @@
 # OpenTom
 
-[![Build Status](https://img.shields.io/circleci/project/github/navit-gps/NavitTom.svg)](https://circleci.com/gh/navit-gps/NaitTom)
-[![Latest Pre-Built Image](https://img.shields.io/badge/pre--built%20image-latest-green.svg)](https://circleci.com/api/v1/project/navit-gps/NavitTom/latest/artifacts/0//home/ubuntu/NavitTom/target/opentom.tar.gz?branch=master&filter=successful)
+[![Build Status](https://img.shields.io/circleci/project/github/navit-gps/NavitTom.svg)](https://circleci.com/gh/navit-gps/NavitTom)
+[![Latest Pre-Built Image](https://img.shields.io/badge/pre--built%20image-latest-green.svg)](https://circleci.com/api/v1/project/navit-gps/NavitTom/latest/artifacts/0/home/ubuntu/NavitTom/target/opentom.tar.gz?branch=master&filter=successful)
 
 **OpenTom** is a tiny, open source Linux distribution for TomTom™ devices.
 
