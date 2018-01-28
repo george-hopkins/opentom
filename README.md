@@ -12,7 +12,8 @@ Planned Features are:
 ## Tested Devices
 |team member|device|
 |---|---|
-| [jkoan](https://github.com/jkoan) |TomTom One|
+| [jkoan](https://github.com/jkoan) |TomTom One v2 (4N00.004.2)
+| [jkoan](https://github.com/jkoan) |TomTom One XL 2 (4S00.000.2)|
 
 
 ## Getting Started
