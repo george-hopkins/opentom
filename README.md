@@ -8,7 +8,7 @@
 
 ## Getting Started
 
-- Install the following dependencies: subversion chrpath fluid imagemagick xsltproc
+- Install the following dependencies: autoconf chrpath fluid imagemagick libglib2.0-dev libtool subversion xsltproc
 - Set the `ROOT` envvar in `get_cross_env.sh`
 - `source get_cross_env.sh`
 - Run `make` to start the initial OpenTom build
