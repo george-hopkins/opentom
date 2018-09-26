@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build_step:
     docker:
       - image: ubuntu:18.04
     steps:
