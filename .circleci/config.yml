@@ -4,6 +4,11 @@ jobs:
     docker:
       - image: ubuntu:18.04
     steps:
+      - run:
+          command: |
+            apt update
+            apt install git
+          name: Build
       - checkout
       - run:
           name: Build
