@@ -1,0 +1,6 @@
+#!/bin/sh
+mount -t devpts none /dev/pts
+
+
+echo Starting telnet daemon ...
+/usr/sbin/telnetd -F &

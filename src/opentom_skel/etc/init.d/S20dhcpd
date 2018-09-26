@@ -1,0 +1,11 @@
+#!/bin/sh
+
+mkdir -p /var/run
+touch /var/run/udhcpd.leases
+touch /var/run/udhcpd.pid
+
+echo Starting DHCPD Server
+
+
+# DHCPD Server
+udhcpd -f /etc/udhcpd.conf &

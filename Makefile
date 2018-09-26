@@ -76,8 +76,8 @@ base: tools ttsystem distrib
 	@echo
 
 
-extra: espeak libzip sdl_net ctorrent
-	make -C applications
+extra: base espeak libzip sdl_net ctorrent
+	make -C applications extra
 	make verif_dist
 	@echo
 	@echo "######################################################################################"
@@ -99,6 +99,7 @@ build/initramfs.cpio.gz: $(CONFIGS)/initramfs_prepend kernel/arch/arm/boot/zImag
 	cp $(CONFIGS)/initramfs_prepend build/cpio_list
 	rm -Rf $(INITRAMFS_ROOT)/lib/modules/*
 	cd kernel && INSTALL_MOD_PATH=$(INITRAMFS_ROOT)/ make modules_install
+	cd kernel && INSTALL_MOD_PATH=$(INITRAMFS_ROOT)/ make modules_install
 	# 3rd pass for new sharedlibs
 	install_shared_libs.sh initramfs "$(ARM_ROOT)/lib $(ARM_ROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib"
 	chmod u+x kernel/scripts/gen_initramfs_list.sh
@@ -113,7 +114,7 @@ kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
 	cd src && tar xf ../$(DOWNLOADS)/golinux-tt1114405.tar.gz
 	ln -s src/linux-s3c24xx kernel
 	cd kernel && patch -p1 <$(ROOT)/patchs/kernel_tt1114405_opentom.patch
-	cp $(CONFIGS)/kernel_config.no_console kernel/.config
+	cp $(CONFIGS)/kernel_config.console_ext kernel/.config
 
 $(ARM_ROOT): $(ARMGCC)/lib
 	mkdir -p $(ARM_ROOT)/bin
@@ -559,6 +560,7 @@ extract_initramfs:
 clean_all:
 	make -C applications clean_all
 	cd kernel && make mrproper
+	rm kernel/linux-s3c24xx
 	rm -Rf build initramfs arm-sysroot $(TOMDIST)
 	rm -f $(LOGS)/*
 

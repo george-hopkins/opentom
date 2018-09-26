@@ -5,6 +5,9 @@ echo Runnning \(ttsystem\) etc/rc ...
 fstype="vfat"
 mntopt="rw,exec,noatime,nodev,nosuid"
 devbase="/dev"
+ext2p=mmcblk0p2
+
+
 
 initial_mount() {
 	mount -n -t proc none /proc
@@ -17,10 +20,10 @@ initial_mount() {
 #	mount -n -t tmpfs  none /tmp          
 #	mount -n -t tmpfs  none /var/run     
 	mount -n -t usbfs none /proc/bus/usb 
-	mount -n -t devpts none /dev/pts     
+#	mount -n -t devpts none /dev/pts     
 	
 	#Mount flash where it is used to be found on TT...
-	mount -n -t ngffs mtd0 /mnt/flash
+	#mount -n -t ngffs mtd0 /mnt/flash
 }
 
 do_mount_storage() {
@@ -124,24 +127,43 @@ sleep 3
 
 # Generic mount storage device (sdcards and hard disk) 
 hw_bootdevice=`cat /proc/barcelona/bootdevice`
-mount_storage
+#mount_storage
 
 DIST=/mnt/sdcard/opentom
 KVER=`uname -r`
 
 # Starting USB Ether Gadget ...
-insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/s3c24xx_udc.ko
-insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/g_ether.ko
-sleep 1
-ifconfig usb0 192.168.1.10
+#insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/s3c24xx_udc.ko
+#insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/g_ether.ko
+modprobe ext3
+#ifconfig usb0 192.168.1.10
 # DHCPD Server
-udhcpd -f /etc/udhcpd.conf &
+
+#udhcpd -f /etc/udhcpd.conf &
 
 # Starting telnet daemon ...
-( cd $DIST ; /usr/sbin/telnetd -F & )
+#( cd $DIST ; /usr/sbin/telnetd -F & )
+#sleep 900
+#set -e
+#mount -n -t proc none /proc
+#cat /proc/partitions
+echo Mounting Newroot
+mount -o remount,rw /
+mkdir /newroot
+mount -o rw -t ext3 /dev/$ext2p /newroot
+mount --move /sys /newroot/sys
+mount --move /proc /newroot/proc
+mkdir -p /newroot/dev/pts
+mount -n -t devpts none /newroot/dev/pts
+#mount --move /dev /newroot/dev
+cp -ar /dev/ /newroot/
+#sleep 300
+
+echo exec switch_root /newroot /init
+exec switch_root /newroot /init $@
 
 # Running /mnt/sdcard/opentom/start.sh script ...
-sh $DIST/start.sh >$DIST/logs/start.log 2>&1
+#sh $DIST/start.sh >$DIST/logs/start.log 2>&1
 
 sleep 10
 force_reboot
