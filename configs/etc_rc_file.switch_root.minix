@@ -1,0 +1,160 @@
+#!/bin/sh
+
+# Linux init script located at the root of initramfs.
+#
+# The first, or only, partition on the boot device is FAT format.
+# This script starts when initramfs has been extracted from ttsystem.
+# The boot partition will be mounted as a read/write storage partition.
+# The boot device optionally has additional partitions.
+# The second, or, if present, third, partition is Linux with an uncompressed copy of initramfs.
+# The root will be switched to the Linux partition, which will be mounted read only.
+# If there are more than two partitions, the second is a swap partition.
+# Other FAT partitions on devices are mounted as read/write storage partitions.
+#
+# The first part of the script falls through to the second part if the boot device has one partition only.
+# The initial read/write memory-resident system is then retained.
+# Otherwise the script is reentered after the root has been switched and resumes at the second part.
+
+# Writeable directories
+DIRSRW='.ssh dev etc mnt root tmp var'
+
+export DIST='/mnt/sdcard/opentom'
+FATFS='vfat'
+FATOPT='rw,exec,noatime,nodev,nosuid'
+LINUXFS='minix'
+LINUXOPT='ro'
+NEWINIT='OpenTom'
+
+export storagedevs
+
+# List FAT storage partitions on devices, with boot device first
+# Detect any swap and Linux partitions
+get_partitions() {
+	echo '* Detecting main storage partitions'
+	while [ ! "$(sed -En '3,$s~^.+ ((mmcblk0p|hd)[[:alnum:]]+[[:digit:]]*)$~\1~p' /proc/partitions)" ]; do
+		echo 'Waiting for devices'; sleep 1
+	done
+#	Is this sleep needed?
+	sleep 3
+	local partitions="$(sed -En '3,$s~^.+ ([[:alnum:]]+[[:digit:]]*)$~\1~p' /proc/partitions)"
+
+	for p in $partitions; do
+		# Detect swap and Linux partitions
+		[ "$p" = 'mmcblk0p2' ] && { [ ! "$PLINUX" ] || ! PSWAP="$p"; } && PLINUX="$p"
+		[ "$p" = 'mmcblk0p3' ] &&  { [ ! "$PLINUX" ] || PSWAP="$PLINUX"; } && PLINUX="$p"
+		# Ignore other known non-storage partitions
+		[ "${p#mmcblk0}" != "${p#hd}" -a "${p%1}" = "$p" ] || [ "${p#mtd}" != "$p" ] && continue
+		# Hard disk? Must be boot partition (we ship no devices with HDD & other storage)
+		[ "${p#hd}" != "$p" ] && { storagedevs="$p $storagedevs"; continue; }
+		# SD/MMC? Could be our boot disk!
+		[ "${p#mmcblk}" != "$p" ] && {
+			# Bootloader specified CID? Assume boot device if no CID given
+			[ -z "$hw_bootdevice" -o  "$hw_bootdevice" = "$(cat "/sys/block/${p%p?}/device/cid" 2>/dev/null)" ] && {
+				storagedevs="$p $storagedevs"; continue
+			}
+			# Ordinary storage partition
+			storagedevs="$storagedevs $p"
+			continue
+		}
+		# Unrecognized
+		echo "Ignoring unknown storage device $p..."
+	done
+}
+
+# Mount point for each FAT partion in list is according to device type
+mount_storage() {
+	local cnt=""
+	echo 0 > /proc/barcelona/rebootonsdremoval
+	for p in $storagedevs; do
+		[ -e "/sys/block/${p%p?}/device/scr" ] && isSD="1" || isSD=
+		# Assume ordinary storage initially
+		mntpt="/mnt/storage${#cnt}"
+		# First mount? Is boot device
+		[ "$cnt" ] || {
+			rm -f /dev/sdcard; ln -s "/dev/$p" /dev/sdcard
+			mntpt=/mnt/sdcard
+			# Booting from SD? Tell kernel (for sd removal while suspended)
+			[ "$isSD" ] &&  echo 1 > /proc/barcelona/rebootonsdremoval
+		}
+		# Second mount? Must be movinand
+		[ "${#cnt}" -eq 1 ] && mntpt=/mnt/movinand
+		# Mount as sync if on removable device
+		[ "$isSD" ] && FATOPT="${FATOPT%,sync},sync"
+		mkdir -p "$mntpt"
+		mount -nt "$FATFS" -o"$FATOPT" "/dev/$p" "$mntpt" >/dev/null 2>&1 && {
+			echo "* Storage $p mounted on $mntpt options $FATOPT"
+			cnt="${cnt}1"
+		} || rm -Rf "$mntpt"
+    done
+    [ "$cnt" ]
+}
+
+[ "$1" ] && [ "$1" != "$NEWINIT" ] && echo Invalid init argument && exit 1
+
+# First part of init. If present: turns on swap; mounts Linux partition; switches root
+[ "$1" ] || {
+	echo 'Runnning init script (part 1) ...'
+
+	mount -ntproc none /proc
+	for i in /proc/barcelona/*; do export "hw_${i##*/}"="$(cat "$i")"; done
+
+	[ "$hw_gprsmodemdev" ] && [ ! -h /dev/gprsmodem ] &&  ln -sf "$hw_gprsmodemdev" /dev/gprsmodem
+	ln -sf fb /dev/fb0 >/dev/null 2>&1
+
+	get_partitions
+	[ "$PSWAP" ] && swapon "/dev/$PSWAP"
+	[ "$PLINUX" ] && {
+		echo 'Switching root'
+		# Stage Linux root
+		rm -Rf /tmp/* && mount -t"$LINUXFS" "/dev/$PLINUX" /tmp
+		cd /tmp
+#		Clean mount points; create tree
+		for d in $DIRSRW proc sys; do [ -d "$d" ] && rm -Rf "$d/"* || mkdir -p "$d"; done
+#		Writeable locations
+		for d in $DIRSRW; do mount -nttmpfs none "$d"; done
+#		Preserve
+		for d in dev etc var; do cp -a /"$d"/* "$d"/; done
+		mount -ntdevpts none dev/pts
+
+		mkdir -p etc/bluetooth etc/dropbear etc/ppp mnt/flash proc/bus/usb var/lock
+		[ -h usr/bin/scp ] || ln -sf "$DIST/bin/scp" usr/bin/scp
+		[ -h usr/bin/dbclient ] || ln -sf "$DIST/bin/ssh" usr/bin/dbclient
+#		Read only
+		mount -noremount,"$LINUXOPT" .
+		mount -nomove /proc proc
+#		Point of no return
+		exec switch_root . /init "$NEWINIT"
+	}
+#	Else fall through with r/w memory-resident root
+	echo 'Not switching root'
+	mount -ntdevpts none /dev/pts
+	mount -nttmpfs none /dev/shm
+	mkdir -p /.ssh /etc/bluetooth /etc/dropbear /etc/ppp /proc/bus/usb /root /sys /var/lock
+	ln -s "$DIST/bin/scp" /usr/bin/scp
+	ln -s "$DIST/bin/ssh" /usr/bin/dbclient
+}
+
+# -----
+# Second part of init. Continues after switch_root if Linux partition found
+echo 'Continuing init script (part 2)'
+
+chmod 0700 /.ssh
+chmod 0700 /etc/dropbear
+
+mount -ntsysfs none /sys;
+mount -ntngffs mtd0 /mnt/flash
+mount -ntusbfs none /proc/bus/usb
+
+# Mount FAT storage partitions
+mount_storage || echo '* No storage detected'
+unset storagedevs
+
+# Running /mnt/sdcard/opentom/start.sh script ...
+echo 'Starting ...'
+cd "$DIST"
+sh start.sh >logs/start.log 2>&1
+
+# Clean umount / (in case)
+mount -oremount,ro /
+sync
+"$DIST/bin/force_reboot"

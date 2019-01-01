@@ -1,3 +1,14 @@
+--- ~/linux-s3c24xx/arch/arm/mach-s3c2410/cpufreq/cpufreq_dvs.c
++++ linux-s3c24xx/arch/arm/mach-s3c2410/cpufreq/cpufreq_dvs.c
+@@ -343,6 +343,7 @@ static int __init s3c24xx_cpufreq_dvs_in
+ 	switch( IO_GetCpuType( ) )
+ 	{
+ 		case GOCPU_S3C2440 :
++		case GOCPU_S3C2442 :
+ 			s3c24xx_dvs_handlestate.get=s3c2440_get_dvs_state;
+ 			s3c24xx_dvs_handlestate.set=s3c2440_set_dvs_state;
+ 			break;
+
 diff -rupN linux-s3c24xx/drivers/barcelona/gacc/smb365.c linux-s3c24xx.tt1114405/drivers/barcelona/gacc/smb365.c
 --- linux-s3c24xx/drivers/barcelona/gacc/smb365.c	2013-05-31 14:28:26.000000000 +0200
 +++ linux-s3c24xx.tt1114405/drivers/barcelona/gacc/smb365.c	2014-02-14 14:30:52.000000000 +0100
@@ -54,6 +65,24 @@ diff -rupN linux-s3c24xx/drivers/barcelona/usbmode/s3c24xx_usbmode.c linux-s3c24
  
  /* Function used when we use poll based USB_HOST_DETECT monitoring */
  int buspower_changed(struct notifier_block *self, unsigned long power_on,
+@@ -1051,7 +1052,6 @@ static int device_detect_enter(struct us
+ 	}
+ 	clk_use(clk);
+ 
+-	init_timer(&impl->device_detect_timeout);	/* only clears the timer */
+ 	impl->device_detect_timeout.expires =
+ 	    jiffies + DEVICE_DETECT_TIMEOUT_SECONDS * HZ;
+ 	impl->device_detect_timeout.data = (unsigned long)data;
+@@ -1108,6 +1108,9 @@ static int device_detect_exit(struct usb
+ int s3c24xx_initial_to_idle(struct usbmode_data *data)
+ {
+ 	unsigned long i;
++	struct impl_data_s3c *impl = (struct impl_data_s3c *)data->u_impl_data;
++
++	init_timer(&impl->device_detect_timeout);
+ 
+ 	s3c2443_phy_state = 0;
+ 	helper_disable_host_port(data); // This is probably superfluous, but it shouldn't harm either.
 diff -rupN linux-s3c24xx/drivers/barcelona/usbmode/usbmode.c linux-s3c24xx.tt1114405/drivers/barcelona/usbmode/usbmode.c
 --- linux-s3c24xx/drivers/barcelona/usbmode/usbmode.c	2013-05-31 14:28:26.000000000 +0200
 +++ linux-s3c24xx.tt1114405/drivers/barcelona/usbmode/usbmode.c	2013-12-12 11:35:55.000000000 +0100

@@ -114,7 +114,7 @@ kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
 	cd src && tar xf ../$(DOWNLOADS)/golinux-tt1114405.tar.gz
 	ln -s src/linux-s3c24xx kernel
 	cd kernel && patch -p1 <$(ROOT)/patchs/kernel_tt1114405_opentom.patch
-	cp $(CONFIGS)/kernel_config.console_ext kernel/.config
+	cp $(CONFIGS)/kernel_config.minix kernel/.config
 
 $(ARM_ROOT): $(ARMGCC)/lib
 	mkdir -p $(ARM_ROOT)/bin
@@ -494,8 +494,8 @@ $(ARM_ROOT)/usr/bin/rfcomm: $(DOWNLOADS)/bluez-utils-2.15.tar.gz $(ARM_ROOT)/usr
 	cd build && { \
 		tar xf ../Downloads/bluez-utils-2.15.tar.gz; \
 		cd bluez-utils-2.15 && { \
-			./configure --prefix=$(TOMDIST) --host=arm-linux; \
-			make install; \
+			./configure --prefix='' --host=arm-linux; \
+			make DESTDIR=$(TOMDIST) install; \
 		} >$(LOGS)/bluez-utils.log 2>&1; \
 	}
 
@@ -548,7 +548,7 @@ verif_dist:
 	rm -f $(TOMDIST)/lib/* || echo ok
 	libcount=0 ; while [ $$libcount -lt `find $(TOMDIST)/lib | wc -l` ] ; do \
 		libcount=`find $(TOMDIST)/lib | wc -l` ; \
-		install_shared_libs.sh $(TOMDIST) "$(ARM_SYSROOT)/lib $(ARM_SYSROOT)/usr/lib $(CROSS)/$(T_ARCH)/lib" ; \
+		install_shared_libs.sh $(TOMDIST) $(ARM_SYSROOT)/usr/lib "$(ARM_SYSROOT)/lib $(CROSS)/$(T_ARCH)/lib" ; \
 	done
 	cd $(TOMDIST) && find . -type f -exec $(STRIP) 2>/dev/null {} \;
 

@@ -1,93 +1,120 @@
-diff --git a/navit/CMakeLists.txt b/navit/CMakeLists.txt
-index 5333c9f..819e3bc 100644
---- a/navit/CMakeLists.txt
-+++ b/navit/CMakeLists.txt
-@@ -102,7 +102,7 @@ if(NOT MSVC)
-     SET(NAVIT_LIBS ${NAVIT_LIBS} m)
+--- a/navit/CMakeLists.txt	2018-11-18 21:59:14.000000000 +0000
++++ b/navit/CMakeLists.txt	2019-01-01 13:54:11.000000000 +0000
+@@ -104,7 +104,7 @@ if(NOT MSVC)
+ 	SET(NAVIT_LIBS ${NAVIT_LIBS} m)
  endif(NOT MSVC)
- target_link_libraries(${NAVIT_LIBNAME}  ${MODULES_NAME} ${NAVIT_SUPPORT_LIBS} fib ${NAVIT_LIBS} ) 
+ target_link_libraries(${NAVIT_LIBNAME}  ${MODULES_NAME} ${NAVIT_SUPPORT_LIBS} fib ${NAVIT_LIBS} )
 -set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_DEFINITIONS "MODULE=navit;LIBDIR=\"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}\";PREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 +set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_DEFINITIONS "MODULE=navit;LIBDIR=\"/mnt/sdcard/opentom/lib\";PREFIX=\"/mnt/sdcard/opentom\"")
  if (DEFINED NAVIT_COMPILE_FLAGS)
-    set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_FLAGS "${NAVIT_COMPILE_FLAGS}")
+ 	set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_FLAGS "${NAVIT_COMPILE_FLAGS}")
  endif()
-@@ -147,9 +147,15 @@ if(ANDROID)
-    add_custom_target( navit_config_xml ALL DEPENDS navitxxxhdpi.xml navitxxhdpi.xml navitxhdpi.xml navithdpi.xml navitmdpi.xml navitldpi.xml)
- else()
-    process_xslt(${CMAKE_CURRENT_SOURCE_DIR}/navit_shipped.xml ${CMAKE_CURRENT_BINARY_DIR}/navit.xml "")
--   add_custom_target( navit_config_xml_resource DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/navit.xml COMMAND mkdir -p resources/share/navit COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/navit.xml resources/share/navit)
-+   compose_xslt_transform_command(TOMTOM_XL_CMD "${PROJECT_SOURCE_DIR}/navit/xslt/tomtom_xl.xslt" "${CMAKE_CURRENT_BINARY_DIR}/navit.xml" "${CMAKE_CURRENT_BINARY_DIR}/navit_xl.xml")
-+   ADD_CUSTOM_COMMAND(
-+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/navit_xl.xml
-+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/navit.xml ${PROJECT_SOURCE_DIR}/navit/xslt/tomtom_xl.xslt
-+      ${TOMTOM_XL_CMD}
-+   )
-+   add_custom_target( navit_config_xml_resource DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/navit.xml COMMAND mkdir -p resources/share/navit COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/navit.xml ${CMAKE_CURRENT_BINARY_DIR}/navit_xl.xml resources/share/navit)
-    add_custom_target( locale_resource DEPENDS locales COMMAND mkdir -p resources/share COMMAND cp -a ${CMAKE_CURRENT_BINARY_DIR}/../locale resources/share/locale)
--   add_custom_target( navit_config_xml ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/navit.xml)
-+   add_custom_target( navit_config_xml ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/navit.xml ${CMAKE_CURRENT_BINARY_DIR}/navit_xl.xml)
- endif()
- 
- ADD_DEPENDENCIES(${NAVIT_LIBNAME} git_version)
-@@ -169,7 +175,7 @@ install(TARGETS navit
-         DESTINATION ${BIN_DIR}
-         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
- 
--install(FILES ${CMAKE_CURRENT_BINARY_DIR}/navit.xml
-+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/navit.xml ${CMAKE_CURRENT_BINARY_DIR}/navit_xl.xml
-         DESTINATION ${SHARE_DIR}
-         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
- 
-diff --git a/navit/xpm/CMakeLists.txt b/navit/xpm/CMakeLists.txt
-index a2ce9e4..c6cd660 100644
---- a/navit/xpm/CMakeLists.txt
-+++ b/navit/xpm/CMakeLists.txt
-@@ -105,7 +105,9 @@ foreach (IMAGE_SRC ${FILES_TO_PNG})
-    string(REGEX REPLACE ".[a-z]*\$" "" IMAGE ${IMAGE_SRC})
-    
-    if ( IMAGE_SRC MATCHES ".*svgz*" )
--      if ( DEFINED svg2png_scaling_nav AND ${IMAGE} MATCHES "^nav_")
-+      if ( DEFINED svg2png_scaling AND ${IMAGE} MATCHES "^tomtom_")
-+         add_scale_targets(${IMAGE_SRC} ${IMAGE} -1 64 80)
-+      elseif( DEFINED svg2png_scaling_nav AND ${IMAGE} MATCHES "^nav_")
-          add_scale_targets(${IMAGE_SRC} ${IMAGE} ${svg2png_scaling_nav})
-       elseif( DEFINED svg2png_scaling_flag AND ${IMAGE} MATCHES "^country_")
-          add_scale_targets(${IMAGE_SRC} ${IMAGE} ${svg2png_scaling_flag})
-diff --git a/navit/xpm/tomtom_minus.svg b/navit/xpm/tomtom_minus.svg
-new file mode 100644
-index 0000000..6dd6ad2
 --- /dev/null
-+++ b/navit/xpm/tomtom_minus.svg
-@@ -0,0 +1,6 @@
-+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-+<svg width="64px" height="64px" viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg" version="1.1">
-+  <rect x="-110" y="-110" width="220" height="220" fill="#000080" stroke="none" opacity="0.5"/>
-+  <path fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" d="M 60 0 L -60 0"/>
-+</svg>
-diff --git a/navit/xpm/tomtom_plus.svg b/navit/xpm/tomtom_plus.svg
-new file mode 100644
-index 0000000..2c4cb6b
---- /dev/null
-+++ b/navit/xpm/tomtom_plus.svg
-@@ -0,0 +1,6 @@
-+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-+<svg width="64px" height="64px" viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg" version="1.1">
-+  <rect x="-110" y="-110" width="220" height="220" fill="#000080" stroke="none" opacity="0.5"/>
-+  <path fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" d="M 0 60 L 0 -60 M 60 0 L -60 0"/>
-+</svg>
-diff --git a/navit/xslt/tomtom.xslt b/navit/xslt/tomtom.xslt
-index 3e34d92..2bce60c 100644
---- a/navit/xslt/tomtom.xslt
-+++ b/navit/xslt/tomtom.xslt
-@@ -20,19 +20,19 @@
++++ b/navit/xslt/tomtom_xl.xslt	2018-12-21 17:56:21.000000000 +0000
+@@ -0,0 +1,87 @@
++<?xml version="1.0"?>
++<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xi="http://www.w3.org/2001/XInclude" version="1.0">
++
++	<xsl:output method="xml" indent="yes" cdata-section-elements="gui" doctype-system="navit.dtd"/>
++
++	<xsl:template match="/">
++		<xsl:copy-of select="layout"/>
++		<xsl:apply-templates select="config"/>
++	</xsl:template>
++
++	<xsl:template match="config">
++		<xsl:copy>
++			<xsl:apply-templates select="navit"/>
++		</xsl:copy>
++	</xsl:template>
++
++	<xsl:template match="navit">
++		<xsl:copy>
++			<xsl:attribute name="zoom">32</xsl:attribute>
++			<xsl:attribute name="tracking">1</xsl:attribute>
++			<xsl:attribute name="orientation">-1</xsl:attribute>
++			<xsl:attribute name="autozoom_active">1</xsl:attribute>
++			<xsl:attribute name="recent_dest">25</xsl:attribute>
++			<graphics type="sdl" w="480" h="272" bpp="16" frame="0" flags="1"/>
++			<xsl:apply-templates select="gui[@type='internal']"/>
++
++			<!-- Top center: speed cam warnings -->
++			<osd enabled="yes" type="speed_cam" w="100" h="50" x="190" y="0" font_size="400" background_color="#000000FF" text_color="#00FF00" label="Radar ${distance}" align=""/>
++
++			<!-- Bottom right area: speed warnings, vehicle speed display, arrival time, remaining time and gps signal strength -->
++			<osd enabled="yes" type="speed_warner" w="30" h="25"  x="315" y="-45" background_color="#000000FF" font_size="300" speed_exceed_limit_offset="5" speed_exceed_limit_percent="10" announce_on="1" label="text_only" />
++			<osd enabled="yes" type="text" font_size="300" background_color="#000000FF" label="${{vehicle.position_speed}}" w="76" h="25" x="239" y="-45" align="4"/>
++			<osd enabled="yes" type="text" font_size="300" background_color="#000000FF" label="${{navigation.item.destination_time[arrival]}}" w="95" h="25" x="345" y="-70" align="4"/>
++			<osd enabled="yes" type="text" label="${{navigation.item.destination_length[named]}}" background_color="#000000FF" font_size="300" w="95" h="25" x="345" y="227" align="4" />
++			<osd enabled="yes" type="gps_status" background_color="#000000FF" w="40" h="50" x="-40" y="-70"/>
++			<osd enabled="yes" type="text" label="${{navigation.item.destination_time[remaining]}}" background_color="#000000FF" font_size="300" w="106" h="25" x="239" y="202" align="4" />
++
++			<!-- Bottom left area: Navigation next turn, and distance to next turn is displayed -->
++			<osd enabled="yes" type="navigation_next_turn" background_color="#000000FF" w="50" h="50" x="0" y="202" icon_src="%s_wh_32_32.png" />
++			<osd enabled="yes" type="text" label="${{navigation.item[1].length[named]}}" background_color="#000000FF" font_size="300" w="191" h="50" x="50" y="202" />
++
++			<!-- Bottom Center: name of next road -->
++			<osd enabled="yes" type="text" label="${{navigation.item[1].street_name}}" w="480" h="22" x="0" y="250" background_color="#000000FF" font_size="300" align="0" />
++
++			<osd enabled="no" type="text" label="${{vehicle.position_time_iso8601[local;%X]}}" background_color="#000000FF" w="100" h="50" x="-100" y="150" font_size="300" />
++
++			<!-- Top right and left corners: zoom in & out buttons -->
++			<osd enabled="yes" type="button" x="10" y="10" command="zoom_in()" src="tomtom_plus_48_48.png"/>
++			<osd enabled="yes" type="button" x="-58" y="10" command="zoom_out()" src="tomtom_minus_48_48.png"/> 
++			<vehicle name="Local GPS" profilename="car" enabled="yes" active="yes" follow="1" source="file:/var/run/gpspipe">
++
++				<!-- Navit can write a tracklog in several formats (gpx, nmea or textfile): -->
++				<log enabled="no" type="gpx" attr_types="position_time_iso8601,position_direction,position_speed,position_radius" data="$NAVIT_PREFIX/track_%Y%m%d-%%i.gpx" flush_size="1000" flush_time="30"/>
++			</vehicle>
++			<vehicle name="Demo" profilename="car" enabled="yes" active="no" follow="1" source="demo://" speed="100"/>
++			<xsl:copy-of select="tracking"/>
++
++			<xsl:copy-of select="vehicleprofile[@name='car']"/>
++			<xsl:copy-of select="vehicleprofile[@name='car_shortest']"/>
++			<xsl:copy-of select="vehicleprofile[@name='car_avoid_tolls']"/>
++			<xsl:copy-of select="vehicleprofile[@name='bike']"/>
++			<xsl:copy-of select="vehicleprofile[@name='pedestrian']"/>
++
++			<xsl:copy-of select="route"/>
++			<xsl:copy-of select="navigation"/>
++
++			<xsl:comment>Use espeak.</xsl:comment>
++			<speech type="cmdline" data="$NAVIT_PREFIX/bin/espeakdsp -v en '%s'"/>
++
++			<mapset enabled="yes">
++				<map type="binfile" enabled="yes" data="$NAVIT_SHAREDIR/maps/*.bin"/>
++			</mapset>
++			<xsl:copy-of select="layer"/>
++			<xi:include href="$NAVIT_SHAREDIR/navit_layout_*.xml"/>
++			<xsl:copy-of select="layout"/>
++		</xsl:copy>
++	</xsl:template>
++
++	<xsl:template match="gui[@type='internal']">
++		<xsl:copy>
++			<xsl:copy-of select="@*"/>
++			<xsl:attribute name="fullscreen">1</xsl:attribute>
++			<xsl:attribute name="pitch">35</xsl:attribute>
++			<xsl:apply-templates/>
++		</xsl:copy>
++	</xsl:template>
++</xsl:transform>
+--- a/navit/xslt/tomtom.xslt	2018-12-27 11:33:21.000000000 +0000
++++ b/navit/xslt/tomtom.xslt	2019-01-01 14:23:01.000000000 +0000
+@@ -4,6 +4,7 @@
+ 	<xsl:output method="xml" indent="yes" cdata-section-elements="gui" doctype-system="navit.dtd"/>
+ 
+ 	<xsl:template match="/">
++		<xsl:copy-of select="layout"/>
+ 		<xsl:apply-templates select="config"/>
+ 	</xsl:template>
+ 
+@@ -20,22 +21,22 @@
  			<xsl:attribute name="orientation">-1</xsl:attribute>
  			<xsl:attribute name="autozoom_active">1</xsl:attribute>
  			<xsl:attribute name="recent_dest">25</xsl:attribute>
 -			<graphics type="sdl" w="480" h="272" bpp="16" frame="0" flags="1"/>
-+			<graphics type="sdl" w="320" h="240" bpp="16" frame="0" flags="1"/>
- 			<xsl:copy-of select="gui[@type='internal']"/>
+-			<xsl:copy-of select="gui[@type='internal']"/>
 -			<osd enabled="yes" type="text" x="80" y="0" w="320" h="40" font_size="360" align="0" label="${{tracking.item.street_name}} ${{tracking.item.street_name_systematic}}" background_color="#00008080"/>
 -			<osd enabled="yes" type="text" x="80" y="232" w="80" h="40" font_size="360" align="0" label="${{navigation.item[1].length[named]}}" background_color="#00008080"/>
 -			<osd enabled="yes" type="text" x="160" y="232" w="240" h="40" font_size="360" align="0" label="${{vehicle.position_speed}} / ${{tracking.item.route_speed}}" background_color="#00008080"/>
@@ -96,9 +123,11 @@ index 3e34d92..2bce60c 100644
 -			<osd enabled="yes" type="compass" x="400" y="80" w="80" h="112" background_color="#00008080" font_size="300"/>
 -			<osd enabled="yes" type="gps_status" x="0" y="80" w="80" h="40" background_color="#00008080"/>
 -			<osd enabled="yes" type="speed_warner" x="0" y="120" w="80" h="72" background_color="#00008080" font_size="300"/>
--			<osd enabled="yes" type="navigation_next_turn" x="0" y="192" w="80" h="80" icon_w="48" icon_h="48" icon_src="%s_wh_48_48.png" background_color="#00008080"/> 
+-			<osd enabled="yes" type="navigation_next_turn" x="0" y="192" w="80" h="80" icon_w="48" icon_h="48" icon_src="%s_wh_48_48.png" background_color="#00008080"/>
 -			<osd enabled="yes" type="button" x="400" y="0" command="zoom_in()" src="tomtom_plus_80_80.png"/>
 -			<osd enabled="yes" type="button" x="0" y="0" command="zoom_out()" src="tomtom_minus_80_80.png"/>
++			<graphics type="sdl" w="320" h="240" bpp="16" frame="0" flags="1"/>
++			<xsl:apply-templates select="gui[@type='internal']"/>
 +			<osd enabled="yes" type="text" x="64" y="0" w="192" h="32" font_size="240" align="0" label="${{tracking.item.street_name}} ${{tracking.item.street_name_systematic}}" background_color="#00008080"/>
 +			<osd enabled="yes" type="text" x="64" y="208" w="48" h="32" font_size="240" align="0" label="${{navigation.item[1].length[named]}}" background_color="#00008080"/>
 +			<osd enabled="yes" type="text" x="112" y="208" w="144" h="32" font_size="240" align="0" label="${{vehicle.position_speed}} / ${{tracking.item.route_speed}}" background_color="#00008080"/>
@@ -112,51 +141,33 @@ index 3e34d92..2bce60c 100644
 +			<osd enabled="yes" type="button" x="0" y="0" command="zoom_out()" src="tomtom_minus_64_64.png"/>
  			<vehicle name="Local GPS" profilename="car" enabled="yes" active="yes" follow="1" source="file:/var/run/gpspipe">
  			<!-- Navit can write a tracklog in several formats (gpx, nmea or textfile): -->
- 				<log enabled="no" type="gpx" attr_types="position_time_iso8601,position_direction,position_speed,position_radius" data="/mnt/sdcard/navit/track_%Y%m%d-%%i.gpx" flush_size="1000" flush_time="30"/>
-@@ -50,7 +50,7 @@
+-				<log enabled="no" type="gpx" attr_types="position_time_iso8601,position_direction,position_speed,position_radius" data="/mnt/sdcard/navit/track_%Y%m%d-%%i.gpx" flush_size="1000" flush_time="30"/>
++				<log enabled="no" type="gpx" attr_types="position_time_iso8601,position_direction,position_speed,position_radius" data="$NAVIT_PREFIX/track_%Y%m%d-%%i.gpx" flush_size="1000" flush_time="30"/>
+ 			</vehicle>
+ 			<vehicle name="Demo" profilename="car" enabled="yes" active="no" follow="1" source="demo://" speed="100"/>
+ 			<xsl:copy-of select="tracking"/>
+@@ -50,13 +51,23 @@
  			<xsl:copy-of select="navigation"/>
  
  			<xsl:comment>Use espeak.</xsl:comment>
 -			<speech type="cmdline" data="/mnt/sdcard/navit/bin/espeakdsp -v en '%s'"/>
-+			<speech type="cmdline" data="/mnt/sdcard/opentom/bin/espeakdsp -v en '%s'"/>
++			<speech type="cmdline" data="$NAVIT_PREFIX/bin/espeakdsp -v en '%s'"/>
  
  			<mapset enabled="yes">
  				<map type="binfile" enabled="yes" data="$NAVIT_SHAREDIR/maps/*.bin"/>
-diff --git a/navit/xslt/tomtom_xl.xslt b/navit/xslt/tomtom_xl.xslt
-new file mode 100644
-index 0000000..3a167ac
---- /dev/null
-+++ b/navit/xslt/tomtom_xl.xslt
-@@ -0,0 +1,32 @@
-+<?xml version="1.0"?>
-+<xsl:transform version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xi="http://www.w3.org/2001/XInclude">
-+	<xsl:output method="xml" doctype-system="navit.dtd" cdata-section-elements="gui"/>
+ 			</mapset>
+ 			<xsl:copy-of select="layer"/>
++			<xi:include href="$NAVIT_SHAREDIR/navit_layout_*.xml"/>
+ 			<xsl:copy-of select="layout"/>
+ 		</xsl:copy>
+ 	</xsl:template>
 +
-+	<xsl:template match="@*|node()">
++	<xsl:template match="gui[@type='internal']">
 +		<xsl:copy>
-+			<xsl:apply-templates select="@*|node()"/>
++			<xsl:copy-of select="@*"/>
++			<xsl:attribute name="fullscreen">1</xsl:attribute>
++			<xsl:attribute name="pitch">35</xsl:attribute>
++			<xsl:apply-templates/>
 +		</xsl:copy>
 +	</xsl:template>
-+
-+	<xsl:template match="/config/navit/osd|/config/navit/gui|/config/navit/graphics"/>
-+
-+	<xsl:template match="/config/navit">
-+		<xsl:copy>
-+			<xsl:apply-templates select="@*"/>
-+			<graphics type="sdl" w="480" h="272" bpp="16" frame="0" flags="1"/>
-+			<xsl:copy-of select="gui[@type='internal']"/>
-+			<osd enabled="yes" type="text" x="80" y="0" w="320" h="40" font_size="360" align="0" label="${{tracking.item.street_name}} ${{tracking.item.street_name_systematic}}" background_color="#00008080"/>
-+			<osd enabled="yes" type="text" x="80" y="232" w="80" h="40" font_size="360" align="0" label="${{navigation.item[1].length[named]}}" background_color="#00008080"/>
-+			<osd enabled="yes" type="text" x="160" y="232" w="240" h="40" font_size="360" align="0" label="${{vehicle.position_speed}} / ${{tracking.item.route_speed}}" background_color="#00008080"/>
-+			<osd enabled="yes" type="text" x="400" y="232" w="80" h="40" font_size="360" align="0" label="${{navigation.item.destination_length[named]}}" background_color="#00008080"/>
-+			<osd enabled="yes" type="text" x="400" y="192" w="80" h="40" font_size="360" align="0" label="${{navigation.item.destination_time[arrival]}}" background_color="#00008080"/>
-+			<osd enabled="yes" type="compass" x="400" y="80" w="80" h="112" background_color="#00008080" font_size="300"/>
-+			<osd enabled="yes" type="gps_status" x="0" y="80" w="80" h="40" background_color="#00008080"/>
-+			<osd enabled="yes" type="speed_warner" x="0" y="120" w="80" h="72" background_color="#00008080" font_size="300"/>
-+			<osd enabled="yes" type="navigation_next_turn" x="0" y="192" w="80" h="80" icon_w="48" icon_h="48" icon_src="%s_wh_48_48.png" background_color="#00008080"/>
-+			<osd enabled="yes" type="button" x="400" y="0" command="zoom_in()" src="tomtom_plus_80_80.png"/>
-+			<osd enabled="yes" type="button" x="0" y="0" command="zoom_out()" src="tomtom_minus_80_80.png"/>
-+			<xsl:apply-templates select="node()"/>
-+		</xsl:copy>
-+	</xsl:template>
-+</xsl:transform>
+ </xsl:transform>

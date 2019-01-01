@@ -1,0 +1,34 @@
+# Framework to be sourced by bt_* scripts.
+
+btdev=/dev/bt
+RFCOMMPID="/var/run/rfcomm#$RFCOMM#$CHANNEL.pid"
+
+# Service handle(s) for current rfcomm device and channel
+gethandle() {
+	H=
+	for h in $(sdptool browse local | sed -Ene "/Service Name: $SVCNAME/,/^Service RecHandle:/s~^.* ([x0-9]+).*$~\1~p"); do
+		sdptool get "$h" | grep -qe "Channel: $CHANNEL" && H="$H $h"
+	done
+	[ "$H" ]
+}
+
+start_bt
+# Advertise service
+[ "$SVC" ] && ! gethandle || exit && sdptool add --channel="$CHANNEL" "$SVC" && ! gethandle && exit
+[ -t 0 ] && stty "-F$(tty)" -hup
+while [ -e "$btdev" ]; do
+	# Check bad pid file
+	[ -e "$RFCOMMPID" ] && ! kill -0 "$(cat "$RFCOMMPID")" && break
+	[ ! -e "$RFCOMMPID" ] && {
+		# Ask whether to listen
+		echo "$MSG" | flmessage -y -s >/dev/null 2>&1 && { rfcomm listen "$RFCOMM" "$CHANNEL" & } || break
+		echo "$!" >"$RFCOMMPID"
+	} ||
+	# Incoming connection? Action blocks until disconnected
+	! rfcomm show "$RFCOMM" 2>/dev/null |grep -qe "^.\+channel \+$CHANNEL \+connected" || { action; rm -f "$RFCOMMPID"; }
+	sleep 2
+done
+# Cleanup
+for h in $H; do sdptool del "$h"; done
+kill "$(cat "$RFCOMMPID")"
+rm -f "$RFCOMMPID"

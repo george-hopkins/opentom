@@ -1,49 +1,51 @@
 #! /bin/sh
 
-export DIST=/mnt/sdcard/opentom
-export HOME=$DIST
+export HOME="$DIST"
 
-export FRAMEBUFFER=/dev/fb
+# Login files
+[ -f "$DIST/etc/.shinit" ] && cp -f "$DIST/etc/.shinit" /etc/
+[ -f "$DIST/etc/profile" ] && cp -f "$DIST/etc/profile" /etc/
+. /etc/.shinit
 
-export TSLIB_CONSOLEDEVICE=none
-export TSLIB_FBDEVICE=/dev/fb
-export TSLIB_TSDEVICE=/dev/input/event0
-export TSLIB_CONFFILE=$DIST/etc/ts.conf
-export TSLIB_PLUGINDIR=$DIST/lib/ts
-export TSLIB_CALIBFILE=$DIST/etc/pointercal
+DB=/etc/dropbear
+RSA_KEYFILE="$DB/dropbear_rsa_host_key"
 
-export PATH=$PATH:$DIST/bin
-export LD_LIBRARY_PATH=$DIST/lib
-
-ln -s $DIST/lib/libz.so.1 /lib/libz.so
-
-if [ ! -e /etc/profile ]; then ln -s $DIST/etc/profile /etc/profile; fi
-
-echo "Disabling BT"
+echo 'Disabling BT'
 stop_bt -s
+
+#echo 'syslogd'
+#rm -f "$DIST/logs/messages"; syslogd "-O$DIST/logs/messages" -l8
+
+echo 'opentom * opentom' >/etc/ppp/pap-secrets
+chmod 0600 /etc/ppp/pap-secrets
 
 ifconfig lo 127.0.0.1 up
 
-cd /dev
-ln -s fb fb0
-export NANOX_YRES=`fbset -s | grep geometry | if read x x yres x; then echo $yres; fi`
+echo 'telnetd'
+telnetd
+
+echo 'ssh private key'
+[ -d "$DIST$DB" ] && {
+	[ -e "$DIST$RSA_KEYFILE" ] || dropbearkey -t rsa -f "$DIST$RSA_KEYFILE" &&
+	cp -f "$DIST$RSA_KEYFILE" "$RSA_KEYFILE" &&
+	chmod 0600 "$RSA_KEYFILE"
+}
+
+echo 'ssh server'
+[ -f "$RSA_KEYFILE" ] && [ -f "$DIST$DB/authorized_keys" ] &&
+cp -f "$DIST$DB/authorized_keys" /.ssh/authorized_keys && chmod 0600 /.ssh/authorized_keys
+env HOME=/ dropbear -sgB
 
 # Verify TS is calibrated
-if [ ! -f $TSLIB_CALIBFILE ]; then ts_calibrate; fi
-
-cd $DIST
+[ -f "$TSLIB_CALIBFILE" ] || ts_calibrate
 
 # Suspend when the power button is pressed or the battery is low
-power_button -b bin/suspend bin/suspend &
+power_button -b "$DIST/bin/suspend" "$DIST/bin/suspend" &
 
-while /bin/true
+while true
 do
-	sleep 1
-	pidof nano-X || { 
-		nice -n -10 nano-X &
-		nanowm &
-	}
-	sleep 1
-	nxmenu $DIST/etc/nxmenu.cfg >$DIST/logs/nxmenu.log 2>&1
+	pidof nano-X >/dev/null 2>&1 || { nice -n -10 nano-X & }
+	pidof nanowm >/dev/null 2>&1 ||	{ nanowm & }
+	pidof nano-X >/dev/null 2>&1 && pidof nanowm >/dev/null 2>&1 || ! sleep 1 || continue
+	nxmenu "$DIST/etc/nxmenu.cfg" >"$DIST/logs/nxmenu.log" 2>&1
 done
-

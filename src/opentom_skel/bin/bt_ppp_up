@@ -1,0 +1,22 @@
+#! /bin/sh
+
+# Handle incoming PPP connection over BT
+
+IP_LOC='192.168.145.1'
+IP_REM='192.168.145.2'
+CHANNEL=3
+RFCOMM=3
+SVC=SP
+SVCNAME='Serial Port'
+SPEED=115200
+MSG="use on your computer:\nsudo rfcomm bind <n> <ID> $CHANNEL\nsudo pppd noauth debug nodetach $SPEED /dev/rfcomm<n>"
+
+action() {
+	stty -F/dev/rfcomm"$RFCOMM" -echo
+	stty -F/dev/rfcomm"$RFCOMM" -echok
+	pppd rfcomm"$RFCOMM" "$SPEED" "$IP_LOC":"$IP_REM" user opentom noauth nodetach debug
+}
+
+modprobe ppp-async
+. "$DIST/bin/bt_listen"
+modprobe -r ppp-async

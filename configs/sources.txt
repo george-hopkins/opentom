@@ -1,9 +1,9 @@
 # How to get source archives
 # Libs
-wget --progress=dot:giga  https://web.archive.org/web/20071013013709/http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
+wget --progress=dot:giga  http://download.tomtom.com/open/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
 wget --progress=dot:giga https://archive.org/download/golinux-tt1114405.tar.gz/golinux-tt1114405.tar.gz
 wget --progress=dot:giga https://downloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz
-wget --progress=dot:giga ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
+wget --progress=dot:giga ftp://ftp.fu-berlin.de/unix/X11/graphics/ImageMagick/delegates/libjpeg-6b.tar.gz
 wget --progress=dot:giga http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
 wget --progress=dot:giga https://github.com/navit-gps/dependencies/raw/master/tomtom/libpng-1.6.29.tar.gz
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }

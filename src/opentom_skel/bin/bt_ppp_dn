@@ -1,0 +1,12 @@
+#! /bin/sh
+
+# Force PPP disconnect
+
+CHANNEL=3
+RFCOMM=3
+RFCOMMPID="/var/run/rfcomm#$RFCOMM#$CHANNEL.pid"
+
+for p in /var/run/ppp*.pid; do kill "$(cat "$p")"; rm -f "$p"; done
+kill "$(cat "$RFCOMMPID")"; rm -f "$RFCOMMPID"
+
+modprobe -r ppp-async

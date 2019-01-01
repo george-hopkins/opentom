@@ -12,6 +12,11 @@ ifeq ($(ROOT),)
 	echo Please, do first : source get_build_env.sh
 endif
 
+ifeq ($(TTXL),1)
+	TTXSLTS := tomtom_xl
+else
+	TTXSLTS := tomtom
+endif
 
 TMP=/tmp
 export APPS_ROOT=$(ROOT)/applications
@@ -49,7 +54,6 @@ $(CLEAN_APPS):
 
 $(EXTRA): %: $(TOMDIST)/bin/%
 
-
 build/%/Makefile:
 	if ! test -f $@; then make $(@:%/Makefile=%); fi
 	cd $(@:%/Makefile=%) && ./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH);
@@ -75,14 +79,13 @@ $(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
 	}
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
-
 $(TOMDIST)/bin/navit: Downloads/navit.zip
 	mkdir -p build
 	cd build && unzip ../Downloads/navit.zip && cd navit-* && { \
-		#patch -p1 <../../patchs/navit_opentom.patch && \
+		patch -p1 <../../patchs/navit_opentom.patch && \
 		sed -i 's| TOMTOM_SDK_DIR \S*| TOMTOM_SDK_DIR $(ARM_APPROOT)|' Toolchain/$(T_ARCH).cmake && \
 		mkdir -p build && cd build && \
-		cmake .. -DCMAKE_INSTALL_PREFIX=$(ARM_APPROOT) -DFREETYPE_INCLUDE_DIRS=$(ARM_APPROOT)/include/freetype2/ -Dsupport/gettext_intl=TRUE -DHAVE_API_TOMTOM=TRUE -DXSLTS=tomtom -DAVOID_FLOAT=TRUE -Dmap/mg=FALSE -DUSE_PLUGINS=0 -DCMAKE_TOOLCHAIN_FILE=../Toolchain/$(T_ARCH).cmake -DDISABLE_QT=ON -DSAMPLE_MAP=n -DBUILD_MAPTOOL=n >$(LOGS)/navit.log 2>&1 && \
+		cmake .. -DCMAKE_INSTALL_PREFIX=$(ARM_APPROOT) -DFREETYPE_INCLUDE_DIRS=$(ARM_APPROOT)/include/freetype2/ -Dsupport/gettext_intl=TRUE -DHAVE_API_TOMTOM=TRUE -DXSLTS=$(TTXSLTS) -DUSE_SVG=FALSE -Dsvg2png_scaling="0;16;20;24;32;48;64" -Dsvg2png_scaling_flag="-1;32" -Dsvg2png_scaling_nav="64;32" -DAVOID_FLOAT=TRUE -Dmap/mg=FALSE -DUSE_PLUGINS=0 -DCMAKE_TOOLCHAIN_FILE=../Toolchain/$(T_ARCH).cmake -DDISABLE_QT=ON -DSAMPLE_MAP=n -DBUILD_MAPTOOL=n >$(LOGS)/navit.log 2>&1 && \
 		make $(JOBS) >>$(LOGS)/navit.log 2>&1 && \
 		make install >>$(LOGS)/navit.log 2>&1 && \
 		cp -R $(ARM_APPROOT)/share/navit $(TOMDIST)/share/ && \
