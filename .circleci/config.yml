@@ -7,7 +7,7 @@ jobs:
       - run:
           command: |
             apt update
-            apt install -y git build-essential
+            apt install -y git build-essential wget
           name: Build
       - checkout
       - run:
