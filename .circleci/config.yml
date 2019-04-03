@@ -7,7 +7,7 @@ jobs:
       - run:
           command: |
             apt update
-            apt install -y git
+            apt install -y git build-essential
           name: Build
       - checkout
       - run:
