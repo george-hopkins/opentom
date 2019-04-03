@@ -23,6 +23,8 @@ jobs:
             make extra
             cp build/ttsystem target/opentom-extra
             cp -r opentom_dist target/opentom-extra/opentom
+            tar -C target -cvzf target/opentom.tar.gz opentom
+            tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
       - store_artifacts:
           path: logs
       - store_artifacts:
