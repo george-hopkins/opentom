@@ -4,7 +4,7 @@ wget --progress=dot:giga  http://download.tomtom.com/open/gpl/toolchain_redhat_g
 wget --progress=dot:giga https://archive.org/download/golinux-tt1114405.tar.gz/golinux-tt1114405.tar.gz
 wget --progress=dot:giga https://downloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz
 wget --progress=dot:giga ftp://ftp.fu-berlin.de/unix/X11/graphics/ImageMagick/delegates/libjpeg-6b.tar.gz
-wget --progress=dot:giga https://downloads.sourceforge.net/project/freetype/freetype2/2.3.12/freetype-2.3.12.tar.bz2
+wget --progress=dot:giga https://downloads.sourceforge.net/project/freetype/freetype2/2.3.12/freetype-2.3.12.tar.gz
 wget --progress=dot:giga https://github.com/navit-gps/dependencies/raw/master/tomtom/libpng-1.6.29.tar.gz
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
 [ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
