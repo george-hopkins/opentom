@@ -7,7 +7,8 @@ jobs:
       - run:
           command: |
             apt update
-            apt install -y git build-essential wget
+            apt install -y git build-essential wget fluid imagemagick librsvg2-bin xsltproc lib32z1  
+
           name: Build
       - checkout
       - run:
