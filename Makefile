@@ -16,7 +16,7 @@ else
 endif
 
 # Speedup compilation (choose 1~2 x number of CPU/Core)
-export JOBS=-j6
+export JOBS=-j6<
 
 BUSYBOX_VER=1.22.1
 
@@ -189,7 +189,7 @@ build/microwin/src: $(DOWNLOADS)/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip
 	cd build && { \
 		if ! test -d microwindows; then \
 			unzip ../Downloads/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip; \
-			mv microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa microwindows \
+			mv microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa microwindows; \
 		else \
 			touch microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa/src; \
 		fi; \
@@ -331,7 +331,7 @@ build/nxlib: $(DOWNLOADS)/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip
 	cd build && { \
                 if ! test -d nxlib; then \
                         unzip ../Downloads/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip; \
-			mv nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9 nxlib \
+			mv nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9 nxlib; \
                 else \
                         touch nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9; \
 		fi; \
