@@ -187,12 +187,12 @@ $(ARM_ROOT)/usr/include/microwin/nano-X.h: $(ARM_ROOT)/usr/include/zlib.h $(ARM_
 
 build/microwin/src: $(DOWNLOADS)/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip
 	cd build && { \
-		if ! test -d microwin; then \
+		if ! test -d microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa; then \
 			tar xf ../Downloads/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip; \
 		else \
-			touch microwin/src; \
+			touch microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa/src; \
 		fi; \
-		cd microwin && patch -p1 <$(ROOT)/patchs/microwin_git_opentom.patch; \
+		cd microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa && patch -p1 <$(ROOT)/patchs/microwin_git_opentom.patch; \
 	}
 
 dropbear: $(TOMDIST)/bin/dropbear
@@ -328,12 +328,12 @@ $(ARM_ROOT)/usr/include/X11/X.h: build/nxlib $(ARM_ROOT)/usr/include/microwin/na
 
 build/nxlib: $(DOWNLOADS)/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip
 	cd build && { \
-                if ! test -d nxlib; then \
+                if ! test -d nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9; then \
                         tar xf ../Downloads/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip; \
                 else \
-                        touch nxlib; \
+                        touch nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9; \
 		fi; \
-                cd nxlib && patch -p1 <$(ROOT)/patchs/nxlib_git_opentom.patch; \
+                cd nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9 && patch -p1 <$(ROOT)/patchs/nxlib_git_opentom.patch; \
 		cp -Rf /usr/include/X11 .; \
 	}
 
