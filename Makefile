@@ -188,7 +188,7 @@ $(ARM_ROOT)/usr/include/microwin/nano-X.h: $(ARM_ROOT)/usr/include/zlib.h $(ARM_
 build/microwin/src: $(DOWNLOADS)/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip
 	cd build && { \
 		if ! test -d microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa; then \
-			tar xf ../Downloads/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip; \
+			unzip ../Downloads/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip; \
 		else \
 			touch microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa/src; \
 		fi; \
@@ -329,7 +329,7 @@ $(ARM_ROOT)/usr/include/X11/X.h: build/nxlib $(ARM_ROOT)/usr/include/microwin/na
 build/nxlib: $(DOWNLOADS)/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip
 	cd build && { \
                 if ! test -d nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9; then \
-                        tar xf ../Downloads/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip; \
+                        unzip ../Downloads/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip; \
                 else \
                         touch nxlib-7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9; \
 		fi; \
