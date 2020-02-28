@@ -6,8 +6,8 @@ wget --progress=dot:giga https://downloads.sourceforge.net/libpng/zlib-1.2.11.ta
 wget --progress=dot:giga ftp://ftp.fu-berlin.de/unix/X11/graphics/ImageMagick/delegates/libjpeg-6b.tar.gz
 wget --progress=dot:giga https://downloads.sourceforge.net/project/freetype/freetype2/2.3.12/freetype-2.3.12.tar.gz
 wget --progress=dot:giga https://github.com/navit-gps/dependencies/raw/master/tomtom/libpng-1.6.29.tar.gz
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
+wget --progress=dot:giga https://github.com/ghaerr/microwindows/archive/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip
+wget --progress=dot:giga https://github.com/ghaerr/nxlib/archive/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip
 wget --progress=dot:giga http://www.libsdl.org/release/SDL-1.2.15.tar.gz
 wget --progress=dot:giga http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
 wget --progress=dot:giga http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
