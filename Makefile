@@ -114,7 +114,7 @@ kernel/.config: $(DOWNLOADS)/golinux-tt1114405.tar.gz
 	cd src && tar xf ../$(DOWNLOADS)/golinux-tt1114405.tar.gz
 	ln -s src/linux-s3c24xx kernel
 	cd kernel && patch -p1 <$(ROOT)/patchs/kernel_tt1114405_opentom.patch
-	cp $(CONFIGS)/kernel_config.minix kernel/.config
+	cp $(CONFIGS)/kernel_config.console_minix kernel/.config
 
 $(ARM_ROOT): $(ARMGCC)/lib
 	mkdir -p $(ARM_ROOT)/bin
