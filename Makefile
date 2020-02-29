@@ -187,13 +187,13 @@ $(ARM_ROOT)/usr/include/microwin/nano-X.h: $(ARM_ROOT)/usr/include/zlib.h $(ARM_
 
 build/microwin/src: $(DOWNLOADS)/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip
 	cd build && { \
-		if ! test -d microwindows; then \
+		if ! test -d microwin; then \
 			unzip ../Downloads/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip; \
-			mv microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa microwindows; \
+			mv microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa microwin; \
 		else \
-			touch microwindows-9ffcd174168b37e7c434a61235acaab3bc6422fa/src; \
+			touch microwin/src; \
 		fi; \
-		cd microwindows && patch -p1 <$(ROOT)/patchs/microwin_git_opentom.patch; \
+		cd microwin && patch -p1 <$(ROOT)/patchs/microwin_git_opentom.patch; \
 	}
 
 dropbear: $(TOMDIST)/bin/dropbear
