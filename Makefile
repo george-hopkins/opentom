@@ -16,7 +16,7 @@ else
 endif
 
 # Speedup compilation (choose 1~2 x number of CPU/Core)
-export JOBS=-j6<
+export JOBS=-j6
 
 BUSYBOX_VER=1.22.1
 
