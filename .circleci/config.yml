@@ -4,9 +4,6 @@ jobs:
     docker:
       - image: ubuntu:18.04
     steps:
-      - restore_cache:
-          keys:
-            - dl-{{ checksum "configs/sources.txt" }}
       - run:
           command: |
             apt update
@@ -14,6 +11,9 @@ jobs:
 
           name: Build
       - checkout
+      - restore_cache:
+          keys:
+            - dl-{{ checksum "configs/sources.txt" }}
       - run:
           name: Build
           command: |
