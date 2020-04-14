@@ -500,7 +500,7 @@ $(TOMDIST)/bin/pppd: $(DOWNLOADS)/ppp-2.4.7.tar.gz
 
 quick-%:
 	make $(DOWNLOADS)/$(@:quick-%=%)
-	cd build && { tar xf ../$(DOWNLOADS)/$(@:quick-%=%)* || unzip ../$(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
+	cd build && { tar xf $(DOWNLOADS)/$(@:quick-%=%)* || unzip $(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) >$(LOGS)/$@.log && \
 		find . -name Makefile | while read f; do sed 's/-Wextra//' <$$f >/tmp/tmp$$$$; mv /tmp/tmp$$$$ $$f; done; \
 		make >>$(LOGS)/$@.log && \
