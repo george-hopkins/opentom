@@ -4,6 +4,9 @@ jobs:
     docker:
       - image: ubuntu:18.04
     steps:
+      - restore_cache:
+          keys:
+            - dl-{{ checksum "configs/sources.txt" }}
       - run:
           command: |
             apt update
@@ -25,6 +28,10 @@ jobs:
             cp -r opentom_dist target/opentom-extra/opentom
             tar -C target -cvzf target/opentom.tar.gz opentom
             tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
+      - save_cache:
+          key: dl-{{ checksum "configs/sources.txt" }}
+          paths:
+            - Downloads
       - store_artifacts:
           path: logs
       - store_artifacts:
