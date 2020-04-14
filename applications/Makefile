@@ -61,27 +61,27 @@ build/%/Makefile:
 patch-%:
 	$(eval NAME :=$(@:patch-%=%))
 	$(eval ONAME :=$(NAME).original)
-	make Downloads/$(@:patch-%=%)*
+	make $(DOWNLOADS)/$(@:patch-%=%)*
 	make -C build/$(NAME) clean || echo ok
 	if ! test -d build/$(ONAME); then  cd $(TMP); { \
-			if ! tar xf $(APPS_ROOT)/Downloads/$(NAME)*; then unzip $(APPS_ROOT)/Downloads/$(NAME)*; fi; \
+			if ! tar xf $(DOWNLOADS)/$(NAME)*; then unzip $(DOWNLOADS)/$(NAME)*; fi; \
 		}; \
 		mv $(TMP)/$(NAME) $(APPS_ROOT)/build/$(ONAME); \
 	fi
 	mkdir -p build
 	cd build && diff -rupN $(ONAME) $(NAME) >../patchs/$(NAME)_$(shell date +%y%m%d%k%M).patch
 
-$(TOMDIST)/bin/net-bubble: Downloads/net-bubble-0.9.1-ezx80-0.tar.gz
-	cd build && tar xf ../Downloads/net-bubble-0.9.1-ezx80-0* && cd net-bubble-0.9.1-ezx80-0 && { \
+$(TOMDIST)/bin/net-bubble: $(DOWNLOADS)/net-bubble-0.9.1-ezx80-0.tar.gz
+	cd build && tar xf $(DOWNLOADS)/net-bubble-0.9.1-ezx80-0* && cd net-bubble-0.9.1-ezx80-0 && { \
 		patch -p1 <../../patchs/net-bubble-0.9.1-ezx80-0_opentom.patch && \
 		make clean && make >$(LOGS)/netbubble.log 2>&1 && cp net-bubble $(TOMDIST)/bin; \
 		mkdir -p $(TOMDIST)/share/net-bubble && cp -R levels gfx $(TOMDIST)/share/net-bubble; \
 	}
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
-$(TOMDIST)/bin/navit: Downloads/navit.zip
+$(TOMDIST)/bin/navit: $(DOWNLOADS)/navit.zip
 	mkdir -p build
-	cd build && unzip ../Downloads/navit.zip && cd navit-* && { \
+	cd build && unzip $(DOWNLOADS)/navit.zip && cd navit-* && { \
 		#patch -p1 <../../patchs/navit_opentom.patch && \
 		sed -i 's| TOMTOM_SDK_DIR \S*| TOMTOM_SDK_DIR $(ARM_APPROOT)|' Toolchain/$(T_ARCH).cmake && \
 		mkdir -p build && cd build && \
@@ -94,10 +94,10 @@ $(TOMDIST)/bin/navit: Downloads/navit.zip
 	}
 
 
-$(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
+$(TOMDIST)/bin/eggchess.sh: $(DOWNLOADS)/eggchess-1.1-A780-0.tar.gz
 	mkdir -p $(TOMDIST)/share/eggchess
 	mkdir -p build
-	cd build && tar xf ../Downloads/eggchess-1.1-A780-0.tar.gz && cd eggchess && { \
+	cd build && tar xf $(DOWNLOADS)/eggchess-1.1-A780-0.tar.gz && cd eggchess && { \
 		patch -p1 <../../patchs/eggchess_oppentom.patch && \
 		make >$(LOGS)/eggchess.log && cp eggchess $(TOMDIST)/share/eggchess && \
 		echo '#! /bin/sh§§cd $$DIST/share/eggchess§exec ./eggchess§' | tr '§' '\n' >$(TOMDIST)/bin/eggchess.sh; \
@@ -109,10 +109,10 @@ $(TOMDIST)/bin/eggchess.sh: Downloads/eggchess-1.1-A780-0.tar.gz
 $(TOMDIST)/bin/nxpad_gnuboy:
 	make -C src/nxpad_gnuboy install
 
-$(TOMDIST)/bin/freecell: Downloads/TomTom_FreeCell.zip
+$(TOMDIST)/bin/freecell: $(DOWNLOADS)/TomTom_FreeCell.zip
 	mkdir -p build
 	mkdir -p build/freecell
-	cd build/freecell && unzip ../../Downloads/TomTom_FreeCell.zip && { \
+	cd build/freecell && unzip $(DOWNLOADS)/TomTom_FreeCell.zip && { \
 		cd src && patch -p1 <../../../patchs/freecell_opentom.patch; cd ..; \
 		$(CXX) -o $(TOMDIST)/bin/freecell -D ONLY16BPP -I$(ARM_APPROOT)/include/SDL -I src/include src/*.cpp -lSDL -lpthread && \
 		mkdir -p $(TOMDIST)/share/freecell; \
@@ -148,11 +148,11 @@ $(TOMDIST)/bin/tuxchess:
 		mkdir -p $(TOMDIST)/share/tuxchess && cp -R images $(TOMDIST)/share/tuxchess; \
 	}
 
-$(TOMDIST)/bin/12swap: Downloads/caanoo-12swap-v1.0-bin.zip Downloads/caanoo-12swap-v1.0-src.zip
+$(TOMDIST)/bin/12swap: $(DOWNLOADS)/caanoo-12swap-v1.0-bin.zip $(DOWNLOADS)/caanoo-12swap-v1.0-src.zip
 	mkdir -p build
 	cd build && \
-		unzip ../Downloads/caanoo-12swap-v1.0-bin.zip && \
-		unzip -o ../Downloads/caanoo-12swap-v1.0-src.zip && \
+		unzip $(DOWNLOADS)/caanoo-12swap-v1.0-bin.zip && \
+		unzip -o $(DOWNLOADS)/caanoo-12swap-v1.0-src.zip && \
 		cd caanoo-12swap-v1.0 && { \
 			patch -p1 <../../patchs/caanoo-12swap-v1.0_1402241302.patch; \
 			make >$(LOGS)/12swap.log ; \
@@ -163,8 +163,8 @@ $(TOMDIST)/bin/ntetris:
 	mkdir -p build
 	cp $(ROOT)/build/microwin/src/bin/ntetris $(TOMDIST)/bin/ntetris
 
-$(TOMDIST)/bin/pipepanic: Downloads/pipepanic-0.1.3-source.tar.gz
-	cd build && tar xf ../Downloads/pipepanic-0.1.3-source.tar.gz && cd pipepanic-0.1.3-source && { \
+$(TOMDIST)/bin/pipepanic: $(DOWNLOADS)/pipepanic-0.1.3-source.tar.gz
+	cd build && tar xf $(DOWNLOADS)/pipepanic-0.1.3-source.tar.gz && cd pipepanic-0.1.3-source && { \
 		patch -p1 <../../patchs/pipepanic-0.1.3-source_opentom.patch; \
 		make >$(LOGS)/pipe.log && \
 		mkdir -p $(TOMDIST)/bin/pipepanic && \
@@ -172,39 +172,39 @@ $(TOMDIST)/bin/pipepanic: Downloads/pipepanic-0.1.3-source.tar.gz
 		echo '#! /bin/sh§§cd $$DIST/bin/pipepanic§exec ./pipepanic -320x240§' | tr '§' '\n' >$(TOMDIST)/bin/pipepanic/pipe.sh; \
 	}
 
-$(TOMDIST)/bin/madplay: Downloads/madplay-0.15.2b.tar.gz
+$(TOMDIST)/bin/madplay: $(DOWNLOADS)/madplay-0.15.2b.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/madplay-0.15.2b.tar.gz && cd madplay-0.15.2b && { \
+	cd build && tar xf $(DOWNLOADS)/madplay-0.15.2b.tar.gz && cd madplay-0.15.2b && { \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >$(LOGS)/madplay.log; \
 		make $(JOBS) >$(LOGS)/madplay.log && cp madplay $(TOMDIST)/bin/madplay; \
 	}
 
-$(TOMDIST)/bin/sprsht: Downloads/spreadsheet1.2.2.tar.gz
+$(TOMDIST)/bin/sprsht: $(DOWNLOADS)/spreadsheet1.2.2.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/spreadsheet1.2.2.tar.gz && cd spreadsheet1.2.2 && { \
+	cd build && tar xf $(DOWNLOADS)/spreadsheet1.2.2.tar.gz && cd spreadsheet1.2.2 && { \
 		patch -p1 <../../patchs/spreadsheet1.2.2_1402241834.patch; \
 		make >$(LOGS)/sprsht.log && cp sprsht $(TOMDIST)/bin/; \
 	}
 
-$(TOMDIST)/bin/flchekers: Downloads/yacheckers-1.4.0.tar.bz2
+$(TOMDIST)/bin/flchekers: $(DOWNLOADS)/yacheckers-1.4.0.tar.bz2
 	mkdir -p build
-	cd build && tar xf ../Downloads/yacheckers-1.4.0.tar.bz2 && cd yacheckers-1.4.0 && { \
+	cd build && tar xf $(DOWNLOADS)/yacheckers-1.4.0.tar.bz2 && cd yacheckers-1.4.0 && { \
 		patch -p1 <../../patchs/yacheckers-1.4.0_1402241834.patch; \
 		make -f Makefile.fl >$(LOGS)/flchekers.log && \
 		cp flchekers $(TOMDIST)/bin; \
 	}
 
-$(TOMDIST)/bin/yareversi: Downloads/yareversi-1.0.2.tar.bz2
+$(TOMDIST)/bin/yareversi: $(DOWNLOADS)/yareversi-1.0.2.tar.bz2
 	mkdir -p build
-	cd build && tar xf ../Downloads/yareversi-1.0.2.tar.bz2 && cd yareversi-1.0.2 && { \
+	cd build && tar xf $(DOWNLOADS)/yareversi-1.0.2.tar.bz2 && cd yareversi-1.0.2 && { \
 		patch -p1 <../../patchs/yareversi-1.0.2_opentom.patch && \
 		make -f Makefile.fl >$(LOGS)/yareversi.log && \
 		cp yareversi $(TOMDIST)/bin; \
 	}
 
-$(TOMDIST)/bin/opendune: Downloads/OpenDUNE-0.8.zip
+$(TOMDIST)/bin/opendune: $(DOWNLOADS)/OpenDUNE-0.8.zip
 	mkdir -p build
-	cd build && unzip ../Downloads/OpenDUNE-0.8.zip && cd OpenDUNE-0.8 && { \
+	cd build && unzip $(DOWNLOADS)/OpenDUNE-0.8.zip && cd OpenDUNE-0.8 && { \
 		patch -p1 <../../patchs/OpenDUNE-0.8_opentom.patch && \
 		./configure --prefix=$(ARM_APPROOT) --enable-debug=0 --disable-assert --host=$(T_ARCH) --without-alsa --without-pulse && \
 		make $(JOBS) >/$(LOGS)/opendune.log 2>&1 && \
@@ -213,18 +213,18 @@ $(TOMDIST)/bin/opendune: Downloads/OpenDUNE-0.8.zip
 		echo "# Copy Dune2 files here !" >$(TOMDIST)/share/dune2/data/README; \
 	}
 
-$(TOMDIST)/bin/linapple: Downloads/linapple-src_2a.tar.bz2
+$(TOMDIST)/bin/linapple: $(DOWNLOADS)/linapple-src_2a.tar.bz2
 	mkdir -p build
-	cd build && tar xf ../Downloads/linapple-src_2a.tar.bz2 && cd linapple-src_2a && { \
+	cd build && tar xf $(DOWNLOADS)/linapple-src_2a.tar.bz2 && cd linapple-src_2a && { \
 		patch -p1 <../../patchs/linapple-src_2a_1402241834.patch; \
 		CFLAGS="" CPPFLAGS="" make >$(LOGS)/linapple.log 2>&1 && cp linapple-src_2a $(TOMDIST)/bin/linapple && \
 		mkdir -p $(TOMDIST)/share/linapple && \
 		cp charset40.bmp font.bmp splash.bmp Master.dsk $(TOMDIST)/share/linapple; \
 	}
 
-$(TOMDIST)/bin/scummvm: Downloads/scummvm-1.6.0.tar.bz2
+$(TOMDIST)/bin/scummvm: $(DOWNLOADS)/scummvm-1.6.0.tar.bz2
 	mkdir -p build
-	cd build && tar xf ../Downloads/scummvm-1.6.0.tar.bz2 && cd scummvm-1.6.0 && { \
+	cd build && tar xf $(DOWNLOADS)/scummvm-1.6.0.tar.bz2 && cd scummvm-1.6.0 && { \
 		patch -p1 <../../patchs/scummvm-1.6.0_opentom.patch; \
 		./configure --prefix=$(ARM_SYSROOT)/usr --host=$(T_ARCH) --disable-debug --default-dynamic --disable-scalers --disable-hq-scalers --disable-translation --disable-bink --with-sdl-prefix=$(ARM_SYSROOT)/usr/bin --disable-nasm --disable-readline --disable-libunity --disable-sndio --backend=sdl --enable-optimizations --disable-engine=kyra --disable-engine=hopkins >$(LOGS)/scummvm.log >$(LOGS)/scummvm.log; \
 		VERBOSE_BUILD=1 AS=arm-linux-as make $(JOBS) >$(LOGS)/scummvm.log 2>&1; \
@@ -232,9 +232,9 @@ $(TOMDIST)/bin/scummvm: Downloads/scummvm-1.6.0.tar.bz2
 		mkdir -p $(TOMDIST)/share/scumm_games; \
 	}
 
-$(TOMDIST)/bin/dosbox: Downloads/dosbox-0.74.tar.gz
+$(TOMDIST)/bin/dosbox: $(DOWNLOADS)/dosbox-0.74.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/dosbox-0.74.tar.gz && cd dosbox-0.74 && { \
+	cd build && tar xf $(DOWNLOADS)/dosbox-0.74.tar.gz && cd dosbox-0.74 && { \
 		patch -p1 <../../patchs/dosbox-0.74_opentom_savesfilestate_sdl.patch; \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) --disable-sdltest --disable-alsa-midi --disable-alsatest --disable-dynamic-core --disable-dynamic-x86 --disable-fpu-x86 --disable-opengl >$(LOGS)/dosbox.log; \
 		cp ../../patchs/dosbox-0.74_config.h config.h; \
@@ -242,9 +242,9 @@ $(TOMDIST)/bin/dosbox: Downloads/dosbox-0.74.tar.gz
 	}
 
 
-$(TOMDIST)/bin/dillo: Downloads/dillo-3.0.3.tar.bz2
+$(TOMDIST)/bin/dillo: $(DOWNLOADS)/dillo-3.0.3.tar.bz2
 	mkdir -p build
-	cd build && tar xf ../Downloads/dillo-3.0.3.tar.bz2 && cd dillo-3.0.3 && { \
+	cd build && tar xf $(DOWNLOADS)/dillo-3.0.3.tar.bz2 && cd dillo-3.0.3 && { \
 		patch -p1 <../../patchs/dillo-3.0.3_opentom.patch && \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) >$(LOGS)/dillo.log && \
 		make $(JOBS) install >$(LOGS)/dillo.log && \
@@ -255,9 +255,9 @@ $(TOMDIST)/bin/dillo: Downloads/dillo-3.0.3.tar.bz2
 		sed "s#$(ARM_APPROOT)#/mnt/sdcard/opentom/#" <$(ARM_APPROOT)/etc/dillo/dpidrc >$(TOMDIST)/.dillo/dpidrc; \
 	}
 
-$(TOMDIST)/bin/mupdf: Downloads/mupdf-1.3-source.tar.gz
+$(TOMDIST)/bin/mupdf: $(DOWNLOADS)/mupdf-1.3-source.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/mupdf-1.3-source.tar.gz && cd mupdf-1.3-source && { \
+	cd build && tar xf $(DOWNLOADS)/mupdf-1.3-source.tar.gz && cd mupdf-1.3-source && { \
 		mkdir -p build/debug; \
 		gcc  -Iinclude -Iscripts -Igenerated -Wall -pipe -g -DDEBUG -Ithirdparty/freetype/include -Ithirdparty/jbig2dec -Ithirdparty/jpeg -Ithirdparty/openjpeg/src/lib/openjp2  -Ithirdparty/zlib -o build/debug/cmapdump scripts/cmapdump.c; \
 		gcc  -Iinclude -Iscripts -Igenerated -Wall -pipe -g -DDEBUG -Ithirdparty/freetype/include -Ithirdparty/jbig2dec -Ithirdparty/jpeg -Ithirdparty/openjpeg/src/lib/openjp2  -Ithirdparty/zlib -o build/debug/fontdump scripts/fontdump.c; \
@@ -265,18 +265,18 @@ $(TOMDIST)/bin/mupdf: Downloads/mupdf-1.3-source.tar.gz
 		CROSSCOMPILE=yes verbose=yes make prefix=$(ARM_APPROOT) install >$(LOGS)/mupdf.log && cp build/debug/mupdf-x11 $(TOMDIST)/bin/mupdf; \
 	}
 
-$(TOMDIST)/bin/gnuboy: Downloads/gnuboy-1.0.3.tar.gz
+$(TOMDIST)/bin/gnuboy: $(DOWNLOADS)/gnuboy-1.0.3.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/gnuboy-1.0.3.tar.gz && cd gnuboy-1.0.3 && { \
+	cd build && tar xf $(DOWNLOADS)/gnuboy-1.0.3.tar.gz && cd gnuboy-1.0.3 && { \
 		./configure --prefix=$(ARM_APPROOT) --with-sdl --host=$(T_ARCH) --without-x --without-fb --disable-asm --enable-optimize=full >$(LOGS)/gnuboy.log; \
 		patch -p1 <../../patchs/gnuboy-1.0.3_opentom_sdl.patch; \
 		make clean >>$(LOGS)/gnuboy.log; \
 		make $(JOBS) >>$(LOGS)/gnuboy.log && cp sdlgnuboy $(TOMDIST)/bin/gnuboy; \
 	}
 
-$(TOMDIST)/bin/martian: Downloads/martian_source.tgz
+$(TOMDIST)/bin/martian: $(DOWNLOADS)/martian_source.tgz
 	mkdir -p build
-	cd build && tar xf ../Downloads/martian_source.tgz && cd Martian-Memory && { \
+	cd build && tar xf $(DOWNLOADS)/martian_source.tgz && cd Martian-Memory && { \
 		patch -p1 <../../patchs/Martian-Memory_opentom.patch; \
 		./configure --prefix=$(ARM_SYSROOT)/usr --build=i686-pc-linux-gnu --host=$(T_ARCH) --datadir=/mnt/sdcard/opentom/share >$(LOGS)/martian.log; \
 		make $(JOBS) >$(LOGS)/martian.log && { \
@@ -287,21 +287,21 @@ $(TOMDIST)/bin/martian: Downloads/martian_source.tgz
 		} \
 	}
 
-$(TOMDIST)/bin/jooleem.sh: Downloads/jooleem_0.1.4_win32_bin.zip Downloads/jooleem_0.1.4_src.zip
+$(TOMDIST)/bin/jooleem.sh: $(DOWNLOADS)/jooleem_0.1.4_win32_bin.zip $(DOWNLOADS)/jooleem_0.1.4_src.zip
 	mkdir -p build
-	cd build && unzip ../Downloads/jooleem_0.1.4_win32_bin.zip && cd Jooleem && { \
+	cd build && unzip $(DOWNLOADS)/jooleem_0.1.4_win32_bin.zip && cd Jooleem && { \
 		mkdir -p $(TOMDIST)/share/jooleem; \
 		mogrify -resize 50% data/interface/*  data/marbles/*; \
-		unzip -o ../../Downloads/jooleem_0.1.4_src.zip; \
+		unzip -o ../../$(DOWNLOADS)/jooleem_0.1.4_src.zip; \
 		patch -p1 <../../patchs/Jooleem_opentom.patch; \
 		make >$(LOGS)/jooleem.log && \
 		cp -R data jooleem $(TOMDIST)/share/jooleem; \
 		echo '#! /bin/sh§§cd $$DIST/share/jooleem§exec ./jooleem§' | tr '§' '\n' >$(TOMDIST)/bin/jooleem.sh; \
 	}
 
-$(TOMDIST)/bin/cr3: Downloads/cr3_3.0.56.orig.tar.gz
+$(TOMDIST)/bin/cr3: $(DOWNLOADS)/cr3_3.0.56.orig.tar.gz
 	mkdir -p build
-	cd build && tar xf ../Downloads/cr3_3.0.56.orig.tar.gz && cd cr3.0.56-7 && { \
+	cd build && tar xf $(DOWNLOADS)/cr3_3.0.56.orig.tar.gz && cd cr3.0.56-7 && { \
 		patch -p1 <../../patchs/cr3.0.56-7_opentom_fltk.patch; \
 		mkdir -p arm_build; \
 		cd arm_build && { \
@@ -328,7 +328,7 @@ clean_all:
 	rm -Rf build/*
 	make clean
 
-Downloads/%:
+$(DOWNLOADS)/%:
 	mkdir -p Downloads
 	mkdir -p logs
-	get_source.sh $(@:Downloads/%=%)
+	get_source.sh $(@:$(DOWNLOADS)/%=%)
