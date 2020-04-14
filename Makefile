@@ -551,7 +551,7 @@ clean_all:
 	rm -f $(LOGS)/*
 
 
-Downloads/%:
+$(DOWNLOADS)/%:
 	mkdir -p Downloads
 	get_source.sh $*
 
