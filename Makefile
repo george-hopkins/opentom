@@ -189,7 +189,6 @@ $(ARM_ROOT)/usr/include/microwin/nano-X.h: $(ARM_ROOT)/usr/include/zlib.h $(ARM_
 	make install >>$(LOGS)/nanox.log 2>&1 && \
 	cp bin/convb* $(ARM_APPROOT)/bin
 
-
 dropbear: $(TOMDIST)/bin/dropbear
 $(TOMDIST)/bin/dropbear: $(DOWNLOADS)/dropbear-2016.74.tar.bz2
 	cd build && tar xf $(DOWNLOADS)/dropbear-2016.74.tar.bz2 && cd dropbear* && { \
@@ -323,7 +322,6 @@ $(ARM_ROOT)/usr/include/X11/X.h: $(ARM_ROOT)/usr/include/microwin/nano-X.h $(DOW
 	cat $(CONFIGS)/xext.pc | sed 's#ARM_APPROOT#$(ARM_APPROOT)#' >$(ARM_APPROOT)/lib/pkgconfig/xext.pc
 	cd $(ARM_ROOT)/usr/lib && ln -sf libX11.so libX11.so.0
 	
-
 
 fltk13: $(ARM_ROOT)/usr/include/FL/Fl.H
 $(ARM_ROOT)/usr/include/FL/Fl.H: $(DOWNLOADS)/fltk-1.3.2-source.tar.gz $(ARM_ROOT)/usr/include/X11/X.h
