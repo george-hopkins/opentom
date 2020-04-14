@@ -405,11 +405,11 @@ $(ARM_ROOT)/usr/include/expat.h: $(DOWNLOADS)/expat-2.1.0.tar.gz
         }
 
 espeak: $(TOMDIST)/bin/espeak
-$(TOMDIST)/bin/espeak: Downloads/pa_stable_v19_20140130.tgz Downloads/espeak-1.48.02-source.zip
+$(TOMDIST)/bin/espeak: $(DOWNLOADS)/pa_stable_v19_20140130.tgz $(DOWNLOADS)/espeak-1.48.02-source.zip
 	cd build && tar xf $(DOWNLOADS)/pa_stable_v19_20140130.tgz && cd portaudio && { \
 		./configure --prefix=$(ARM_APPROOT) --host=arm-linux --without-alsa --with-alsa --without-jack --without-asihpi --without-winapi >$(LOGS)/pa_stable.log && \
 		make $(JOBS) install >$(LOGS)/pa_stable.log; }
-	cd build && unzip -o -qq ../Downloads/espeak-1.48.02-source.zip && cd espeak-1.48* && { \
+	cd build && unzip -o -qq $(DOWNLOADS)/espeak-1.48.02-source.zip && cd espeak-1.48* && { \
 		cp src/portaudio19.h src/portaudio.h; \
 		patch -p1 <../../patchs/espeak-1.48.01-source_opentom.patch; \
 		make -C src $(JOBS) install >$(LOGS)/espeak.log; \
@@ -425,7 +425,7 @@ $(ARM_ROOT)/usr/include/zip.h: $(DOWNLOADS)/libzip-0.11.2.tar.gz
 	}
 
 ssl: $(ARM_ROOT)/usr/include/openssl/opensslconf.h
-$(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1u.tar.gz
+$(ARM_ROOT)/usr/include/openssl/opensslconf.h: $(DOWNLOADS)/openssl-1.0.1u.tar.gz
 	cd build && tar xf $(DOWNLOADS)/openssl-1.0.1u.tar.gz && cd openssl-1.0.1u && { \
 		CC=gcc ./Configure linux-armv4 shared --prefix=$(ARM_APPROOT) >$(LOGS)/ssl.log && \
 		make >>$(LOGS)/ssl.log && \
@@ -433,7 +433,7 @@ $(ARM_ROOT)/usr/include/openssl/opensslconf.h: Downloads/openssl-1.0.1u.tar.gz
 	}
 
 gtk: $(ARM_ROOT)/usr/include/gtk-1.2/gtk/gtk.h
-/usr/include/gtk-1.2/gtk/gtk.h: Downloads/gtk+-1.2.10.tar.gz
+/usr/include/gtk-1.2/gtk/gtk.h: $(DOWNLOADS)/gtk+-1.2.10.tar.gz
 	cd build && tar xf $(DOWNLOADS)/gtk+-1.2.10.tar.gz && cd gtk+-1.2.10 && { \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) --with-glib-prefix=$(ARM_APPROOT) && \
 		make install $(JOBS) >$(LOGS)/gtk1.log; \
@@ -499,7 +499,7 @@ $(TOMDIST)/bin/pppd: $(DOWNLOADS)/ppp-2.4.7.tar.gz
 ####
 
 quick-%:
-	make Downloads/$(@:quick-%=%)
+	make $(DOWNLOADS)/$(@:quick-%=%)
 	cd build && { tar xf ../$(DOWNLOADS)/$(@:quick-%=%)* || unzip ../$(DOWNLOADS)/$(@:quick-%=%)*; } && cd $(@:quick-%=%)* && { \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) >$(LOGS)/$@.log && \
 		find . -name Makefile | while read f; do sed 's/-Wextra//' <$$f >/tmp/tmp$$$$; mv /tmp/tmp$$$$ $$f; done; \
@@ -512,7 +512,7 @@ quick-%:
 	}
 
 quickb-%:
-	make Downloads/$(@:quickb-%=%)
+	make $(DOWNLOADS)/$(@:quickb-%=%)
 	cd build && { tar xf $(DOWNLOADS)/$(@:quickb-%=%)* || unzip $(DOWNLOADS)/$(@:quickb-%=%)*; } && cd $(@:quickb-%=%)* && { \
 		./bootstrap && \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) && \
@@ -521,7 +521,7 @@ quickb-%:
 	}
 
 quicka-%:
-	make Downloads/$(@:quicka-%=%)
+	make $(DOWNLOADS)/$(@:quicka-%=%)
 	cd build && { tar xf $(DOWNLOADS)/$(@:quicka-%=%)* || unzip $(DOWNLOADS)/$(@:quicka-%=%)*; } && cd $(@:quicka-%=%)* && { \
 		./autogen.sh && \
 		./configure --prefix=$(ARM_APPROOT) --host=$(T_ARCH) $(CONF_ARGS) && \
