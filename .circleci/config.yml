@@ -8,8 +8,7 @@ jobs:
           command: |
             apt update
             apt install -y git build-essential libglib2.0-dev unzip gawk wget libtool fluid imagemagick pkg-config librsvg2-bin xsltproc lib32z1 chrpath cmake kmod autoconf
-
-          name: Build
+          name: Setup System
       - checkout
       - restore_cache:
           keys:
