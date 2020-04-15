@@ -26,6 +26,7 @@ APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
 CLEAN_APPS= $(APPS:%=clean-%)
 
 EXTRA= 	navit
+mkdir -p $(LOGS)
 
 
 .PHONY: $(APPS)
