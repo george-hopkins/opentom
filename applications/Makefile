@@ -26,18 +26,17 @@ APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
 CLEAN_APPS= $(APPS:%=clean-%)
 
 EXTRA= 	navit
-mkdir -p $(LOGS)
 
 
 .PHONY: $(APPS)
 .PHONY: $(CLEAN_APPS)
 .PHONY: $(EXTRA)
 
-install: $(APPS)
+install: $(LOGS) $(APPS)
 
 clean: $(CLEAN_APPS)
 
-extra: $(EXTRA)
+extra: $(LOGS) $(EXTRA)
 	@echo
 	@echo "######################################################################################"
 	@echo "# Build of Extra apps are done"
@@ -47,10 +46,10 @@ extra: $(EXTRA)
 	@echo "#"
 	@echo "#####################################################################################"
 
-$(APPS):
+$(APPS): $(LOGS)
 	make -C src/$@ install
 
-$(CLEAN_APPS):
+$(CLEAN_APPS): $(LOGS)
 	make -C src/$(@:clean-%=%) clean
 
 $(EXTRA): %: $(TOMDIST)/bin/%
@@ -80,7 +79,7 @@ $(TOMDIST)/bin/net-bubble: $(DOWNLOADS)/net-bubble-0.9.1-ezx80-0.tar.gz
 	}
 	echo '#! /bin/sh§§cd $$DIST/share/net-bubble§exec net-bubble§' | tr '§' '\n' >$(TOMDIST)/bin/net-bubble.sh; \
 
-$(TOMDIST)/bin/navit: $(DOWNLOADS)/navit.zip
+$(TOMDIST)/bin/navit: $(LOGS) $(DOWNLOADS)/navit.zip
 	mkdir -p build
 	cd build && unzip $(DOWNLOADS)/navit.zip && cd navit-* && { \
 		#patch -p1 <../../patchs/navit_opentom.patch && \
@@ -328,6 +327,9 @@ clean_duplicate_patchs:
 clean_all:
 	rm -Rf build/*
 	make clean
+
+$(LOGS):
+	mkdir -p $(LOGS)
 
 $(DOWNLOADS)/%:
 	mkdir -p Downloads
