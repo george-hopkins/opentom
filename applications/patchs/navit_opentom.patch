@@ -2,7 +2,7 @@ diff --git a/navit/CMakeLists.txt b/navit/CMakeLists.txt
 index ca19ce41..13276770 100644
 --- a/navit/CMakeLists.txt
 +++ b/navit/CMakeLists.txt
-@@ -104,7 +104,7 @@ if(NOT MSVC)
+@@ -107,7 +107,7 @@ if(NOT MSVC)
  	SET(NAVIT_LIBS ${NAVIT_LIBS} m)
  endif(NOT MSVC)
  target_link_libraries(${NAVIT_LIBNAME}  ${MODULES_NAME} ${NAVIT_SUPPORT_LIBS} fib ${NAVIT_LIBS} )
@@ -11,16 +11,15 @@ index ca19ce41..13276770 100644
  if (DEFINED NAVIT_COMPILE_FLAGS)
  	set_target_properties(${NAVIT_LIBNAME} PROPERTIES COMPILE_FLAGS "${NAVIT_COMPILE_FLAGS}")
  endif()
-diff --git a/navit/xslt/tomtom.xslt b/navit/xslt/tomtom.xslt
-index dac69f3d..a402d78e 100644
---- a/navit/xslt/tomtom.xslt
-+++ b/navit/xslt/tomtom.xslt
-@@ -10,11 +10,13 @@
- 	<xsl:include href="osd_minimum.xslt"/>
+
+--- ./navit/xslt/tomtom.xslt.orig	2020-08-21 23:09:21.646678108 +0000
++++ ./navit/xslt/tomtom.xslt	2020-08-21 23:14:14.994671983 +0000
+@@ -11,11 +11,12 @@
  
  	<xsl:template match="/">
-+		<xsl:copy-of select="layout"/>
  		<xsl:apply-templates select="config"/>
+-		<xsl:apply-templates select="layout"/>
++		<xsl:copy-of select="layout"/>
  	</xsl:template>
  
  	<xsl:template match="config">
@@ -29,7 +28,7 @@ index dac69f3d..a402d78e 100644
  			<xsl:apply-templates select="navit"/>
  		</xsl:copy>
  	</xsl:template>
-@@ -26,11 +28,11 @@
+@@ -27,11 +28,11 @@
  			<xsl:attribute name="orientation">-1</xsl:attribute>
  			<xsl:attribute name="autozoom_active">1</xsl:attribute>
  			<xsl:attribute name="recent_dest">25</xsl:attribute>
@@ -44,7 +43,7 @@ index dac69f3d..a402d78e 100644
  			</vehicle>
  			<vehicle name="Demo" profilename="car" enabled="yes" active="no" follow="1" source="demo://" speed="100"/>
  			<xsl:copy-of select="tracking"/>
-@@ -45,13 +47,23 @@
+@@ -46,20 +47,24 @@
  			<xsl:copy-of select="navigation"/>
  
  			<xsl:comment>Use espeak.</xsl:comment>
@@ -57,15 +56,18 @@ index dac69f3d..a402d78e 100644
  			<xsl:copy-of select="layer"/>
 +			<xi:include href="$NAVIT_SHAREDIR/navit_layout_*.xml"/>
  			<xsl:copy-of select="layout"/>
+ 			<xsl:copy-of select="xi:include"/>
  		</xsl:copy>
  	</xsl:template>
-+
+ 
+-	<xsl:template match="layout">
 +	<xsl:template match="gui[@type='internal']">
-+		<xsl:copy>
+ 		<xsl:copy>
+-			<xsl:copy-of select="@*|node()"/>
 +			<xsl:copy-of select="@*"/>
 +			<xsl:attribute name="fullscreen">1</xsl:attribute>
 +			<xsl:attribute name="pitch">35</xsl:attribute>
 +			<xsl:apply-templates/>
-+		</xsl:copy>
-+	</xsl:template>
+ 		</xsl:copy>
+ 	</xsl:template>
  </xsl:transform>
