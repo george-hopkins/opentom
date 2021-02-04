@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Starting USB Ether Gadget ...
+KVER=$(uname -r)
+
+insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/s3c24xx_udc.ko
+insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/g_ether.ko
+modprobe ext3
+ifconfig usb0 192.168.1.10
+

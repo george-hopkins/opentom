@@ -1,0 +1,15 @@
+export HOME="$DIST"
+
+export FRAMEBUFFER=/dev/fb
+
+export TSLIB_CONSOLEDEVICE=none
+export TSLIB_FBDEVICE=/dev/fb
+export TSLIB_TSDEVICE=/dev/input/event0
+export TSLIB_CONFFILE="$DIST/etc/ts.conf"
+export TSLIB_PLUGINDIR="$DIST/lib/ts"
+export TSLIB_CALIBFILE="$DIST/etc/pointercal"
+
+export PATH="/usr/sbin:/sbin:$PATH:$DIST/sbin:$DIST/usr/sbin:$DIST/bin:$DIST/usr/bin"
+export LD_LIBRARY_PATH="$DIST/lib"
+
+export NANOX_YRES="$(fbset -s | sed -Ene '/geometry/s~^.+geometry +[0-9]+ +([0-9]+) +.*$~\1~p')"

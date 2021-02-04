@@ -1,0 +1,23 @@
+#!/bin/sh
+
+red(){
+    echo "\033[0;31m${*}\033[0m"
+}
+
+
+
+red ' _   _             _ _  _____               '
+red '| \ | | __ ___   _(_) ||_   _|__  _ __ ___  '
+red "|  \| |/ _' \ \ / / | __|| |/ _ \| '_ ' _ \ "
+red '| |\  | (_| |\ V /| | |_ | | (_) | | | | | |'
+red '|_| \_|\__,_| \_/ |_|\__||_|\___/|_| |_| |_|'
+                                            
+
+# Starting USB Ether Gadget ...
+KVER=$(uname -r)
+
+insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/s3c24xx_udc.ko
+insmod /lib/modules/$KVER/kernel/drivers/usb/gadget/g_ether.ko
+modprobe ext3
+ifconfig usb0 192.168.1.10
+

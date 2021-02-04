@@ -1,0 +1,42 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - run:
+          command: |
+            apt update
+            apt install -y git build-essential libglib2.0-dev unzip gawk wget libtool fluid imagemagick pkg-config librsvg2-bin xsltproc lib32z1 chrpath cmake kmod autoconf
+          name: Setup System
+      - checkout
+      - restore_cache:
+          keys:
+            - dl-{{ checksum "configs/sources.txt" }}
+      - run:
+          name: Build
+          command: |
+            mkdir -p target/opentom target/opentom-extra
+            export ROOT=`pwd`
+            source get_cross_env.sh
+            make base
+            cp build/ttsystem target/opentom
+            cp -r opentom_dist target/opentom/opentom
+            make extra
+            cp build/ttsystem target/opentom-extra
+            cp -r opentom_dist target/opentom-extra/opentom
+            tar -C target -cvzf target/opentom.tar.gz opentom
+            tar -C target -cvzf target/opentom-extra.tar.gz opentom-extra
+      - save_cache:
+          key: dl-{{ checksum "configs/sources.txt" }}
+          paths:
+            - Downloads
+      - store_artifacts:
+          path: logs
+      - store_artifacts:
+          path: applications/logs
+      - store_artifacts:
+          path: target/opentom.tar.gz
+      - store_artifacts:
+          path: target/opentom-extra.tar.gz
+

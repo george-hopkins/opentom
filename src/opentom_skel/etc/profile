@@ -1,4 +1,6 @@
-# Load environment variables
-if [ -e /mnt/sdcard/opentom/getenv.sh ]; then
-	source /mnt/sdcard/opentom/getenv.sh
-fi
+export DIST=/mnt/sdcard/opentom
+. /etc/.shinit
+for i in /proc/barcelona/*; do export "hw_${i##*/}"="$(cat "$i")"; done
+cd() { chdir "$@" && PS1="root:$PWD\$ "; }
+cd .
+lswinscp() { ls -ailn "$@" |sed -Ene 's~^[^0-9]*([0-9]+) +([-a-z]+) +[0-9]+ +[0-9] +[0-9] *([0-9].*)$~\2 \1 root root \3~p'; }

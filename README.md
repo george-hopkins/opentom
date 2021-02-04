@@ -1,9 +1,19 @@
 # OpenTom
 
-[![Build Status](https://img.shields.io/circleci/project/github/george-hopkins/opentom/master.svg)](https://circleci.com/gh/george-hopkins/opentom)
-[![Latest Pre-Built Image](https://img.shields.io/badge/pre--built%20image-latest-green.svg)](https://circleci.com/api/v1/project/george-hopkins/opentom/latest/artifacts/0//home/ubuntu/opentom/target/opentom.tar.gz?branch=master&filter=successful)
+[![Build Status](https://img.shields.io/circleci/project/github/navit-gps/NavitTom.svg)](https://circleci.com/gh/navit-gps/NavitTom)
+[![Latest Pre-Built Image](https://img.shields.io/badge/pre--built%20image-latest-green.svg)](https://circleci.com/api/v1/project/navit-gps/NavitTom/latest/artifacts/0/home/ubuntu/NavitTom/target/opentom.tar.gz?branch=master&filter=successful)
 
-**OpenTom** is a tiny, open source Linux distribution for TomTom™ devices.
+**NavitTom** is a tiny, open source Linux distribution for TomTom™ devices. Its includes Navit with specific Configurations.
+
+Planned Features are:
+ - Download Maps over Bluetooth Internet connection
+ - Automatic update to the last version of Navit
+ 
+## Tested Devices
+|team member|device|
+|---|---|
+| [jkoan](https://github.com/jkoan) |TomTom One v2 (4N00.004.2)
+| [jkoan](https://github.com/jkoan) |TomTom One XL 2 (4S00.000.2)|
 
 
 ## Getting Started

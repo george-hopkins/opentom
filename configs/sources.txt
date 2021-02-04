@@ -1,65 +1,53 @@
 # How to get source archives
 # Libs
-wget https://web.archive.org/web/20071013013709/http://www.tomtom.com/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
-wget https://archive.org/download/golinux-tt1114405.tar.gz/golinux-tt1114405.tar.gz
-wget https://downloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz
-wget ftp://ftp.pl.freebsd.org/vol/rzm4/GraphicsMagick/delegates/libjpeg-6b.tar.gz
-wget http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-2.3.12.tar.gz
-wget http://downloads.sourceforge.net/project/libpng/libpng16/1.6.28/libpng-1.6.28.tar.gz
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/microwin && cd microwin && git checkout 9ffcd17 && cd .. && tar czf ../Downloads/microwin_9ffcd17.tgz microwin; }
-[ -f $1 ] || { cd ../build && git clone git://microwindows.org/nxlib && cd nxlib && git checkout 7adaf0e && cd .. && tar czf ../Downloads/nxlib_7adaf0e.tgz nxlib; }
-wget http://www.libsdl.org/release/SDL-1.2.15.tar.gz
-wget http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
-wget http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
-wget http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.11.tar.gz
-wget http://www.libsdl.org/projects/SDL_net/release/SDL_net-1.2.8.tar.gz
+wget --progress=dot:giga  http://download.tomtom.com/open/gpl/toolchain_redhat_gcc-3.3.4_glibc-2.3.2-20060131a.tar.gz
+wget --progress=dot:giga https://archive.org/download/golinux-tt1114405.tar.gz/golinux-tt1114405.tar.gz
+wget --progress=dot:giga https://downloads.sourceforge.net/libpng/zlib-1.2.11.tar.gz
+wget --progress=dot:giga ftp://ftp.fu-berlin.de/unix/X11/graphics/ImageMagick/delegates/libjpeg-6b.tar.gz
+wget --progress=dot:giga https://downloads.sourceforge.net/project/freetype/freetype2/2.3.12/freetype-2.3.12.tar.gz
+wget --progress=dot:giga https://github.com/navit-gps/dependencies/raw/master/tomtom/libpng-1.6.29.tar.gz
+wget --progress=dot:giga https://github.com/ghaerr/microwindows/archive/9ffcd174168b37e7c434a61235acaab3bc6422fa.zip
+wget --progress=dot:giga https://github.com/ghaerr/nxlib/archive/7adaf0ef23e27ca1d19e4c14e49d5631d8e59fa9.zip
+wget --progress=dot:giga http://www.libsdl.org/release/SDL-1.2.15.tar.gz
+wget --progress=dot:giga http://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz
+wget --progress=dot:giga http://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz
+wget --progress=dot:giga http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.11.tar.gz
+wget --progress=dot:giga http://www.libsdl.org/projects/SDL_net/release/SDL_net-1.2.8.tar.gz
 [ -f $1 ] || { cd ../build && hg clone -r stable-1.0 http://hg.icculus.org/icculus/SDL_sound tar czf ../Downloads/SDL_sound_hg.tgz SDL_sound; }
-wget http://fltk.org/pub/fltk/1.3.2/fltk-1.3.2-source.tar.gz
-wget ftp://microwindows.org/pub/microwindows/microwindows-fonts-snapshot.tar.gz
-wget http://downloads.sourceforge.net/mad/libmad-0.15.1b.tar.gz
-wget https://web.archive.org/web/20150714174958/http://www.tomtom.com/gpl/csrinit-tt531604.tar.gz
-wget http://pkgs.fedoraproject.org/repo/pkgs/tslib/tslib-1.0.tar.bz2/92b2eb55b1e4ef7e2c0347069389390e/tslib-1.0.tar.bz2
-wget http://ftp.gnome.org/pub/gnome/sources/glib/1.2/glib-1.2.10.tar.gz
-wget http://ftp.gnome.org/pub/gnome/sources/glib/2.14/glib-2.14.6.tar.gz
-wget https://archive.org/download/bluez-libs-2.15-tt350126.tar.gz/bluez-libs-2.15-tt350126.tar.gz
-wget https://curl.haxx.se/download/curl-7.51.0.tar.gz
-wget http://downloads.sourceforge.net/project/mad/libid3tag/0.15.1b/libid3tag-0.15.1b.tar.gz
-wget http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
-wget http://downloads.sourceforge.net/project/espeak/espeak/espeak-1.48/espeak-1.48.02-source.zip
-wget http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz
-wget http://www.nih.at/libzip/libzip-0.11.2.tar.gz
-wget http://downloads.sourceforge.net/project/cppunit/cppunit/1.12.1/cppunit-1.12.1.tar.gz
-wget https://www.openssl.org/source/openssl-1.0.1u.tar.gz
-wget http://ftp.gnome.org/pub/gnome/sources/gtk+/1.2/gtk+-1.2.10.tar.gz
+wget --progress=dot:giga http://fltk.org/pub/fltk/1.3.2/fltk-1.3.2-source.tar.gz
+wget --progress=dot:giga ftp://microwindows.org/pub/microwindows/microwindows-fonts-snapshot.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/mad/libmad-0.15.1b.tar.gz
+wget --progress=dot:giga https://web.archive.org/web/20150714174958/http://www.tomtom.com/gpl/csrinit-tt531604.tar.gz
+wget --progress=dot:giga http://pkgs.fedoraproject.org/repo/pkgs/tslib/tslib-1.0.tar.bz2/92b2eb55b1e4ef7e2c0347069389390e/tslib-1.0.tar.bz2
+wget --progress=dot:giga http://ftp.gnome.org/pub/gnome/sources/glib/1.2/glib-1.2.10.tar.gz
+wget --progress=dot:giga http://ftp.gnome.org/pub/gnome/sources/glib/2.14/glib-2.14.6.tar.gz
+wget --progress=dot:giga https://archive.org/download/bluez-libs-2.15-tt350126.tar.gz/bluez-libs-2.15-tt350126.tar.gz
+wget --progress=dot:giga https://curl.haxx.se/download/curl-7.51.0.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/mad/libid3tag/0.15.1b/libid3tag-0.15.1b.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/espeak/espeak/espeak-1.48/espeak-1.48.02-source.zip
+wget --progress=dot:giga http://www.portaudio.com/archives/pa_stable_v19_20140130.tgz
+wget --progress=dot:giga http://www.nih.at/libzip/libzip-0.11.2.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/cppunit/cppunit/1.12.1/cppunit-1.12.1.tar.gz
+wget --progress=dot:giga https://www.openssl.org/source/openssl-1.0.1u.tar.gz
+wget --progress=dot:giga http://ftp.gnome.org/pub/gnome/sources/gtk+/1.2/gtk+-1.2.10.tar.gz
 # Apps
-wget http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
-wget https://download.samba.org/pub/ppp/ppp-2.4.7.tar.gz
-wget https://matt.ucc.asn.au/dropbear/releases/dropbear-2016.74.tar.bz2
-wget http://pkgs.fedoraproject.org/repo/pkgs/bluez-utils/bluez-utils-2.15.tar.gz/4e86dfd4449ff49e82696d8a3b254002/bluez-utils-2.15.tar.gz
-wget https://picocom.googlecode.com/files/picocom-1.7.tar.gz
-wget http://downloads.sourceforge.net/project/mad/madplay/0.15.2b/madplay-0.15.2b.tar.gz
-wget http://mupdf.googlecode.com/files/mupdf-1.3-source.tar.gz
-#wget http://nab.pcug.org.au/spreadsheet1.2.2.tar.gz
-[ -f $1 ] || { cd ../build && wget -nH --max-redirect=0 -r -l 2 -k -L -np -R \*index.html\* http://nab.pcug.org.au/spreadsheet1.2.2/ && tar czf ../Downloads/spreadsheet1.2.2.tar.gz spreadsheet1.2.2; }
-wget http://fedorchenko.net/src/yacheckers-1.4.0.tar.bz2
-wget http://fedorchenko.net/src/yareversi-1.0.2.tar.bz2
-wget --no-check-certificate https://pkgs.fedoraproject.org/repo/pkgs/dillo/dillo-3.0.3.tar.bz2/726cd0b7a18c5e25f4d80ebeffe7607e/dillo-3.0.3.tar.bz2
-wget http://mirrors.usc.edu/pub/gnu/gdb/gdb-7.1.tar.gz
-wget http://downloads.sourceforge.net/project/ctorrent/CTorrent-1.3.4/CTorrent-1.3.4/ctorrent-1.3.4.tar.bz2
-wget http://downloads.sourceforge.net/project/dosbox/dosbox/0.74/dosbox-0.74.tar.gz
-wget http://downloads.sourceforge.net/project/crengine/CoolReader3/cr3-3.0.56/cr3_3.0.56.orig.tar.gz
-wget -O navit-R7213.tar.gz https://github.com/navit-gps/navit/archive/R7213.tar.gz
-# Games
-wget http://downloads.sourceforge.net/project/scummvm/scummvm/1.6.0/scummvm-1.6.0.tar.bz2
-wget http://downloads.sourceforge.net/project/linapple/linapple/linapple-2a/linapple-src_2a.tar.bz2
-wget -O OpenDUNE-0.8.zip https://github.com/OpenDUNE/OpenDUNE/archive/0.8.zip
-wget http://www.users.waitrose.com/~thunor/pipepanic/dload/pipepanic-0.1.3-source.tar.gz
-wget http://downloads.sourceforge.net/project/dragontech/Martian%20Memory/Martian%20Memory%201.2/martian_source.tgz
-wget http://downloads.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_src.zip
-wget http://downloads.sourceforge.net/project/jooleem/jooleem/0.1.4/jooleem_0.1.4_win32_bin.zip
-wget http://www.tomtomheaven.com/data/zip/TomTom_FreeCell.zip
-wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-bin.zip
-wget http://zx81.zx81.free.fr/public/caanoo/12swap/caanoo-12swap-v1.0-src.zip
-wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/sylar-stuff/gnuboy-1.0.3.tar.gz
-wget http://downloads.sourceforge.net/project/devezx/eggchess/eggchess-1.1-A780-0/eggchess-1.1-A780-0.tar.gz
-wget http://downloads.sourceforge.net/project/devezx/net-bubble/net-bubble-0.9.1-ezx80-0/net-bubble-0.9.1-ezx80-0.tar.gz
+wget --progress=dot:giga http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
+wget --progress=dot:giga https://download.samba.org/pub/ppp/ppp-2.4.7.tar.gz
+wget --progress=dot:giga https://matt.ucc.asn.au/dropbear/releases/dropbear-2016.74.tar.bz2
+wget --progress=dot:giga http://pkgs.fedoraproject.org/repo/pkgs/bluez-utils/bluez-utils-2.15.tar.gz/4e86dfd4449ff49e82696d8a3b254002/bluez-utils-2.15.tar.gz
+wget --progress=dot:giga https://picocom.googlecode.com/files/picocom-1.7.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/mad/madplay/0.15.2b/madplay-0.15.2b.tar.gz
+wget --progress=dot:giga http://mupdf.googlecode.com/files/mupdf-1.3-source.tar.gz
+#wget --progress=dot:giga http://nab.pcug.org.au/spreadsheet1.2.2.tar.gz
+[ -f $1 ] || { cd ../build && wget --progress=dot:giga -nH --max-redirect=0 -r -l 2 -k -L -np -R \*index.html\* http://nab.pcug.org.au/spreadsheet1.2.2/ && tar czf ../Downloads/spreadsheet1.2.2.tar.gz spreadsheet1.2.2; }
+wget --progress=dot:giga http://fedorchenko.net/src/yacheckers-1.4.0.tar.bz2
+wget --progress=dot:giga http://fedorchenko.net/src/yareversi-1.0.2.tar.bz2
+wget --progress=dot:giga --no-check-certificate https://pkgs.fedoraproject.org/repo/pkgs/dillo/dillo-3.0.3.tar.bz2/726cd0b7a18c5e25f4d80ebeffe7607e/dillo-3.0.3.tar.bz2
+wget --progress=dot:giga http://mirrors.usc.edu/pub/gnu/gdb/gdb-7.1.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/ctorrent/CTorrent-1.3.4/CTorrent-1.3.4/ctorrent-1.3.4.tar.bz2
+wget --progress=dot:giga http://downloads.sourceforge.net/project/dosbox/dosbox/0.74/dosbox-0.74.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/crengine/CoolReader3/cr3-3.0.56/cr3_3.0.56.orig.tar.gz
+wget --progress=dot:giga -O navit.zip https://github.com/navit-gps/navit/archive/master.zip
+chess-1.1-A780-0.tar.gz
+wget --progress=dot:giga http://downloads.sourceforge.net/project/devezx/net-bubble/net-bubble-0.9.1-ezx80-0/net-bubble-0.9.1-ezx80-0.tar.gz

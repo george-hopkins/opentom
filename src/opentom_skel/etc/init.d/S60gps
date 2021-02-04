@@ -10,6 +10,12 @@ stop_counter=""
 def_fix_start="normal"
 par_fix_start=${def_fix_start}
 
+sanity(){
+    if ! which gltt; then
+        echo "\033[0;31mGltt not found\033[0m\n"
+        exit 1
+}
+
 stop_count() {
     echo ${stop_counter} | wc -c
 }
@@ -28,7 +34,7 @@ start() {
     [ -e /var/run/gpspipe ] || mknod /var/run/gpspipe p
 
     # Link actual GPS device
-    [ -e /dev/gpsdata ] || ln -s /dev/`cat /proc/barcelona/gpsdev` /dev/gpsdata
+    [ -e /dev/gpsdata ] || ln -s /dev/$(cat /proc/barcelona/gpsdev) /dev/gpsdata
 
     # Create log folder
     mkdir -p ${sdcard}/gl/log
@@ -47,7 +53,7 @@ start() {
     fi
 
     # Start gltt
-    gltt -baud ${gl_baudrate} -periodic 2000 -fix_start ${par_fix_start} ${rftype_param} &
+    gltt -baud ${gl_baudrate} -periodic 500 -fix_start ${par_fix_start} ${rftype_param} &
 }
 
 stop() {
@@ -78,6 +84,7 @@ case "${1}" in
 	else 
           par_fix_start=${3}
         fi
+        sanity
         start
         ;;
 
