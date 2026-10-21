@@ -17,7 +17,7 @@ TMP=/tmp
 export APPS_ROOT=$(ROOT)/applications
 export LOGS=$(APPS_ROOT)/logs
 
-APPS=	tools nxmenu flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
+APPS=	tools nxmenu gpsdash flxplorer pixil_keyboard nanobrick nxtetravex nxterminal imgv
 CLEAN_APPS= $(APPS:%=clean-%)
 
 EXTRA= 	12swap ntetris pipepanic \

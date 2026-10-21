@@ -48,6 +48,12 @@
 #define RUN_TYPE_ONOFF  2
 #define RUN_TYPE_SEPARATOR	4
 
+// Screen position of the rocket icon (= top-left corner of the menu), in pixels.
+// The default (0, 0) is the top-left corner of the screen. Override at run time
+// (useful when the touchscreen does not reach the corner):
+//     nxmenu <config file> <x> <y>
+static int org_x = 0, org_y = 0;
+
 // Nombre maxi d'item visible dans un menu
 #define MAX_VISIBLE_ITEM	15
 
@@ -293,7 +299,7 @@ void repaint( pMenuWindow win) {
 	}
 	
 	GrSetGCForeground( app->gc, WHITE);
-	GrFillRect(win->id, app->gc, win->x, 0, win->width, win->height);
+	GrFillRect(win->id, app->gc, 0, 0, win->width, win->height);
 	
 	y = -win->scroll_to;
 	for ( pi = win->items; pi && (y<MAX_VISIBLE_ITEM); pi=pi->next) {
@@ -350,8 +356,10 @@ void repaint( pMenuWindow win) {
 	}
 }
 
-inline int get_item_position( int y) {
-	return ((y+1) / app->text_h);
+static inline int get_item_position( int y) {
+	y = y - org_y + 1;
+	if ( y < 0) return -1;
+	return (y / app->text_h);
 }
 
 void recalculate_win_size(pMenuWindow win) {
@@ -377,7 +385,7 @@ void set_extend( pMenuWindow win, int extended, int dx ) {
 	if ( ! win->id) {
 		recalculate_win_size(win);
 		win->id = GrNewWindowEx(GR_WM_PROPS_APPWINDOW|GR_WM_PROPS_NOAUTOMOVE, "nxMenu",GR_ROOT_WINDOW_ID,
-						win->x = dx, 0, win->width, win->height, BLACK);
+						win->x = dx, org_y, win->width, win->height, BLACK);
 		props.flags = GR_WM_FLAGS_PROPS;
 		props.props = GR_WM_PROPS_NODECORATE | GR_WM_PROPS_NOFOCUS;
 		GrSetWMProperties(win->id, &props);
@@ -482,7 +490,9 @@ static void quit_prog( int sig) {
 
 pMenuItem get_visible_item( pMenuWindow win, int n) {
 	pMenuItem pi = win->items;
-	int ni = get_item_position(n)+win->scroll_to;
+	int pos = get_item_position(n), ni;
+	if ( pos < 0) return NULL;
+	ni = pos + win->scroll_to;
 	if ( (ni<0)||(ni>=win->nb_items)) return NULL;
 	while (ni--) pi = pi->next;
 	return pi;
@@ -545,10 +555,14 @@ int main( int argc, char** argv) {
 			GR_EVENT_MASK_BUTTON_UP | GR_EVENT_MASK_BUTTON_DOWN);	
 		*/
 	//GrMoveWindow( app->pwid, 0, 0);
-	load_configuration((argc==2)?argv[1]:"nanomenu.cfg");
+	if ( argc >= 4) {
+		org_x = atoi(argv[2]);
+		org_y = atoi(argv[3]);
+	}
+	load_configuration((argc>=2)?argv[1]:"nanomenu.cfg");
 	
 	app->quit = in_window = 0;
-	set_extend( app->win, 0, 0);
+	set_extend( app->win, 0, org_x);
 	GrMapWindow( app->win->id);
 
 	//GrGetWindowInfo( app->win->id, &wininfo);
@@ -567,8 +581,8 @@ int main( int argc, char** argv) {
 
 					if ( ! win ) break;
 					
-					if ( (ev.mouse.rootx < win->x) || (ev.mouse.rooty < 0) || 
-						 (ev.mouse.rootx > (win->x+win->width)) || (ev.mouse.rooty > win->height)) {
+					if ( (ev.mouse.rootx < win->x) || (ev.mouse.rooty < org_y) || 
+						 (ev.mouse.rootx > (win->x+win->width)) || (ev.mouse.rooty > org_y + win->height)) {
 							 
 						new_sel = -1;
 					} else
